@@ -1,0 +1,62 @@
+body {
+  width: 300px;
+  padding: 16px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+}
+
+.container {
+  text-align: center;
+}
+
+h1 {
+  font-size: 1.5rem;
+  color: #333;
+  margin-bottom: 1rem;
+}
+
+#timer {
+  font-size: 2rem;
+  font-family: monospace;
+  color: #2d3748;
+  margin: 1rem 0;
+}
+
+#focusButton {
+  padding: 1rem 2rem;
+  font-size: 1rem;
+  border: none;
+  border-radius: 25px;
+  background-color: #4299e1;
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  outline: none;
+  width: 80%;
+}
+
+#focusButton:hover {
+  background-color: #3182ce;
+}
+
+#focusButton.holding {
+  background-color: #48bb78;
+  animation: pulse 2s infinite;
+}
+
+.instructions {
+  margin-top: 1rem;
+  color: #718096;
+  font-size: 0.8rem;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(72, 187, 120, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(72, 187, 120, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(72, 187, 120, 0);
+  }
+}
