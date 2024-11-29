@@ -409,6 +409,8 @@ export default function FocusButton() {
     setIsCountingDown(false);
     setIsPaused(false);
     setIsFinished(false);
+    localStorage.removeItem("focusTimer");
+    localStorage.removeItem("focusbutton_timer_state");
     trackEvent("timer_cancel", { timeLeft: time });
   };
 
