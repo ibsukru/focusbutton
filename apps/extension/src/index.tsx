@@ -1,0 +1,25 @@
+import React from "react";
+import { createRoot } from "react-dom/client";
+import { ThemeProvider } from "next-themes";
+import { FocusButton } from "@focusbutton/ui";
+import "./index.css";
+
+function Popup() {
+  return (
+    <ThemeProvider attribute="class">
+      <div className="container">
+        <FocusButton />
+      </div>
+    </ThemeProvider>
+  );
+}
+
+const container = document.getElementById("root");
+if (!container) {
+  throw new Error("Root element not found");
+}
+
+const root = createRoot(container);
+root.render(<Popup />);
+
+// Remove service worker registration since we're using manifest v3 background service worker

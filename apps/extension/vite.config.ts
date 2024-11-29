@@ -3,34 +3,32 @@ import react from '@vitejs/plugin-react';
 import { resolve } from 'path';
 import { writeFileSync, copyFileSync, cpSync } from 'fs';
 
-// Custom plugin to copy manifest and handle assets
-const copyAssets = () => ({
-  name: 'copy-assets',
-  closeBundle() {
-    // Copy manifest.json to dist
-    try {
+// Custom plugin to copy assets after build
+function copyAssets() {
+  return {
+    name: 'copy-assets',
+    closeBundle() {
+      // Copy manifest.json
       copyFileSync(
         resolve(__dirname, 'manifest.json'),
         resolve(__dirname, 'dist/manifest.json')
       );
-      console.log('✓ Copied manifest.json');
-    } catch (err) {
-      console.error('Failed to copy manifest.json:', err);
-    }
-
-    // Copy public directory to dist
-    try {
+      
+      // Copy icons
       cpSync(
-        resolve(__dirname, 'public'),
-        resolve(__dirname, 'dist'),
+        resolve(__dirname, 'icons'),
+        resolve(__dirname, 'dist/icons'),
         { recursive: true }
       );
-      console.log('✓ Copied public directory');
-    } catch (err) {
-      console.error('Failed to copy public directory:', err);
+
+      // Copy background script directly without bundling
+      copyFileSync(
+        resolve(__dirname, 'src/background.js'),
+        resolve(__dirname, 'dist/background.js')
+      );
     }
-  }
-});
+  };
+}
 
 export default defineConfig({
   plugins: [react(), copyAssets()],
@@ -38,7 +36,7 @@ export default defineConfig({
     outDir: 'dist',
     rollupOptions: {
       input: {
-        popup: resolve(__dirname, 'popup.html'),
+        index: resolve(__dirname, 'index.html')
       },
       output: {
         entryFileNames: '[name].js',
