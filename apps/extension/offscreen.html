@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Offscreen Document</title>
+</head>
+<body>
+    <audio id="notificationSound" src="timer-end.mp3"></audio>
+    <script>
+        chrome.runtime.onMessage.addListener((message) => {
+            if (message.type === 'PLAY_SOUND') {
+                const audio = document.getElementById('notificationSound');
+                audio.volume = 1.0;
+                audio.play().catch(console.error);
+            }
+        });
+    </script>
+</body>
+</html>

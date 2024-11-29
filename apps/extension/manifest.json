@@ -3,7 +3,15 @@
   "name": "FocusButton",
   "version": "1.0.0",
   "description": "Track your focus time with a simple press and hold button",
-  "permissions": ["storage", "notifications", "tabs", "windows"],
+  "permissions": [
+    "notifications",
+    "alarms",
+    "storage",
+    "tabs"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
   "action": {
     "default_icon": {
       "16": "icons/icon-16.png",
@@ -21,5 +29,9 @@
   },
   "chrome_url_overrides": {
     "newtab": "index.html"
-  }
+  },
+  "web_accessible_resources": [{
+    "resources": ["timer-end.mp3", "notification.html", "offscreen.html"],
+    "matches": ["<all_urls>"]
+  }]
 }

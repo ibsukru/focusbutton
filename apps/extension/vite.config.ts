@@ -31,7 +31,13 @@ function copyAssets() {
 }
 
 export default defineConfig({
-  plugins: [react(), copyAssets()],
+  plugins: [
+    react({
+      // Disable React Strict Mode
+      strict: false
+    }), 
+    copyAssets()
+  ],
   build: {
     outDir: 'dist',
     rollupOptions: {
