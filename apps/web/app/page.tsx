@@ -1,15 +1,6 @@
 import { FocusButton } from "@focusbutton/ui";
 import styles from "./page.module.scss";
-import { ChromeIcon } from "lucide-react";
-
-const STORAGE_KEY = "focusbutton_timer_state";
-
-interface TimerState {
-  time: number;
-  isCountingDown: boolean;
-  isPaused: boolean;
-  startTime: number;
-}
+// import { ChromeIcon } from "lucide-react";
 
 export default function Home() {
   return (
