@@ -1,8 +1,6 @@
-import { useState, useRef, useEffect } from "react";
-import styles from "./page.module.scss";
-import { ChevronDown, ChevronUp, Focus } from "lucide-react";
-import MotionNumber from "motion-number";
 import { FocusButton } from "@focusbutton/ui";
+import styles from "./page.module.scss";
+import { ChromeIcon } from "lucide-react";
 
 const STORAGE_KEY = "focusbutton_timer_state";
 
@@ -14,5 +12,17 @@ interface TimerState {
 }
 
 export default function Home() {
-  return <FocusButton />;
+  return (
+    <div className={styles.page}>
+      <div className={styles.main}>
+        <FocusButton />
+        {/* <a
+            className={styles.chromeWebStore}
+            href="https://chrome.google.com/webstore/detail/focusbutton/njgjgjgjgjgjgjgjgjgj"
+          >
+            <ChromeIcon /> Download from Chrome Web Store
+          </a> */}
+      </div>
+    </div>
+  );
 }

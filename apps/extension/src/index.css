@@ -76,6 +76,21 @@ body {
   background-color: var(--background);
 }
 
+.page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
 body {
   color: var(--foreground);
   font-family: var(--font-sans);

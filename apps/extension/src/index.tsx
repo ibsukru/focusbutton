@@ -7,8 +7,10 @@ import "./index.css";
 function Popup() {
   return (
     <ThemeProvider attribute="class">
-      <div className="container">
-        <FocusButton />
+      <div className="page">
+        <div className="main">
+          <FocusButton />
+        </div>
       </div>
     </ThemeProvider>
   );
