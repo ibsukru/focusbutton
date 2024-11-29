@@ -3,15 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <title>FocusButton</title>
-  <link rel="stylesheet" href="popup.css">
+  <link rel="stylesheet" href="./popup.css">
 </head>
 <body>
-  <div class="container">
-    <h1>FocusButton</h1>
-    <div id="timer">00:00:00</div>
-    <button id="focusButton">Press and Hold</button>
-    <p class="instructions">Press and hold the button to start focusing. Release to stop.</p>
-  </div>
-  <script src="popup.js"></script>
+  <div id="root"></div>
+  <script type="module" src="./src/popup.tsx"></script>
 </body>
 </html>

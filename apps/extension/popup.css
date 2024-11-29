@@ -1,62 +1,144 @@
+:root {
+  --background: #ffffff;
+  --foreground: #000000;
+  --shade-1: rgba(0, 0, 0, 0.1);
+  --shade-2: rgba(0, 0, 0, 0.2);
+  --accent-1: #48c78e;
+}
+
+[data-theme="dark"] {
+  --background: #000000;
+  --foreground: #ffffff;
+  --shade-1: rgba(255, 255, 255, 0.1);
+  --shade-2: rgba(255, 255, 255, 0.2);
+  --accent-1: #48c78e;
+}
+
 body {
-  width: 300px;
-  padding: 16px;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  width: 400px;
+  height: 500px;
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
+    Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  background: var(--background);
+  color: var(--foreground);
+}
+
+.page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
 }
 
 .container {
   text-align: center;
+  padding: 2rem;
+  max-width: 90%;
+  width: 400px;
 }
 
-h1 {
-  font-size: 1.5rem;
-  color: #333;
-  margin-bottom: 1rem;
-}
-
-#timer {
-  font-size: 2rem;
+.timeDisplay {
+  display: inline-flex;
+  align-items: center;
   font-family: monospace;
-  color: #2d3748;
-  margin: 1rem 0;
+  font-size: 2rem;
+  font-weight: 500;
+  letter-spacing: -0.5px;
+  gap: 8px;
 }
 
-#focusButton {
-  padding: 1rem 2rem;
-  font-size: 1rem;
+.timeAdjust {
+  background: none;
   border: none;
-  border-radius: 25px;
-  background-color: #4299e1;
-  color: white;
+  padding: 4px;
+  color: var(--foreground);
   cursor: pointer;
-  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  border-radius: 4px;
+}
+
+.focusButton {
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  border: none;
+  cursor: default;
   outline: none;
-  width: 80%;
+  font-size: 1.2rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--background);
+  border: 1px solid var(--shade-2);
+  color: var(--foreground);
 }
 
-#focusButton:hover {
-  background-color: #3182ce;
+.focusButton.counting {
+  background: var(--accent-1);
 }
 
-#focusButton.holding {
-  background-color: #48bb78;
-  animation: pulse 2s infinite;
+.focusButton.paused {
+  opacity: 0.7;
 }
 
-.instructions {
-  margin-top: 1rem;
-  color: #718096;
-  font-size: 0.8rem;
+.focusButton.finished {
+  animation: tiltShake 0.5s ease-in-out;
+  background: var(--accent-1);
 }
 
-@keyframes pulse {
-  0% {
-    box-shadow: 0 0 0 0 rgba(72, 187, 120, 0.4);
-  }
-  70% {
-    box-shadow: 0 0 0 10px rgba(72, 187, 120, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(72, 187, 120, 0);
-  }
+.controls {
+  margin-top: 10px;
+  display: flex;
+  gap: 20px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  white-space: nowrap;
+}
+
+.controls.visible {
+  opacity: 1;
+}
+
+.controls button {
+  text-decoration: none;
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 8px 16px;
+  border-radius: 20px;
+  background: var(--background);
+  color: var(--foreground);
+  border: 1px solid var(--shade-2);
+  transition: all 0.3s ease;
+  box-shadow: none;
+}
+
+.time {
+  min-width: 100px;
+  text-align: center;
+  cursor: pointer;
+  user-select: none;
+}
+
+@keyframes tiltShake {
+  0% { transform: rotate(0deg); }
+  25% { transform: rotate(-10deg); }
+  50% { transform: rotate(0deg); }
+  75% { transform: rotate(10deg); }
+  100% { transform: rotate(0deg); }
 }

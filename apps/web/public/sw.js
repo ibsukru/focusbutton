@@ -12,24 +12,33 @@ self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
+        console.log('Service Worker: Caching files');
         return cache.addAll(urlsToCache);
       })
+      .catch(error => {
+        console.error('Service Worker: Cache failed:', error);
+      })
   );
+  // Force waiting Service Worker to become active
+  self.skipWaiting();
 });
 
 self.addEventListener("activate", (event) => {
-  const cacheWhitelist = [CACHE_NAME];
+  console.log('Service Worker: Activated');
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
-          if (cacheWhitelist.indexOf(cacheName) === -1) {
+          if (cacheName !== CACHE_NAME) {
+            console.log('Service Worker: Clearing old cache');
             return caches.delete(cacheName);
           }
         })
       );
     })
   );
+  // Take control of all clients immediately
+  event.waitUntil(clients.claim());
 });
 
 self.addEventListener("fetch", (event) => {
@@ -42,26 +51,17 @@ self.addEventListener("fetch", (event) => {
         }
         return fetch(event.request);
       })
+      .catch(() => {
+        // If both cache and network fail, return offline fallback
+        return new Response('Offline');
+      })
   );
 });
 
-self.addEventListener("message", async (event) => {
+self.addEventListener("message", (event) => {
   console.log("Service Worker received message:", event.data);
   
-  if (event.data && event.data.type === "SHOW_NOTIFICATION") {
-    try {
-      const result = await self.registration.showNotification("Focus Timer Complete!", {
-        body: "Your focus session has ended.",
-        icon: "/favicon.ico",
-        badge: "/favicon.ico",
-        tag: "focus-timer",
-        renotify: true,
-        requireInteraction: true,
-        vibrate: [200, 100, 200]
-      });
-      console.log("Notification shown successfully:", result);
-    } catch (error) {
-      console.error("Failed to show notification:", error);
-    }
+  if (event.data && event.data.type === "SKIP_WAITING") {
+    self.skipWaiting();
   }
 });
