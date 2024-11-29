@@ -38,6 +38,16 @@ export default function FocusButton() {
     return /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
   };
 
+  // Track events with GA4
+  const trackEvent = (eventName: string, params = {}) => {
+    if (typeof window !== "undefined" && (window as any).gtag) {
+      (window as any).gtag("event", eventName, {
+        ...params,
+        source: "FocusButton",
+      });
+    }
+  };
+
   // Set mounted state
   useEffect(() => {
     setMounted(true);
@@ -82,7 +92,8 @@ export default function FocusButton() {
 
     // Initialize Web Audio API context
     try {
-      audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+      audioContextRef.current = new (window.AudioContext ||
+        (window as any).webkitAudioContext)();
     } catch (error) {
       console.log("Web Audio API not supported");
     }
@@ -90,28 +101,31 @@ export default function FocusButton() {
     // On iOS, we need to play (and immediately pause) after user interaction
     const initAudio = () => {
       if (audioRef.current) {
-        audioRef.current.play().then(() => {
-          audioRef.current?.pause();
-          audioRef.current?.load();
-        }).catch(error => {
-          console.log("Initial audio play failed (expected):", error);
-        });
+        audioRef.current
+          .play()
+          .then(() => {
+            audioRef.current?.pause();
+            audioRef.current?.load();
+          })
+          .catch((error) => {
+            console.log("Initial audio play failed (expected):", error);
+          });
       }
-      
+
       // Also resume audio context if available
-      if (audioContextRef.current?.state === 'suspended') {
+      if (audioContextRef.current?.state === "suspended") {
         audioContextRef.current.resume();
       }
     };
 
     // Add listeners for user interaction
     const interactionEvents = ["touchstart", "click"];
-    interactionEvents.forEach(event => {
+    interactionEvents.forEach((event) => {
       document.addEventListener(event, initAudio, { once: true });
     });
 
     return () => {
-      interactionEvents.forEach(event => {
+      interactionEvents.forEach((event) => {
         document.removeEventListener(event, initAudio);
       });
       if (audioRef.current) {
@@ -131,19 +145,26 @@ export default function FocusButton() {
   const playFallbackSound = () => {
     try {
       if (!audioContextRef.current) {
-        audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+        audioContextRef.current = new (window.AudioContext ||
+          (window as any).webkitAudioContext)();
       }
 
       if (audioContextRef.current) {
         // Create and configure oscillator
         const oscillator = audioContextRef.current.createOscillator();
         const gainNode = audioContextRef.current.createGain();
-        
-        oscillator.type = 'sine';
-        oscillator.frequency.setValueAtTime(440, audioContextRef.current.currentTime); // A4 note
-        
+
+        oscillator.type = "sine";
+        oscillator.frequency.setValueAtTime(
+          440,
+          audioContextRef.current.currentTime
+        ); // A4 note
+
         gainNode.gain.setValueAtTime(0.1, audioContextRef.current.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContextRef.current.currentTime + 1);
+        gainNode.gain.exponentialRampToValueAtTime(
+          0.01,
+          audioContextRef.current.currentTime + 1
+        );
 
         oscillator.connect(gainNode);
         gainNode.connect(audioContextRef.current.destination);
@@ -163,11 +184,14 @@ export default function FocusButton() {
       if (audioRef.current) {
         // Reset the audio to start
         audioRef.current.currentTime = 0;
-        
+
         const playPromise = audioRef.current.play();
         if (playPromise !== undefined) {
           playPromise.catch((error) => {
-            console.log("Sound playback error (expected on iOS background):", error);
+            console.log(
+              "Sound playback error (expected on iOS background):",
+              error
+            );
             // On iOS background, sound won't play - this is expected behavior
           });
         }
@@ -239,10 +263,12 @@ export default function FocusButton() {
 
     // Only request notification permission on up click
     if (adjustment > 0 && Notification.permission === "default") {
-      requestNotificationPermission().catch(error => {
+      requestNotificationPermission().catch((error) => {
         console.log("Permission request failed:", error);
       });
     }
+
+    trackEvent("timer_adjust", { adjustment });
 
     // Clear any existing adjustment intervals
     if (adjustIntervalRef.current) {
@@ -319,6 +345,8 @@ export default function FocusButton() {
       clearInterval(timerRef.current);
     }
 
+    trackEvent("timer_start", { duration: time });
+
     const startTime = Date.now();
     localStorage.setItem(
       "focusTimer",
@@ -337,14 +365,11 @@ export default function FocusButton() {
           setIsCountingDown(false);
           setIsPaused(false);
           setIsFinished(true);
-
-          // Always try to play sound first
+          trackEvent("timer_complete", { duration: time });
           playNotificationSound();
-          // Then attempt notification as secondary feedback
           sendNotification().catch(() => {
             // Error already logged in sendNotification
           });
-
           localStorage.removeItem("focusTimer");
           return 0;
         }
@@ -357,56 +382,89 @@ export default function FocusButton() {
     setIsPaused(false);
   };
 
-  // Handle visibility change and background time tracking
-  const handleVisibilityChange = useCallback((now: number) => {
-    if (document.hidden) {
-      // App going to background
-      if (isCountingDown && !isPaused && timerRef.current) {
-        clearInterval(timerRef.current);
-        timerRef.current = null;
-        localStorage.setItem(
-          "focusTimer",
-          JSON.stringify({
-            timeLeft: time,
-            startTime: now,
-            isCountingDown: true,
-            isPaused: false,
-          })
-        );
-      }
-    } else {
-      // App coming to foreground
-      const savedTimer = localStorage.getItem("focusTimer");
-      if (savedTimer) {
-        try {
-          const {
-            timeLeft,
-            startTime,
-            isCountingDown: wasCountingDown,
-            isPaused: wasPaused,
-          } = JSON.parse(savedTimer);
-          if (wasCountingDown && !wasPaused) {
-            const elapsedSeconds = Math.floor((now - startTime) / 1000);
-            const newTimeLeft = Math.max(0, timeLeft - elapsedSeconds);
-            setTime(newTimeLeft);
-
-            if (newTimeLeft === 0) {
-              setIsCountingDown(false);
-              setIsPaused(false);
-              setIsFinished(true);
-              // Play sound when coming back to foreground if timer finished
-              playNotificationSound();
-            } else {
-              startCountdown();
-            }
-          }
-        } catch (error) {
-          console.error("Error parsing saved timer:", error);
-        }
-        localStorage.removeItem("focusTimer");
-      }
+  const handlePause = () => {
+    console.log("Pausing timer");
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
     }
-  }, [isCountingDown, isPaused, time, startCountdown]);
+    setIsPaused(true);
+    trackEvent("timer_pause", { timeLeft: time });
+  };
+
+  const handleResume = () => {
+    console.log("Resuming timer");
+    startCountdown();
+    trackEvent("timer_resume", { timeLeft: time });
+  };
+
+  const handleCancel = () => {
+    console.log("Canceling timer");
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+    setTime(0);
+    setDisplayTime(0);
+    setIsCountingDown(false);
+    setIsPaused(false);
+    setIsFinished(false);
+    trackEvent("timer_cancel", { timeLeft: time });
+  };
+
+  // Handle visibility change and background time tracking
+  const handleVisibilityChange = useCallback(
+    (now: number) => {
+      if (document.hidden) {
+        // App going to background
+        if (isCountingDown && !isPaused && timerRef.current) {
+          clearInterval(timerRef.current);
+          timerRef.current = null;
+          localStorage.setItem(
+            "focusTimer",
+            JSON.stringify({
+              timeLeft: time,
+              startTime: now,
+              isCountingDown: true,
+              isPaused: false,
+            })
+          );
+        }
+      } else {
+        // App coming to foreground
+        const savedTimer = localStorage.getItem("focusTimer");
+        if (savedTimer) {
+          try {
+            const {
+              timeLeft,
+              startTime,
+              isCountingDown: wasCountingDown,
+              isPaused: wasPaused,
+            } = JSON.parse(savedTimer);
+            if (wasCountingDown && !wasPaused) {
+              const elapsedSeconds = Math.floor((now - startTime) / 1000);
+              const newTimeLeft = Math.max(0, timeLeft - elapsedSeconds);
+              setTime(newTimeLeft);
+
+              if (newTimeLeft === 0) {
+                setIsCountingDown(false);
+                setIsPaused(false);
+                setIsFinished(true);
+                // Play sound when coming back to foreground if timer finished
+                playNotificationSound();
+              } else {
+                startCountdown();
+              }
+            }
+          } catch (error) {
+            console.error("Error parsing saved timer:", error);
+          }
+          localStorage.removeItem("focusTimer");
+        }
+      }
+    },
+    [isCountingDown, isPaused, time, startCountdown]
+  );
 
   useEffect(() => {
     const handleVisibilityChangeWrapper = () => {
@@ -420,33 +478,17 @@ export default function FocusButton() {
       handleVisibilityChange(now);
     };
 
-    document.addEventListener("visibilitychange", handleVisibilityChangeWrapper);
+    document.addEventListener(
+      "visibilitychange",
+      handleVisibilityChangeWrapper
+    );
     return () => {
-      document.removeEventListener("visibilitychange", handleVisibilityChangeWrapper);
+      document.removeEventListener(
+        "visibilitychange",
+        handleVisibilityChangeWrapper
+      );
     };
   }, [handleVisibilityChange]);
-
-  const handlePause = () => {
-    console.log("Pausing timer");
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-      timerRef.current = null;
-    }
-    setIsPaused(true);
-  };
-
-  const handleCancel = () => {
-    console.log("Canceling timer");
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-      timerRef.current = null;
-    }
-    setTime(0);
-    setDisplayTime(0);
-    setIsCountingDown(false);
-    setIsPaused(false);
-    setIsFinished(false); // Remove finished state when canceling
-  };
 
   // Remove finished state after animation or when timer is adjusted
   useEffect(() => {

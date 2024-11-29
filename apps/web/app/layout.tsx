@@ -39,7 +39,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en">
       <head>
         <link rel="apple-touch-icon" href="/icon-192.png" />
         <Splash />
@@ -47,6 +47,21 @@ export default function RootLayout({
         <meta
           name="apple-mobile-web-app-status-bar-style"
           content="black-translucent"
+        />
+        {/* Google Analytics */}
+        <script
+          async
+          src="https://www.googletagmanager.com/gtag/js?id=G-JWGLMW333E"
+        ></script>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', 'G-JWGLMW333E');
+            `,
+          }}
         />
       </head>
       <body className={inter.className}>
