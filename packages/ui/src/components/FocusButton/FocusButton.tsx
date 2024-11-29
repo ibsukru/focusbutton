@@ -178,11 +178,6 @@ export default function FocusButton() {
   };
 
   const requestNotificationPermission = async () => {
-    // Skip notification permission request for Safari
-    if (isSafari()) {
-      return "denied";
-    }
-
     if (!("Notification" in window)) {
       return "denied";
     }
@@ -197,22 +192,6 @@ export default function FocusButton() {
 
   const sendNotification = async () => {
     try {
-      // Don't even try notifications on iOS/Safari
-      if (isSafari()) {
-        return;
-      }
-
-      // Check if we're in a PWA/standalone mode
-      const isStandalone = window.matchMedia(
-        "(display-mode: standalone)"
-      ).matches;
-      if (isStandalone) {
-        // In PWA mode, just play sound
-        playNotificationSound();
-        return;
-      }
-
-      // For regular web, try system notification
       if (Notification.permission === "granted") {
         try {
           const notification = new Notification("Time's up!", {
@@ -225,8 +204,8 @@ export default function FocusButton() {
             notification.close();
           };
         } catch (error) {
-          console.log("Notification creation error:", error);
-          // Fallback to sound
+          console.log("Notification creation failed:", error);
+          // Just play sound if notification fails
           playNotificationSound();
         }
       } else {
@@ -234,8 +213,8 @@ export default function FocusButton() {
         playNotificationSound();
       }
     } catch (error) {
-      console.log("Notification error (expected on some platforms):", error);
-      // Always ensure sound plays as fallback
+      console.log("Notification error:", error);
+      // Ensure sound plays as fallback
       playNotificationSound();
     }
   };
@@ -256,11 +235,12 @@ export default function FocusButton() {
     }
     setIsCountingDown(false);
     setIsPaused(false);
-    setIsFinished(false); // Remove finished state when adjusting time
+    setIsFinished(false);
 
-    if (adjustment > 0 && notificationPermission === "default") {
-      requestNotificationPermission().then(() => {
-        console.log("Permission after request:", Notification.permission);
+    // Only request notification permission on up click
+    if (adjustment > 0 && Notification.permission === "default") {
+      requestNotificationPermission().catch(error => {
+        console.log("Permission request failed:", error);
       });
     }
 
