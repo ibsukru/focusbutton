@@ -595,6 +595,52 @@ export default function FocusButton() {
     setDisplayTime(time);
   }, [time]);
 
+  // Handle keyboard events
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Handle ESC key for cancel
+      if (event.key === "Escape") {
+        event.preventDefault();
+        if (isCountingDown || time > 0) {
+          handleCancel();
+        }
+        return;
+      }
+
+      // Prevent default behavior for arrow keys
+      if (event.key === "ArrowUp" || event.key === "ArrowDown") {
+        event.preventDefault();
+
+        // Only handle if not counting down and no adjustment is in progress
+        if (!adjustIntervalRef.current) {
+          if (event.key === "ArrowUp") {
+            startAdjustment(60);
+          } else if (event.key === "ArrowDown" && time > 0) {
+            startAdjustment(-60);
+          }
+        }
+      }
+    };
+
+    const handleKeyUp = (event: KeyboardEvent) => {
+      if (event.key === "ArrowUp" || event.key === "ArrowDown") {
+        event.preventDefault();
+        if (adjustIntervalRef.current) {
+          stopAdjustment();
+        }
+      }
+    };
+
+    // Add event listeners
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
+    };
+  }, [isCountingDown, time, startAdjustment, stopAdjustment]);
+
   // Don't render anything until mounted
   if (!mounted) {
     return;
