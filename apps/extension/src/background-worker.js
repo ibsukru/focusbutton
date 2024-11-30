@@ -55,13 +55,15 @@ async function setupOffscreenDocument() {
   }
 
   // Create an offscreen document
-  await chrome.offscreen.createDocument({
-    url: 'offscreen.html',
-    reasons: ['AUDIO_PLAYBACK'],
-    justification: 'Playing timer end notification sound'
-  }).catch(error => {
-    console.error('Error creating offscreen document:', error);
-  });
+  await chrome.offscreen
+    .createDocument({
+      url: "offscreen.html",
+      reasons: ["AUDIO_PLAYBACK"],
+      justification: "Playing timer end notification sound",
+    })
+    .catch((error) => {
+      console.error("Error creating offscreen document:", error);
+    });
 }
 
 // Initialize offscreen document
@@ -90,8 +92,11 @@ function tick() {
     // Play notification sound using offscreen document
     console.log("Playing notification sound");
     setupOffscreenDocument().then(() => {
-      chrome.runtime.sendMessage({ type: "PLAY_SOUND" })
-        .catch(error => console.error("Error sending play sound message:", error));
+      chrome.runtime
+        .sendMessage({ type: "PLAY_SOUND" })
+        .catch((error) =>
+          console.error("Error sending play sound message:", error)
+        );
     });
 
     // Show notification
@@ -156,6 +161,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       } else if (message.type === "STOP_TIMER") {
         console.log("Stopping timer from message:", message);
         await stopTimer();
+        sendResponse({ success: true });
+      } else if (message.type === "TIMER_END") {
+        console.log("Ending timer from message:", message);
         sendResponse({ success: true });
       } else if (message.type === "GET_TIMER_STATE") {
         console.log("Getting timer state");
