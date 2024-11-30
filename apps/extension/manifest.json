@@ -7,11 +7,10 @@
     "storage",
     "notifications",
     "tabs",
-    "offscreen",
     "alarms",
-    "windows",
     "activeTab",
-    "scripting"
+    "scripting",
+    "offscreen"
   ],
   "action": {
     "default_icon": {
@@ -21,27 +20,28 @@
     }
   },
   "background": {
-    "service_worker": "background-worker.js"
+    "scripts": ["background-worker.js"]
   },
   "icons": {
     "16": "icons/icon-16.png",
     "48": "icons/icon-48.png",
     "128": "icons/icon-128.png"
   },
-  "content_security_policy": {
-    "extension_pages": "script-src 'self'; object-src 'self'"
-  },
   "web_accessible_resources": [
     {
       "resources": [
         "timer-end.mp3",
-        "sound.html",
-        "notification.html",
+        "assets/*",
         "offscreen.html",
-        "offscreen.js",
-        "assets/*"
+        "offscreen.js"
       ],
       "matches": ["<all_urls>"]
     }
-  ]
+  ],
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "focusbutton@example.com",
+      "strict_min_version": "109.0"
+    }
+  }
 }

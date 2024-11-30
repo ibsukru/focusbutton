@@ -5,7 +5,7 @@ import { copyFileSync, mkdirSync, existsSync } from "fs";
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
-  const isFirefox = mode === "firefox";
+  const isFirefox = env.VITE_BROWSER === "firefox";
 
   const manifestBase = {
     manifest_version: 3,
@@ -34,10 +34,14 @@ export default defineConfig(({ mode }) => {
         "128": "icons/icon-128.png",
       },
     },
-    background: {
-      service_worker: "background-worker.js",
-      type: "module",
-    },
+    background: isFirefox
+      ? {
+          scripts: ["background-worker.js"],
+        }
+      : {
+          service_worker: "background-worker.js",
+          type: "module",
+        },
     icons: {
       "16": "icons/icon-16.png",
       "48": "icons/icon-48.png",
@@ -45,68 +49,56 @@ export default defineConfig(({ mode }) => {
     },
     web_accessible_resources: [
       {
-        resources: [
-          "index.html",
-          "assets/*",
-          "timer-end.mp3",
-          "notification.html",
-        ],
+        resources: ["timer-end.mp3", "assets/*"],
         matches: ["<all_urls>"],
       },
     ],
-  };
-
-  const manifest = isFirefox
-    ? {
-        ...manifestBase,
-        browser_specific_settings: {
+    browser_specific_settings: isFirefox
+      ? {
           gecko: {
-            id: "focusbutton@ibsukru.com",
+            id: "focusbutton@example.com",
             strict_min_version: "109.0",
           },
-        },
-      }
-    : manifestBase;
+        }
+      : undefined,
+  };
+
+  const manifest = manifestBase;
 
   return {
     plugins: [
       react(),
       {
-        name: "copy-files",
+        name: "copy-assets",
         writeBundle() {
+          // Create dist directory if it doesn't exist
           if (!existsSync("dist")) {
             mkdirSync("dist");
           }
 
-          const files = [
-            "manifest.json",
-            "icons/icon-16.png",
-            "icons/icon-48.png",
-            "icons/icon-128.png",
-            "timer-end.mp3",
-          ];
+          // Create icons directory
+          if (!existsSync("dist/icons")) {
+            mkdirSync("dist/icons");
+          }
 
-          // Copy static files
-          files.forEach((file) => {
-            if (existsSync(file)) {
-              const dir = resolve("dist", file.split("/")[0]);
-              if (!existsSync(dir) && file.includes("/")) {
-                mkdirSync(dir);
-              }
-              copyFileSync(file, resolve("dist", file));
+          // Copy icon files
+          const iconFiles = ["icon-16.png", "icon-48.png", "icon-128.png"];
+          iconFiles.forEach((file) => {
+            const sourcePath = resolve("src/icons", file);
+            if (existsSync(sourcePath)) {
+              copyFileSync(sourcePath, resolve("dist/icons", file));
             }
           });
 
-          // Copy source HTML files
-          const sourceFiles = [
-            "offscreen.html",
-            "offscreen.js",
-            "notification.html",
-            "notification.js",
-            "sound.html",
-          ];
+          // Copy sound file
+          const soundFile = resolve("src", "timer-end.mp3");
+          if (existsSync(soundFile)) {
+            copyFileSync(soundFile, resolve("dist", "timer-end.mp3"));
+          }
 
-          sourceFiles.forEach((file) => {
+          // Copy offscreen files
+          const offscreenFiles = ["offscreen.html", "offscreen.js"];
+          offscreenFiles.forEach((file) => {
             const sourcePath = resolve("src", file);
             if (existsSync(sourcePath)) {
               copyFileSync(sourcePath, resolve("dist", file));
@@ -136,19 +128,12 @@ export default defineConfig(({ mode }) => {
           main: resolve(__dirname, "index.html"),
           "background-worker": resolve(__dirname, "src/background-worker.js"),
           "content-script": resolve(__dirname, "src/content-script.js"),
-          offscreenJs: resolve(__dirname, "src/offscreen.js"),
         },
         output: {
           entryFileNames: "[name].js",
           chunkFileNames: "assets/[name].[hash].js",
           assetFileNames: "assets/[name].[ext]",
         },
-      },
-      sourcemap: true,
-    },
-    resolve: {
-      alias: {
-        "@": resolve(__dirname, "./src"),
       },
     },
   };

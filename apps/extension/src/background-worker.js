@@ -2,13 +2,37 @@
 const browserAPI = (function () {
   try {
     if (typeof chrome !== "undefined") {
+      // Wrap Chrome storage API in promises
+      const chromeStorage = {
+        get: (keys) =>
+          new Promise((resolve, reject) => {
+            chrome.storage.local.get(keys, (result) => {
+              if (chrome.runtime.lastError) {
+                reject(chrome.runtime.lastError);
+              } else {
+                resolve(result);
+              }
+            });
+          }),
+        set: (items) =>
+          new Promise((resolve, reject) => {
+            chrome.storage.local.set(items, () => {
+              if (chrome.runtime.lastError) {
+                reject(chrome.runtime.lastError);
+              } else {
+                resolve();
+              }
+            });
+          }),
+      };
+
       return {
         runtime: chrome.runtime,
         action: chrome.action,
         scripting: chrome.scripting,
         tabs: chrome.tabs,
         windows: chrome.windows,
-        storage: chrome.storage,
+        storage: { local: chromeStorage },
         alarms: chrome.alarms,
         offscreen: chrome.offscreen,
         notifications: chrome.notifications,
@@ -118,95 +142,113 @@ if (!browserAPI) {
   });
 
   async function initializeTimerState() {
+    console.log("Initializing timer state");
     try {
       const result = await browserAPI.storage.local.get([
         "focusbutton_timer_state",
       ]);
-      console.log("Restoring timer state:", result);
       const state = result.focusbutton_timer_state;
 
-      if (state?.isCountingDown && !state.isPaused && state.time > 0) {
-        console.log("Resuming timer with time:", state.time);
-        await startTimer(state.time);
+      if (state) {
+        // Initialize timer object
+        timer = {
+          timeLeft: state.time || 0,
+          isRunning: state.isCountingDown && !state.isPaused,
+          lastTick: Date.now(),
+          isPaused: state.isPaused || false,
+        };
+
+        // If timer was running, restart it
+        if (state.isCountingDown && !state.isPaused && state.time > 0) {
+          await startTimer(state.time);
+        } else {
+          // Update storage with current state
+          await browserAPI.storage.local.set({
+            focusbutton_timer_state: {
+              type: "TIMER_UPDATE",
+              isCountingDown: state.isCountingDown || false,
+              time: state.time || 0,
+              isPaused: state.isPaused || false,
+              isFinished: state.isFinished || false,
+              source: "background",
+              timestamp: Date.now(),
+            },
+          });
+        }
+      } else {
+        // Set initial state
+        timer = {
+          timeLeft: 0,
+          isRunning: false,
+          lastTick: 0,
+          isPaused: false,
+        };
+
+        await browserAPI.storage.local.set({
+          focusbutton_timer_state: {
+            type: "TIMER_UPDATE",
+            isCountingDown: false,
+            time: 0,
+            isPaused: false,
+            isFinished: false,
+            source: "background",
+            timestamp: Date.now(),
+          },
+        });
       }
     } catch (error) {
       console.error("Error initializing timer state:", error);
     }
   }
 
-  function tick() {
-    if (!timer.isRunning || timer.isPaused) {
-      console.log("Timer not running or is paused, skipping tick");
-      return;
-    }
-
-    const now = Date.now();
-
-    // Ensure we don't tick too frequently
-    if (now - lastTickTime < 900) {
-      // Allow for some timing variation
-      return;
-    }
-
-    console.log("Tick: current time:", timer.timeLeft);
-    lastTickTime = now;
-
-    const newTime = Math.max(0, timer.timeLeft - 1);
-    timer.timeLeft = newTime;
-    timer.lastTick = now;
-
-    // Update state and check for timer completion
-    if (newTime === 0) {
-      console.log("Timer completed");
-      stopTimer().catch(console.error);
-      playNotificationSound().catch(console.error);
-    } else {
-      // Only update state if timer is still running and not paused
-      if (!timer.isPaused) {
-        updateTimerState().catch(console.error);
-      }
-    }
-  }
-
   async function startTimer(duration) {
     console.log("Starting timer with duration:", duration);
+
+    // Validate duration
+    if (!duration || duration <= 0) {
+      console.error("Invalid duration:", duration);
+      return;
+    }
 
     // Stop any existing timer
     await stopTimer();
 
-    // Initialize timer state
+    // Initialize timer state with exact duration
     timer = {
-      timeLeft: duration,
+      timeLeft: Math.floor(duration), // Ensure integer value
       isRunning: true,
       lastTick: Date.now(),
       isPaused: false,
     };
     lastTickTime = Date.now();
 
-    // Create alarms for redundancy
+    // Create alarm for countdown (every second)
     await browserAPI.alarms.clear("timerTick");
-    await browserAPI.alarms.clear("timerBackup");
-
     await browserAPI.alarms.create("timerTick", {
       periodInMinutes: 1 / 60, // Every second
       when: Date.now() + 1000, // Start in 1 second
     });
 
-    // Create a backup alarm that fires every minute
-    await browserAPI.alarms.create("timerBackup", {
-      periodInMinutes: 1,
-      when: Date.now() + 60000,
-    });
+    // Send initial state with exact duration
+    const state = {
+      type: "TIMER_UPDATE",
+      isCountingDown: true,
+      time: Math.floor(duration), // Ensure integer value
+      isPaused: false,
+      isFinished: false,
+      source: "background",
+      timestamp: Date.now(),
+    };
 
-    // Update state immediately
-    await updateTimerState();
+    await browserAPI.storage.local.set({
+      focusbutton_timer_state: state,
+    });
 
     console.log("Timer started:", timer);
   }
 
   async function stopTimer() {
     console.log("Stopping timer");
-    const wasRunning = timer.isRunning;
     timer.isRunning = false;
     timer.timeLeft = 0;
     timer.lastTick = 0;
@@ -215,18 +257,95 @@ if (!browserAPI) {
     // Clear the alarm
     await browserAPI.alarms.clear("timerTick");
 
-    // Only send updates if we were actually running
-    if (wasRunning) {
-      // Update state one last time to ensure UI reflects stopped state
+    // Reset UI update tracking
+    let lastUiUpdate = null;
+
+    // Send final state only if timer was running
+    if (timer.isRunning) {
+      const state = {
+        type: "TIMER_UPDATE",
+        isCountingDown: false,
+        time: 0,
+        isPaused: false,
+        isFinished: true,
+        source: "background",
+        timestamp: Date.now(),
+        isFinalState: true, // Mark as final state
+      };
       await browserAPI.storage.local.set({
-        focusbutton_timer_state: {
-          type: "TIMER_UPDATE",
-          isCountingDown: false,
-          time: 0,
-          isPaused: false,
-          isFinished: true,
-        },
+        focusbutton_timer_state: state,
       });
+    }
+  }
+
+  async function updateState(state) {
+    const now = Date.now();
+    if (now - lastStateUpdate < STATE_UPDATE_THROTTLE) {
+      return;
+    }
+    lastStateUpdate = now;
+
+    try {
+      await browserAPI.storage.local.set({
+        focusbutton_timer_state: state,
+      });
+      console.log("State updated:", state);
+    } catch (error) {
+      console.error("Error updating state:", error);
+    }
+  }
+
+  function tick() {
+    if (!timer.isRunning || timer.isPaused) {
+      return;
+    }
+
+    const now = Date.now();
+    const elapsed = now - timer.lastTick;
+
+    // Update time if at least 1 second has passed
+    if (elapsed >= 1000) {
+      timer.lastTick = now;
+      const newTime = Math.max(0, timer.timeLeft - 1);
+
+      // Only update if time has actually changed
+      if (newTime !== timer.timeLeft) {
+        timer.timeLeft = newTime;
+        console.log("Timer tick:", newTime);
+
+        if (newTime === 0) {
+          console.log("Timer completed");
+          timer.isRunning = false; // Stop timer first
+
+          // Send final state
+          updateState({
+            type: "TIMER_UPDATE",
+            isCountingDown: false,
+            time: 0,
+            isPaused: false,
+            isFinished: true,
+            source: "background",
+            timestamp: now,
+            isFinalState: true,
+          })
+            .then(() => {
+              stopTimer().catch(console.error);
+              playNotificationSound().catch(console.error);
+            })
+            .catch(console.error);
+        } else {
+          // Always send updates during countdown
+          updateState({
+            type: "TIMER_UPDATE",
+            isCountingDown: true,
+            time: newTime,
+            isPaused: false,
+            isFinished: false,
+            source: "background",
+            timestamp: now,
+          }).catch(console.error);
+        }
+      }
     }
   }
 
@@ -239,7 +358,6 @@ if (!browserAPI) {
 
     // Clear the alarms while paused
     await browserAPI.alarms.clear("timerTick");
-    await browserAPI.alarms.clear("timerBackup");
 
     // Update state to reflect pause
     const state = {
@@ -270,11 +388,6 @@ if (!browserAPI) {
       when: Date.now(), // Start immediately
     });
 
-    await browserAPI.alarms.create("timerBackup", {
-      periodInMinutes: 1,
-      when: Date.now() + 60000,
-    });
-
     // Update state
     const state = {
       type: "TIMER_UPDATE",
@@ -291,64 +404,55 @@ if (!browserAPI) {
     });
   }
 
-  // Handle alarm ticks
-  browserAPI.alarms.onAlarm.addListener((alarm) => {
-    console.log("Alarm fired:", alarm.name, "at:", Date.now());
-
-    if (alarm.name === "timerTick") {
-      if (timer.isPaused) {
-        console.log("Timer is paused, skipping tick");
-        return;
-      }
-
-      tick();
-    } else if (alarm.name === "timerBackup") {
-      // Handle backup ticks for redundancy
-      if (timer.isRunning && !timer.isPaused) {
-        const now = Date.now();
-        const elapsedSeconds = Math.floor((now - timer.lastTick) / 1000);
-
-        if (elapsedSeconds > 0) {
-          console.log("Backup tick - elapsed seconds:", elapsedSeconds);
-          timer.timeLeft = Math.max(0, timer.timeLeft - elapsedSeconds);
-          lastTickTime = now;
-          updateTimerState().catch(console.error);
-        }
-      }
-    }
-  });
+  // Track last state update
+  let lastStateUpdate = 0;
+  const STATE_UPDATE_THROTTLE = 100;
 
   // Update timer state in storage and notify all tabs
   async function updateTimerState() {
     const now = Date.now();
 
-    // Skip if we just updated recently or timer is paused
-    if (now - lastStateUpdate < updateThrottleMs || timer.isPaused) {
+    // Don't update if timer is stopped
+    if (timer.timeLeft === 0 && !timer.isRunning) {
       return;
     }
-
-    // Check if we've reached 0
-    if (timer.timeLeft === 0 && lastKnownTime > 0) {
-      console.log("Timer reached zero, stopping timer");
-      await stopTimer();
-      return;
-    }
-
-    lastKnownTime = timer.timeLeft;
 
     const state = {
       type: "TIMER_UPDATE",
-      time: timer.timeLeft,
       isCountingDown: timer.isRunning && !timer.isPaused,
+      time: timer.timeLeft,
       isPaused: timer.isPaused,
-      isFinished: timer.timeLeft === 0,
-      startTime: timer.lastTick,
+      isFinished: timer.timeLeft === 0 && !timer.isRunning,
+      source: "background",
+      timestamp: now,
     };
 
-    console.log("Updating timer state:", state);
-    lastStateUpdate = now;
-
     try {
+      const currentState = await browserAPI.storage.local.get([
+        "focusbutton_timer_state",
+      ]);
+      const oldState = currentState.focusbutton_timer_state;
+
+      // Skip if this is a reflection of our own update
+      if (oldState?.source === "ui") {
+        if (!lastUiUpdate || oldState.timestamp !== lastUiUpdate.timestamp) {
+          lastUiUpdate = oldState;
+          return;
+        }
+      }
+
+      // Skip if state hasn't changed or if we have a final state
+      if (
+        oldState &&
+        (oldState.isFinalState ||
+          (oldState.time === state.time &&
+            oldState.isCountingDown === state.isCountingDown &&
+            oldState.isPaused === state.isPaused &&
+            oldState.isFinished === state.isFinished))
+      ) {
+        return;
+      }
+
       await browserAPI.storage.local.set({
         focusbutton_timer_state: state,
       });
@@ -356,6 +460,13 @@ if (!browserAPI) {
       console.error("Error updating timer state:", error);
     }
   }
+
+  // Handle alarm ticks
+  browserAPI.alarms.onAlarm.addListener((alarm) => {
+    if (alarm.name === "timerTick") {
+      tick();
+    }
+  });
 
   // Handle messages from the popup
   browserAPI.runtime.onMessage.addListener((request, sender, sendResponse) => {
@@ -367,28 +478,6 @@ if (!browserAPI) {
     } else if (request.type === "STOP_TIMER") {
       stopTimer().catch(console.error);
       sendResponse({ success: true });
-    } else if (request.type === "PAUSE_TIMER") {
-      console.log("Pausing timer...");
-      pauseTimer().catch(console.error);
-      sendResponse({
-        success: true,
-        state: {
-          timeLeft: timer.timeLeft,
-          isRunning: false,
-          isPaused: true,
-        },
-      });
-    } else if (request.type === "RESUME_TIMER") {
-      console.log("Resuming timer...");
-      resumeTimer().catch(console.error);
-      sendResponse({
-        success: true,
-        state: {
-          timeLeft: timer.timeLeft,
-          isRunning: true,
-          isPaused: false,
-        },
-      });
     } else if (request.type === "GET_TIMER_STATE") {
       sendResponse({
         success: true,
@@ -396,18 +485,14 @@ if (!browserAPI) {
           timeLeft: timer.timeLeft,
           isRunning: timer.isRunning && !timer.isPaused,
           isPaused: timer.isPaused,
+          isFinished: timer.timeLeft === 0 && !timer.isRunning,
         },
       });
     }
-
-    // Return true to indicate we'll send a response asynchronously
-    return true;
   });
 
   // Add state tracking
-  let lastStateUpdate = 0;
-  const updateThrottleMs = 100;
-  let lastKnownTime = 0;
+  let lastUiUpdate = null;
 
   // Play notification sound
   async function playNotificationSound() {
