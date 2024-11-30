@@ -34,12 +34,12 @@ function copyAssets() {
       // Copy offscreen files
       copyFileSync(
         resolve(__dirname, "src/offscreen.html"),
-        resolve(__dirname, "dist/offscreen.html")
+        resolve(__dirname, "dist/offscreen.html"),
       );
-      
+
       copyFileSync(
         resolve(__dirname, "src/offscreen.js"),
-        resolve(__dirname, "dist/offscreen.js")
+        resolve(__dirname, "dist/offscreen.js"),
       );
 
       // Copy notification sound

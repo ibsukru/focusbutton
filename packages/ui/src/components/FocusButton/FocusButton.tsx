@@ -65,7 +65,7 @@ export default function FocusButton() {
         console.error("Error sending message:", e);
       }
     },
-    [isExtension]
+    [isExtension],
   );
 
   const handleTimerEnd = useCallback(() => {
@@ -116,7 +116,7 @@ export default function FocusButton() {
       try {
         audioContextRef.current = new AudioContext();
       } catch (error) {
-        console.error('Error initializing audio:', error);
+        console.error("Error initializing audio:", error);
       }
     }
   }, []);
@@ -191,7 +191,7 @@ export default function FocusButton() {
 
       trackEvent("timer_start", { duration });
     },
-    [time, isExtension, sendMessage, handleTimerEnd, initializeAudio]
+    [time, isExtension, sendMessage, handleTimerEnd, initializeAudio],
   );
 
   // Set mounted state
@@ -213,7 +213,7 @@ export default function FocusButton() {
           if (state?.isCountingDown && !state.isPaused && state.time > 0) {
             const currentTime = Date.now();
             const elapsedTime = Math.floor(
-              (currentTime - state.startTime) / 1000
+              (currentTime - state.startTime) / 1000,
             );
             const remainingTime = Math.max(0, state.time - elapsedTime);
 
@@ -234,7 +234,7 @@ export default function FocusButton() {
             if (state.isCountingDown && !state.isPaused) {
               const currentTime = Date.now();
               const elapsedTime = Math.floor(
-                (currentTime - state.startTime) / 1000
+                (currentTime - state.startTime) / 1000,
               );
               const remainingTime = Math.max(0, state.time - elapsedTime);
 
@@ -264,12 +264,12 @@ export default function FocusButton() {
     const handleUserInteraction = () => {
       initializeAudio();
       // Remove listener after first interaction
-      document.removeEventListener('click', handleUserInteraction);
+      document.removeEventListener("click", handleUserInteraction);
     };
 
-    document.addEventListener('click', handleUserInteraction);
+    document.addEventListener("click", handleUserInteraction);
     return () => {
-      document.removeEventListener('click', handleUserInteraction);
+      document.removeEventListener("click", handleUserInteraction);
     };
   }, [initializeAudio]);
 
@@ -358,22 +358,22 @@ export default function FocusButton() {
   const playNotificationSound = async () => {
     try {
       const audio = new Audio();
-      
+
       if (isExtension) {
         // For extension, use chrome.runtime.getURL
-        audio.src = chrome.runtime.getURL('timer-end.mp3');
+        audio.src = chrome.runtime.getURL("timer-end.mp3");
       } else {
         // For web, use relative path
-        audio.src = '/timer-end.mp3';
+        audio.src = "/timer-end.mp3";
       }
-      
+
       audio.volume = 0.5;
-      
+
       // Initialize audio context if needed
-      if (audioContextRef.current?.state === 'suspended') {
+      if (audioContextRef.current?.state === "suspended") {
         await audioContextRef.current.resume();
       }
-      
+
       // Preload and play
       await audio.load();
       await audio.play().catch((error) => {
@@ -511,7 +511,7 @@ export default function FocusButton() {
       lastUpdateTime = now;
 
       const elapsedSeconds = Math.floor(
-        (now - adjustStartTimeRef.current) / 1000
+        (now - adjustStartTimeRef.current) / 1000,
       );
       const progressInSecond =
         ((now - adjustStartTimeRef.current) % 1000) / 1000;
@@ -593,7 +593,7 @@ export default function FocusButton() {
               startTime: now,
               isCountingDown: true,
               isPaused: false,
-            })
+            }),
           );
         }
       } else {
@@ -630,7 +630,7 @@ export default function FocusButton() {
         }
       }
     },
-    [time, isCountingDown, isPaused, startCountdown, handleTimerEnd]
+    [time, isCountingDown, isPaused, startCountdown, handleTimerEnd],
   );
 
   useEffect(() => {
@@ -647,12 +647,12 @@ export default function FocusButton() {
 
     document.addEventListener(
       "visibilitychange",
-      handleVisibilityChangeWrapper
+      handleVisibilityChangeWrapper,
     );
     return () => {
       document.removeEventListener(
         "visibilitychange",
-        handleVisibilityChangeWrapper
+        handleVisibilityChangeWrapper,
       );
     };
   }, [handleVisibilityChange]);
@@ -679,7 +679,7 @@ export default function FocusButton() {
     // Function to get or create the meta tag
     const getOrCreateThemeMetaTag = () => {
       let meta = document.querySelector(
-        "meta[name='theme-color']"
+        "meta[name='theme-color']",
       ) as HTMLMetaElement;
       if (!meta) {
         meta = document.createElement("meta");
@@ -691,7 +691,7 @@ export default function FocusButton() {
 
     const getOrCreateBackgroundMetaTag = () => {
       let meta = document.querySelector(
-        "meta[name='background-color']"
+        "meta[name='background-color']",
       ) as HTMLMetaElement;
       if (!meta) {
         meta = document.createElement("meta");
@@ -747,22 +747,22 @@ export default function FocusButton() {
         if (message.type === "PLAY_SOUND") {
           // Play the notification sound
           const audio = new Audio();
-          
+
           if (isExtension) {
             // For extension, use chrome.runtime.getURL
-            audio.src = chrome.runtime.getURL('timer-end.mp3');
+            audio.src = chrome.runtime.getURL("timer-end.mp3");
           } else {
             // For web, use relative path
-            audio.src = '/timer-end.mp3';
+            audio.src = "/timer-end.mp3";
           }
-          
+
           audio.volume = 0.5;
-          
+
           // Initialize audio context if needed
-          if (audioContextRef.current?.state === 'suspended') {
+          if (audioContextRef.current?.state === "suspended") {
             audioContextRef.current.resume();
           }
-          
+
           // Preload and play
           audio.load();
           audio.play().catch(console.error);
