@@ -136,16 +136,33 @@ async function stopTimer() {
   console.log("Stopping timer");
   if (timer.intervalId) {
     clearInterval(timer.intervalId);
+    timer.intervalId = null;
   }
+  timer.timeLeft = 0;
+  timer.isRunning = false;
+  timer.lastTick = 0;
 
-  timer = {
-    intervalId: null,
-    timeLeft: 0,
-    isRunning: false,
-    lastTick: 0,
+  // Update state to show timer is stopped
+  const state = {
+    type: "TIMER_UPDATE",
+    time: 0,
+    isCountingDown: false,
+    isPaused: false,
+    isFinished: true,
   };
 
-  await updateTimerState();
+  chrome.storage.local.set({
+    focusbutton_timer_state: state,
+  });
+
+  // Notify all tabs about timer stop
+  chrome.runtime.sendMessage({
+    type: "TIMER_UPDATE",
+    time: 0,
+    isCountingDown: false,
+  }).catch((error) => {
+    console.log("Error sending timer update:", error);
+  });
 }
 
 // Handle messages
@@ -161,9 +178,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       } else if (message.type === "STOP_TIMER") {
         console.log("Stopping timer from message:", message);
         await stopTimer();
-        sendResponse({ success: true });
-      } else if (message.type === "TIMER_END") {
-        console.log("Ending timer from message:", message);
         sendResponse({ success: true });
       } else if (message.type === "GET_TIMER_STATE") {
         console.log("Getting timer state");
