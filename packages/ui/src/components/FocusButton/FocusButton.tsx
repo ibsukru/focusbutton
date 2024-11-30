@@ -143,7 +143,7 @@ export default function FocusButton() {
       } else {
         // Web mode - use local timer
         localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-        
+
         timerRef.current = setInterval(() => {
           setTime((prevTime) => {
             const newTime = Math.max(0, prevTime - 1);
@@ -251,8 +251,11 @@ export default function FocusButton() {
       console.log("Got timer message:", message);
       if (message.type === "TIMER_UPDATE") {
         const { time: newTime, isCountingDown: newIsCountingDown } = message;
-        console.log("Updating timer state from extension:", { newTime, newIsCountingDown });
-        
+        console.log("Updating timer state from extension:", {
+          newTime,
+          newIsCountingDown,
+        });
+
         // Update timer state from extension
         setTime(newTime);
         setDisplayTime(newTime);
