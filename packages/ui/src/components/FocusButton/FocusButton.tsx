@@ -87,7 +87,7 @@ export default function FocusButton() {
         console.error("Error sending message:", e);
       }
     },
-    [isExtension],
+    [isExtension]
   );
 
   const handleTimerEnd = useCallback(() => {
@@ -202,7 +202,7 @@ export default function FocusButton() {
 
       trackEvent("timer_start", { duration });
     },
-    [time, isExtension, sendMessage, handleTimerEnd, initializeAudio],
+    [time, isExtension, sendMessage, handleTimerEnd, initializeAudio]
   );
 
   // Set mounted state
@@ -224,7 +224,7 @@ export default function FocusButton() {
           if (state?.isCountingDown && !state.isPaused && state.time > 0) {
             const currentTime = Date.now();
             const elapsedTime = Math.floor(
-              (currentTime - state.startTime) / 1000,
+              (currentTime - state.startTime) / 1000
             );
             const remainingTime = Math.max(0, state.time - elapsedTime);
 
@@ -245,7 +245,7 @@ export default function FocusButton() {
             if (state.isCountingDown && !state.isPaused) {
               const currentTime = Date.now();
               const elapsedTime = Math.floor(
-                (currentTime - state.startTime) / 1000,
+                (currentTime - state.startTime) / 1000
               );
               const remainingTime = Math.max(0, state.time - elapsedTime);
 
@@ -306,7 +306,7 @@ export default function FocusButton() {
           setIsCountingDown((current) => {
             if (current !== state.isCountingDown) {
               console.log(
-                `Updating isCountingDown from ${current} to ${state.isCountingDown}`,
+                `Updating isCountingDown from ${current} to ${state.isCountingDown}`
               );
               return state.isCountingDown;
             }
@@ -316,7 +316,7 @@ export default function FocusButton() {
           setIsPaused((current) => {
             if (current !== state.isPaused) {
               console.log(
-                `Updating isPaused from ${current} to ${state.isPaused}`,
+                `Updating isPaused from ${current} to ${state.isPaused}`
               );
               return state.isPaused;
             }
@@ -326,7 +326,7 @@ export default function FocusButton() {
           setIsFinished((current) => {
             if (current !== state.isFinished) {
               console.log(
-                `Updating isFinished from ${current} to ${state.isFinished}`,
+                `Updating isFinished from ${current} to ${state.isFinished}`
               );
               return state.isFinished;
             }
@@ -614,7 +614,7 @@ export default function FocusButton() {
               startTime: now,
               isCountingDown: true,
               isPaused: false,
-            }),
+            })
           );
         }
       } else {
@@ -649,7 +649,7 @@ export default function FocusButton() {
         }
       }
     },
-    [time, isCountingDown, startCountdown, handleTimerEnd],
+    [time, isCountingDown, startCountdown, handleTimerEnd]
   );
 
   useEffect(() => {
@@ -666,12 +666,12 @@ export default function FocusButton() {
 
     document.addEventListener(
       "visibilitychange",
-      handleVisibilityChangeWrapper,
+      handleVisibilityChangeWrapper
     );
     return () => {
       document.removeEventListener(
         "visibilitychange",
-        handleVisibilityChangeWrapper,
+        handleVisibilityChangeWrapper
       );
     };
   }, [handleVisibilityChange]);
@@ -698,7 +698,7 @@ export default function FocusButton() {
     // Function to get or create the meta tag
     const getOrCreateThemeMetaTag = () => {
       let meta = document.querySelector(
-        "meta[name='theme-color']",
+        "meta[name='theme-color']"
       ) as HTMLMetaElement;
       if (!meta) {
         meta = document.createElement("meta");
@@ -710,7 +710,7 @@ export default function FocusButton() {
 
     const getOrCreateBackgroundMetaTag = () => {
       let meta = document.querySelector(
-        "meta[name='background-color']",
+        "meta[name='background-color']"
       ) as HTMLMetaElement;
       if (!meta) {
         meta = document.createElement("meta");
@@ -726,39 +726,6 @@ export default function FocusButton() {
     const backgroundMeta = getOrCreateBackgroundMetaTag();
     backgroundMeta.content = resolvedTheme === "dark" ? "#000000" : "#ffffff";
   }, [resolvedTheme]);
-
-  // Register service worker and update notification permission state
-  useEffect(() => {
-    if (!mounted) return;
-    if (isExtension) return;
-
-    // Update initial notification permission state
-    if ("Notification" in window) {
-      return;
-    }
-
-    // Register service worker
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker
-        .register("/sw.js")
-        .then((registration) => {
-          console.log("Service Worker registered successfully");
-
-          // Check if we have an active service worker
-          if (registration.active) {
-            console.log("Service Worker is already active");
-          } else {
-            console.log("Waiting for Service Worker to activate");
-            registration.addEventListener("activate", () => {
-              console.log("Service Worker activated");
-            });
-          }
-        })
-        .catch((error) => {
-          console.error("Service Worker registration failed:", error);
-        });
-    }
-  }, [mounted]);
 
   useEffect(() => {
     if (isExtension) {

@@ -3,6 +3,7 @@ import "normalize.css";
 import "./globals.scss";
 import { ThemeProvider } from "next-themes";
 import Splash from "./Splash";
+import ServiceWorkerRegistration from "./ServiceWorkerRegistration";
 
 export const metadata: Metadata = {
   title: "FocusButton",
@@ -69,6 +70,7 @@ export default function RootLayout({
           enableSystem={true}
           disableTransitionOnChange
         >
+          <ServiceWorkerRegistration />
           {children}
         </ThemeProvider>
       </body>

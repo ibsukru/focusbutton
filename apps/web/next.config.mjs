@@ -1,32 +1,25 @@
+// next.config.mjs
+import withPWA from "next-pwa";
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   compiler: {
     removeConsole: process.env.NODE_ENV === "production",
   },
-  headers: async () => {
-    return [
-      {
-        source: "/sw.js",
-        headers: [
-          {
-            key: "Service-Worker-Allowed",
-            value: "/",
-          },
-          {
-            key: "Cache-Control",
-            value: "public, max-age=0, must-revalidate",
-          },
-        ],
-      },
-    ];
-  },
-  webpack: (config, { isServer }) => {
-    // Add handling for web workers
-    if (!isServer) {
-      config.output.globalObject = "self";
-    }
+  reactStrictMode: true,
+  transpilePackages: ["@focusbutton/ui"],
+  webpack: (config) => {
+    config.resolve.fallback = {
+      ...config.resolve.fallback,
+      fs: false,
+    };
     return config;
   },
 };
 
-export default nextConfig;
+export default withPWA({
+  dest: "public",
+  // disable: process.env.NODE_ENV === "development",
+  register: true,
+  skipWaiting: true,
+})(nextConfig);
