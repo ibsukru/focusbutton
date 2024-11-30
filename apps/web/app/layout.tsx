@@ -1,14 +1,11 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import "normalize.css";
 import "./globals.scss";
 import { ThemeProvider } from "next-themes";
 import Splash from "./Splash";
 
-const inter = Inter({ subsets: ["latin"] });
-
 export const metadata: Metadata = {
-  title: "Focus Button",
+  title: "FocusButton",
   description: "A minimalist focus timer for productivity",
   manifest: "/manifest.json",
   themeColor: "#000000",
@@ -65,7 +62,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className={inter.className}>
+      <body>
         <ThemeProvider
           attribute="class"
           defaultTheme={"system"}

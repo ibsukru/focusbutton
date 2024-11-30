@@ -29,8 +29,8 @@ export default function PrivacyPolicy() {
 
       <h2>Data Storage</h2>
       <p>
-        All timer data is stored locally on your device using Chrome&apos;s storage
-        API. We do not store any personal information on our servers.
+        All timer data is stored locally on your device using Chrome&apos;s
+        storage API. We do not store any personal information on our servers.
       </p>
       <p>
         Your preferences and settings are stored locally and sync across your
@@ -62,7 +62,9 @@ export default function PrivacyPolicy() {
       <ul>
         <li>All data is stored locally on your device</li>
         <li>No sensitive information is transmitted to external servers</li>
-        <li>Chrome&apos;s built-in security features protect your synced data</li>
+        <li>
+          Chrome&apos;s built-in security features protect your synced data
+        </li>
         <li>Regular security audits and updates</li>
       </ul>
 
