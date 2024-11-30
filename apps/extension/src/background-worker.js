@@ -316,7 +316,7 @@ if (!browserAPI) {
         type: "basic",
         iconUrl: browserAPI.runtime.getURL("icons/icon-128.png"),
         title: "Timer Complete",
-        message: "Your focus session has ended",
+        message: "Your focus session has ended. Click to open FocusButton.",
         priority: 2,
         requireInteraction: true,
       });
@@ -329,7 +329,7 @@ if (!browserAPI) {
           type: "basic",
           iconUrl: browserAPI.runtime.getURL("icons/icon-128.png"),
           title: "Timer Complete",
-          message: "Your focus session has ended",
+          message: "Your focus session has ended. Click to open FocusButton.",
           priority: 2,
           requireInteraction: true,
         });
@@ -338,6 +338,23 @@ if (!browserAPI) {
       }
     }
   }
+
+  // Listen for notification clicks
+  browserAPI.notifications.onClicked.addListener((notificationId) => {
+    if (notificationId === "timer-complete") {
+      // Get the extension's URL
+      const extensionURL = browserAPI.runtime.getURL("index.html");
+
+      // Create a new tab with the extension page
+      browserAPI.tabs.create({
+        url: extensionURL,
+        active: true,
+      });
+
+      // Close the notification
+      browserAPI.notifications.clear(notificationId);
+    }
+  });
 
   // Listen for close sound tab message
   browserAPI.runtime.onMessage.addListener((message) => {

@@ -41,7 +41,7 @@ export const browserAPI = {
 
   async sendMessage<R = any>(
     message: string,
-    options?: Runtime.SendMessageOptionsType
+    options?: Runtime.SendMessageOptionsType,
   ): Promise<R | undefined> {
     const api = browserInstance;
     try {
