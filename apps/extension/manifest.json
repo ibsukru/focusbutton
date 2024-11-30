@@ -9,9 +9,10 @@
     "tabs",
     "offscreen",
     "alarms",
-    "windows"
+    "windows",
+    "activeTab",
+    "scripting"
   ],
-  "host_permissions": ["<all_urls>"],
   "action": {
     "default_icon": {
       "16": "icons/icon-16.png",
@@ -23,12 +24,6 @@
     "service_worker": "background-worker.js",
     "type": "module"
   },
-  "content_scripts": [
-    {
-      "matches": ["<all_urls>"],
-      "js": ["content-script.js"]
-    }
-  ],
   "icons": {
     "16": "icons/icon-16.png",
     "48": "icons/icon-48.png",
@@ -44,7 +39,7 @@
         "offscreen.html",
         "offscreen.js"
       ],
-      "matches": ["<all_urls>"]
+      "matches": []
     }
   ]
 }

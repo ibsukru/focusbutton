@@ -8,17 +8,28 @@ chrome.runtime.onInstalled.addListener(async () => {
 });
 
 // Handle extension icon click
-chrome.action.onClicked.addListener(async () => {
+chrome.action.onClicked.addListener(async (tab) => {
   console.log("Extension icon clicked");
-  
+
+  // Inject content script into active tab
+  try {
+    await chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      files: ["content-script.js"],
+    });
+    console.log("Content script injected successfully");
+  } catch (error) {
+    console.error("Failed to inject content script:", error);
+  }
+
   const extensionUrl = chrome.runtime.getURL("index.html");
   console.log("Opening extension at:", extensionUrl);
-  
+
   // Check if we already have a tab open
   const tabs = await chrome.tabs.query({
-    url: extensionUrl
+    url: extensionUrl,
   });
-  
+
   if (tabs.length > 0) {
     // Focus existing tab
     await chrome.tabs.update(tabs[0].id, { active: true });
@@ -27,7 +38,7 @@ chrome.action.onClicked.addListener(async () => {
     // Create new tab
     await chrome.tabs.create({
       url: extensionUrl,
-      active: true
+      active: true,
     });
   }
 });
@@ -59,7 +70,7 @@ async function initializeTimerState() {
     const result = await chrome.storage.local.get(["focusbutton_timer_state"]);
     console.log("Restoring timer state:", result);
     const state = result.focusbutton_timer_state;
-    
+
     if (state?.isCountingDown && !state.isPaused && state.time > 0) {
       console.log("Resuming timer with time:", state.time);
       await startTimer(state.time);
@@ -76,15 +87,16 @@ function tick() {
   }
 
   const now = Date.now();
-  
+
   // Ensure we don't tick too frequently
-  if (now - lastTickTime < 900) { // Allow for some timing variation
+  if (now - lastTickTime < 900) {
+    // Allow for some timing variation
     return;
   }
 
-  console.log('Tick: current time:', timer.timeLeft);
+  console.log("Tick: current time:", timer.timeLeft);
   lastTickTime = now;
-  
+
   const newTime = Math.max(0, timer.timeLeft - 1);
   timer.timeLeft = newTime;
   timer.lastTick = now;
@@ -93,11 +105,14 @@ function tick() {
   if (newTime === 0) {
     console.log("Timer completed");
     stopTimer().catch(console.error);
-    
+
     // Play notification sound using offscreen document
     setupOffscreenDocument().then(() => {
-      chrome.runtime.sendMessage({ type: "PLAY_SOUND" })
-        .catch(error => console.error("Error sending play sound message:", error));
+      chrome.runtime
+        .sendMessage({ type: "PLAY_SOUND" })
+        .catch((error) =>
+          console.error("Error sending play sound message:", error)
+        );
     });
   } else {
     // Only update state if timer is still running
@@ -107,7 +122,7 @@ function tick() {
 
 async function startTimer(duration) {
   console.log("Starting timer with duration:", duration);
-  
+
   // Stop any existing timer
   await stopTimer();
 
@@ -120,23 +135,23 @@ async function startTimer(duration) {
   lastTickTime = Date.now();
 
   // Create alarms for redundancy
-  await chrome.alarms.clear('timerTick');
-  await chrome.alarms.clear('timerBackup');
-  
-  await chrome.alarms.create('timerTick', { 
-    periodInMinutes: 1/60, // Every second
-    when: Date.now() + 1000 // Start in 1 second
+  await chrome.alarms.clear("timerTick");
+  await chrome.alarms.clear("timerBackup");
+
+  await chrome.alarms.create("timerTick", {
+    periodInMinutes: 1 / 60, // Every second
+    when: Date.now() + 1000, // Start in 1 second
   });
 
   // Create a backup alarm that fires every minute
-  await chrome.alarms.create('timerBackup', {
+  await chrome.alarms.create("timerBackup", {
     periodInMinutes: 1,
-    when: Date.now() + 60000
+    when: Date.now() + 60000,
   });
-  
+
   // Update state immediately
   await updateTimerState();
-  
+
   console.log("Timer started:", timer);
 }
 
@@ -151,7 +166,7 @@ async function stopTimer() {
 
   // Update state one last time to ensure UI reflects stopped state
   await updateTimerState();
-  
+
   // Send final state update to mark as finished
   await chrome.storage.local.set({
     focusbutton_timer_state: {
@@ -159,18 +174,18 @@ async function stopTimer() {
       isCountingDown: false,
       time: 0,
       isPaused: false,
-      isFinished: true
-    }
+      isFinished: true,
+    },
   });
 }
 
 // Handle alarm ticks
 chrome.alarms.onAlarm.addListener((alarm) => {
   console.log("Alarm fired:", alarm.name, "at:", Date.now());
-  
-  if (alarm.name === 'timerTick') {
+
+  if (alarm.name === "timerTick") {
     tick();
-  } else if (alarm.name === 'timerBackup') {
+  } else if (alarm.name === "timerBackup") {
     // Backup alarm ensures we haven't lost too much time
     const now = Date.now();
     if (timer.isRunning && now - lastTickTime > 2000) {
@@ -186,7 +201,7 @@ chrome.alarms.onAlarm.addListener((alarm) => {
 // Handle messages from the popup
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   console.log("Received message:", request);
-  
+
   if (request.type === "START_TIMER") {
     startTimer(request.duration).catch(console.error);
     sendResponse({ success: true });
@@ -198,11 +213,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       success: true,
       state: {
         timeLeft: timer.timeLeft,
-        isRunning: timer.isRunning
-      }
+        isRunning: timer.isRunning,
+      },
     });
   }
-  
+
   // Return true to indicate we'll send a response asynchronously
   return true;
 });
@@ -214,7 +229,7 @@ async function updateTimerState() {
     time: timer.timeLeft,
     isCountingDown: timer.isRunning,
     isPaused: false,
-    isFinished: timer.timeLeft === 0
+    isFinished: timer.timeLeft === 0,
   };
 
   console.log("Updating timer state:", state);
@@ -222,7 +237,7 @@ async function updateTimerState() {
   try {
     // Update storage - this will trigger storage listeners in tabs
     await chrome.storage.local.set({
-      focusbutton_timer_state: state
+      focusbutton_timer_state: state,
     });
   } catch (error) {
     console.error("Error updating timer state:", error);
@@ -232,11 +247,11 @@ async function updateTimerState() {
 // Setup offscreen document for audio
 async function setupOffscreenDocument() {
   if (await chrome.offscreen.hasDocument()) return;
-  
+
   await chrome.offscreen.createDocument({
-    url: 'offscreen.html',
-    reasons: ['AUDIO_PLAYBACK'],
-    justification: 'Playing timer completion sound'
+    url: "offscreen.html",
+    reasons: ["AUDIO_PLAYBACK"],
+    justification: "Playing timer completion sound",
   });
 }
 

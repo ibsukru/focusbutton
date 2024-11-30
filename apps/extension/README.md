@@ -88,9 +88,11 @@ Used for managing timer state across browser tabs and windows.
 - Ensures seamless user experience across browser sessions
 
 ### 6. ActiveTab Permission
+
 Used for accessing the current tab when the user interacts with the extension.
 
 **Justification:**
+
 - More secure than broad host permissions
 - Only activates when user explicitly interacts with extension
 - Provides temporary access to the current tab
@@ -98,6 +100,20 @@ Used for accessing the current tab when the user interacts with the extension.
 - No persistent content access
 - Follows Chrome's recommended security practices
 - Better user privacy protection
+
+### 7. Scripting Permission
+
+Used for dynamically injecting content scripts when user interacts with the extension.
+
+**Justification:**
+
+- Works in conjunction with activeTab permission
+- Required for dynamic content script injection
+- Only activates on user interaction
+- More secure than static content scripts
+- Provides better control over script execution
+- Follows Chrome's recommended security practices
+- Enables on-demand functionality
 
 ## Security and Privacy
 
@@ -125,6 +141,7 @@ All requested permissions are essential for core functionality:
 - Background: For timer accuracy
 - Tabs: For syncing timer state across browser tabs and windows (no content access)
 - ActiveTab: For displaying timer UI in response to user interaction (temporary access)
+- Scripting: For dynamically injecting timer UI code when needed (user-activated)
 
 ## Testing and Validation
 
