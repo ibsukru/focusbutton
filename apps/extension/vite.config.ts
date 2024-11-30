@@ -1,7 +1,7 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { resolve } from "path";
-import { writeFileSync, copyFileSync, cpSync } from "fs";
+import { copyFileSync, cpSync } from "fs";
 
 // Custom plugin to copy assets after build
 function copyAssets() {
@@ -11,7 +11,7 @@ function copyAssets() {
       // Copy manifest.json
       copyFileSync(
         resolve(__dirname, "manifest.json"),
-        resolve(__dirname, "dist/manifest.json")
+        resolve(__dirname, "dist/manifest.json"),
       );
 
       // Copy icons
@@ -23,12 +23,12 @@ function copyAssets() {
 
       copyFileSync(
         resolve(__dirname, "src/background-worker.js"),
-        resolve(__dirname, "dist/background-worker.js")
+        resolve(__dirname, "dist/background-worker.js"),
       );
 
       copyFileSync(
         resolve(__dirname, "src/content-script.js"),
-        resolve(__dirname, "dist/content-script.js")
+        resolve(__dirname, "dist/content-script.js"),
       );
     },
   };
