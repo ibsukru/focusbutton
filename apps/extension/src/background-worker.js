@@ -267,8 +267,19 @@ if (!browserAPI) {
     return true;
   });
 
+  // Add state tracking
+  let lastStateUpdate = 0;
+  const updateThrottleMs = 100;
+
   // Update timer state in storage and notify all tabs
   async function updateTimerState() {
+    const now = Date.now();
+
+    // Skip if we just updated recently
+    if (now - lastStateUpdate < updateThrottleMs) {
+      return;
+    }
+
     const state = {
       type: "TIMER_UPDATE",
       time: timer.timeLeft,
@@ -278,9 +289,9 @@ if (!browserAPI) {
     };
 
     console.log("Updating timer state:", state);
+    lastStateUpdate = now;
 
     try {
-      // Update storage - this will trigger storage listeners in tabs
       await browserAPI.storage.local.set({
         focusbutton_timer_state: state,
       });
