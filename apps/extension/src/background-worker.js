@@ -5,14 +5,14 @@ let timer = {
   intervalId: null,
   timeLeft: 0,
   isRunning: false,
-  lastTick: 0
+  lastTick: 0,
 };
 
 // Restore timer state on startup
-chrome.storage.local.get(['focusbutton_timer_state'], (result) => {
-  console.log('Restoring timer state:', result);
+chrome.storage.local.get(["focusbutton_timer_state"], (result) => {
+  console.log("Restoring timer state:", result);
   const state = result.focusbutton_timer_state;
-  if (state?.type === 'TIMER_UPDATE' && state.isCountingDown) {
+  if (state?.type === "TIMER_UPDATE" && state.isCountingDown) {
     startTimer(state.time);
   }
 });
@@ -28,7 +28,7 @@ chrome.action.onClicked.addListener(function () {
 
 async function updateTimerState() {
   if (!timer.isRunning) return;
-  
+
   console.log("Updating timer state:", timer);
   const state = {
     type: "TIMER_UPDATE",
@@ -47,6 +47,26 @@ async function updateTimerState() {
   }
 }
 
+// Create or get the offscreen document
+async function setupOffscreenDocument() {
+  // Check if we already have an offscreen document
+  if (await chrome.offscreen.hasDocument()) {
+    return;
+  }
+
+  // Create an offscreen document
+  await chrome.offscreen.createDocument({
+    url: 'offscreen.html',
+    reasons: ['AUDIO_PLAYBACK'],
+    justification: 'Playing timer end notification sound'
+  }).catch(error => {
+    console.error('Error creating offscreen document:', error);
+  });
+}
+
+// Initialize offscreen document
+setupOffscreenDocument().catch(console.error);
+
 function tick() {
   if (!timer.isRunning || timer.timeLeft <= 0) {
     stopTimer();
@@ -54,7 +74,8 @@ function tick() {
   }
 
   const now = Date.now();
-  if (now - timer.lastTick < 900) { // Prevent ticks that are too close together
+  if (now - timer.lastTick < 900) {
+    // Prevent ticks that are too close together
     return;
   }
 
@@ -65,6 +86,18 @@ function tick() {
 
   if (timer.timeLeft === 0) {
     stopTimer();
+
+    // Play notification sound using offscreen document
+    console.log("Playing notification sound");
+    
+    // Create offscreen document if it doesn't exist
+    setupOffscreenDocument().then(() => {
+      // Send message to offscreen document to play sound
+      chrome.runtime.sendMessage({ type: "PLAY_SOUND" })
+        .catch(error => console.error("Error sending play sound message:", error));
+    });
+
+    // Show notification
     chrome.notifications.create("timer-complete", {
       type: "basic",
       iconUrl: "/icons/icon-128.png",
@@ -72,6 +105,15 @@ function tick() {
       message: "Your focus session has ended.",
       requireInteraction: true,
       silent: true,
+    });
+
+    // Notify all tabs to play sound (as backup)
+    chrome.tabs.query({}, function (tabs) {
+      tabs.forEach((tab) => {
+        chrome.tabs.sendMessage(tab.id, { type: "PLAY_SOUND" }).catch(() => {
+          // Ignore errors for inactive tabs
+        });
+      });
     });
   }
 }
@@ -84,7 +126,7 @@ async function startTimer(duration) {
     intervalId: null,
     timeLeft: duration,
     isRunning: true,
-    lastTick: Date.now()
+    lastTick: Date.now(),
   };
 
   // Only create interval if it doesn't exist
@@ -105,7 +147,7 @@ async function stopTimer() {
     intervalId: null,
     timeLeft: 0,
     isRunning: false,
-    lastTick: 0
+    lastTick: 0,
   };
 
   await updateTimerState();

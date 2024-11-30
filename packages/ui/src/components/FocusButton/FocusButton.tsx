@@ -65,8 +65,9 @@ export default function FocusButton() {
         console.error("Error sending message:", e);
       }
     },
-    [isExtension],
+    [isExtension]
   );
+
   const handleTimerEnd = useCallback(() => {
     if (isTimerEndingRef.current) {
       return;
@@ -110,11 +111,20 @@ export default function FocusButton() {
     }, 100);
   }, [time, currentTimerId, isExtension]);
 
+  const initializeAudio = useCallback(() => {
+    if (!audioContextRef.current) {
+      try {
+        audioContextRef.current = new AudioContext();
+      } catch (error) {
+        console.error('Error initializing audio:', error);
+      }
+    }
+  }, []);
+
   const startCountdown = useCallback(
     (customDuration?: number) => {
-      // Reset refs
-      endRef.current = false;
-      isTimerEndingRef.current = false;
+      // Initialize audio on user interaction
+      initializeAudio();
 
       // Clear any existing interval
       if (timerRef.current) {
@@ -128,33 +138,34 @@ export default function FocusButton() {
       setIsCountingDown(true);
       setIsFinished(false);
       setIsPaused(false);
-      setDisplayTime(duration);
       setTime(duration);
+      setDisplayTime(duration);
+
+      // Save initial state
+      const state: TimerState = {
+        time: duration,
+        isCountingDown: true,
+        isPaused: false,
+        startTime: startTime,
+      };
 
       if (isExtension) {
-        console.log("Starting extension timer with:", duration);
         sendMessage({
           type: "START_TIMER",
           duration: duration,
         });
       } else {
-        console.log("Starting web timer with:", duration);
-
-        // Save state to localStorage
-        const state: TimerState = {
-          time: duration,
-          isCountingDown: true,
-          isPaused: false,
-          startTime: startTime,
-        };
         localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      }
 
-        // Web mode - use local timer
-        timerRef.current = setInterval(() => {
-          setTime((prevTime) => {
-            const newTime = Math.max(0, prevTime - 1);
-            setDisplayTime(newTime);
+      // Web mode - use local timer
+      timerRef.current = setInterval(() => {
+        setTime((prevTime) => {
+          const newTime = Math.max(0, prevTime - 1);
+          console.log("Timer tick:", { prevTime, newTime });
+          setDisplayTime(newTime);
 
+          if (!isExtension) {
             // Update localStorage with current state
             const currentState: TimerState = {
               time: newTime,
@@ -163,24 +174,24 @@ export default function FocusButton() {
               startTime: startTime,
             };
             localStorage.setItem(STORAGE_KEY, JSON.stringify(currentState));
+          }
 
-            if (newTime === 0) {
-              console.log("Timer reached 0 in interval");
-              if (timerRef.current) {
-                clearInterval(timerRef.current);
-                timerRef.current = null;
-              }
-              handleTimerEnd();
+          if (newTime === 0) {
+            console.log("Timer reached 0");
+            if (timerRef.current) {
+              clearInterval(timerRef.current);
+              timerRef.current = null;
             }
+            handleTimerEnd();
+          }
 
-            return newTime;
-          });
-        }, 1000);
-      }
+          return newTime;
+        });
+      }, 1000);
 
       trackEvent("timer_start", { duration });
     },
-    [time, isExtension, sendMessage, handleTimerEnd],
+    [time, isExtension, sendMessage, handleTimerEnd, initializeAudio]
   );
 
   // Set mounted state
@@ -192,42 +203,6 @@ export default function FocusButton() {
   useEffect(() => {
     if (!mounted || stateRestoredRef.current) return;
 
-    const cleanup = () => {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-        timerRef.current = null;
-      }
-    };
-
-    const startTimerWithDuration = (duration: number) => {
-      cleanup();
-      const startTime = Date.now();
-
-      timerRef.current = setInterval(() => {
-        setTime((prevTime) => {
-          const newTime = Math.max(0, prevTime - 1);
-          setDisplayTime(newTime);
-
-          // Update localStorage with current state
-          if (!isExtension) {
-            const currentState: TimerState = {
-              time: newTime,
-              isCountingDown: true,
-              isPaused: false,
-              startTime: startTime,
-            };
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(currentState));
-          }
-
-          if (newTime === 0) {
-            cleanup();
-            handleTimerEnd();
-          }
-          return newTime;
-        });
-      }, 1000);
-    };
-
     const loadSavedState = async () => {
       try {
         if (isExtension) {
@@ -235,36 +210,43 @@ export default function FocusButton() {
             "focusbutton_timer_state",
           ]);
           const state = result.focusbutton_timer_state;
-          if (
-            state?.type === "TIMER_UPDATE" &&
-            state.isCountingDown &&
-            !state.isPaused &&
-            state.time > 0
-          ) {
-            setTime(state.time);
-            setDisplayTime(state.time);
-            setIsCountingDown(true);
-            setIsPaused(false);
-            setIsFinished(false);
-            startTimerWithDuration(state.time);
-          }
-        } else {
-          const savedState = localStorage.getItem(STORAGE_KEY);
-          if (savedState) {
-            const state: TimerState = JSON.parse(savedState);
+          if (state?.isCountingDown && !state.isPaused && state.time > 0) {
             const currentTime = Date.now();
             const elapsedTime = Math.floor(
-              (currentTime - state.startTime) / 1000,
+              (currentTime - state.startTime) / 1000
             );
             const remainingTime = Math.max(0, state.time - elapsedTime);
 
-            if (state.isCountingDown && !state.isPaused && remainingTime > 0) {
+            if (remainingTime > 0) {
+              console.log("Restoring extension timer with:", remainingTime);
               setTime(remainingTime);
               setDisplayTime(remainingTime);
               setIsCountingDown(true);
               setIsPaused(false);
               setIsFinished(false);
-              startTimerWithDuration(remainingTime);
+              startCountdown(remainingTime);
+            }
+          }
+        } else {
+          const savedState = localStorage.getItem(STORAGE_KEY);
+          if (savedState) {
+            const state: TimerState = JSON.parse(savedState);
+            if (state.isCountingDown && !state.isPaused) {
+              const currentTime = Date.now();
+              const elapsedTime = Math.floor(
+                (currentTime - state.startTime) / 1000
+              );
+              const remainingTime = Math.max(0, state.time - elapsedTime);
+
+              if (remainingTime > 0) {
+                console.log("Restoring web timer with:", remainingTime);
+                setTime(remainingTime);
+                setDisplayTime(remainingTime);
+                setIsCountingDown(true);
+                setIsPaused(false);
+                setIsFinished(false);
+                startCountdown(remainingTime);
+              }
             }
           }
         }
@@ -275,67 +257,24 @@ export default function FocusButton() {
     };
 
     loadSavedState();
-    return cleanup;
-  }, [mounted, isExtension, handleTimerEnd]);
+  }, [mounted, isExtension, startCountdown]);
 
   // Initialize audio without playing
   useEffect(() => {
-    if (!mounted) return;
-
-    // Initialize Web Audio API context
-    try {
-      audioContextRef.current = new (window.AudioContext ||
-        (window as any).webkitAudioContext)();
-    } catch (error) {
-      console.log("Web Audio API not supported");
-    }
-
-    // On iOS, we need to play (and immediately pause) after user interaction
-    const initAudio = () => {
-      if (audioRef.current) {
-        audioRef.current
-          .play()
-          .then(() => {
-            audioRef.current?.pause();
-            audioRef.current?.load();
-          })
-          .catch((error) => {
-            console.log("Initial audio play failed (expected):", error);
-          });
-      }
-
-      // Also resume audio context if available
-      if (audioContextRef.current?.state === "suspended") {
-        audioContextRef.current.resume();
-      }
+    const handleUserInteraction = () => {
+      initializeAudio();
+      // Remove listener after first interaction
+      document.removeEventListener('click', handleUserInteraction);
     };
 
-    // Add listeners for user interaction
-    const interactionEvents = ["touchstart", "click"];
-    interactionEvents.forEach((event) => {
-      document.addEventListener(event, initAudio, { once: true });
-    });
-
+    document.addEventListener('click', handleUserInteraction);
     return () => {
-      interactionEvents.forEach((event) => {
-        document.removeEventListener(event, initAudio);
-      });
-      if (audioRef.current) {
-        audioRef.current = null;
-      }
-      if (oscillatorRef.current) {
-        oscillatorRef.current.stop();
-        oscillatorRef.current = null;
-      }
-      if (audioContextRef.current) {
-        audioContextRef.current.close();
-        audioContextRef.current = null;
-      }
+      document.removeEventListener('click', handleUserInteraction);
     };
-  }, [mounted]);
+  }, [initializeAudio]);
 
+  // Cleanup function
   useEffect(() => {
-    // Cleanup function
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
       timerRef.current = null;
@@ -418,11 +357,25 @@ export default function FocusButton() {
 
   const playNotificationSound = async () => {
     try {
-      const audio = new Audio("/timer-end.mp3");
+      const audio = new Audio();
+      
+      if (isExtension) {
+        // For extension, use chrome.runtime.getURL
+        audio.src = chrome.runtime.getURL('timer-end.mp3');
+      } else {
+        // For web, use relative path
+        audio.src = '/timer-end.mp3';
+      }
+      
       audio.volume = 0.5;
-      // Preload the audio
+      
+      // Initialize audio context if needed
+      if (audioContextRef.current?.state === 'suspended') {
+        await audioContextRef.current.resume();
+      }
+      
+      // Preload and play
       await audio.load();
-      // Play and handle promise
       await audio.play().catch((error) => {
         console.log("Audio playback failed:", error);
       });
@@ -558,7 +511,7 @@ export default function FocusButton() {
       lastUpdateTime = now;
 
       const elapsedSeconds = Math.floor(
-        (now - adjustStartTimeRef.current) / 1000,
+        (now - adjustStartTimeRef.current) / 1000
       );
       const progressInSecond =
         ((now - adjustStartTimeRef.current) % 1000) / 1000;
@@ -640,7 +593,7 @@ export default function FocusButton() {
               startTime: now,
               isCountingDown: true,
               isPaused: false,
-            }),
+            })
           );
         }
       } else {
@@ -677,7 +630,7 @@ export default function FocusButton() {
         }
       }
     },
-    [time, isCountingDown, isPaused, startCountdown, handleTimerEnd],
+    [time, isCountingDown, isPaused, startCountdown, handleTimerEnd]
   );
 
   useEffect(() => {
@@ -694,12 +647,12 @@ export default function FocusButton() {
 
     document.addEventListener(
       "visibilitychange",
-      handleVisibilityChangeWrapper,
+      handleVisibilityChangeWrapper
     );
     return () => {
       document.removeEventListener(
         "visibilitychange",
-        handleVisibilityChangeWrapper,
+        handleVisibilityChangeWrapper
       );
     };
   }, [handleVisibilityChange]);
@@ -726,7 +679,7 @@ export default function FocusButton() {
     // Function to get or create the meta tag
     const getOrCreateThemeMetaTag = () => {
       let meta = document.querySelector(
-        "meta[name='theme-color']",
+        "meta[name='theme-color']"
       ) as HTMLMetaElement;
       if (!meta) {
         meta = document.createElement("meta");
@@ -738,7 +691,7 @@ export default function FocusButton() {
 
     const getOrCreateBackgroundMetaTag = () => {
       let meta = document.querySelector(
-        "meta[name='background-color']",
+        "meta[name='background-color']"
       ) as HTMLMetaElement;
       if (!meta) {
         meta = document.createElement("meta");
@@ -793,8 +746,25 @@ export default function FocusButton() {
       const handleMessage = (message: any) => {
         if (message.type === "PLAY_SOUND") {
           // Play the notification sound
-          const audio = new Audio("/timer-end.mp3");
-          audio.volume = 1.0;
+          const audio = new Audio();
+          
+          if (isExtension) {
+            // For extension, use chrome.runtime.getURL
+            audio.src = chrome.runtime.getURL('timer-end.mp3');
+          } else {
+            // For web, use relative path
+            audio.src = '/timer-end.mp3';
+          }
+          
+          audio.volume = 0.5;
+          
+          // Initialize audio context if needed
+          if (audioContextRef.current?.state === 'suspended') {
+            audioContextRef.current.resume();
+          }
+          
+          // Preload and play
+          audio.load();
           audio.play().catch(console.error);
 
           // If this is an auto-close tab, close after sound

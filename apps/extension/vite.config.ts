@@ -30,6 +30,23 @@ function copyAssets() {
         resolve(__dirname, "src/content-script.js"),
         resolve(__dirname, "dist/content-script.js"),
       );
+
+      // Copy offscreen files
+      copyFileSync(
+        resolve(__dirname, "src/offscreen.html"),
+        resolve(__dirname, "dist/offscreen.html")
+      );
+      
+      copyFileSync(
+        resolve(__dirname, "src/offscreen.js"),
+        resolve(__dirname, "dist/offscreen.js")
+      );
+
+      // Copy notification sound
+      copyFileSync(
+        resolve(__dirname, "../../packages/ui/public/timer-end.mp3"),
+        resolve(__dirname, "dist/timer-end.mp3"),
+      );
     },
   };
 }

@@ -3,7 +3,7 @@
   "name": "FocusButton",
   "version": "1.0.0",
   "description": "Track your focus time with a simple press and hold button",
-  "permissions": ["storage", "notifications", "alarms", "tabs"],
+  "permissions": ["storage", "notifications", "alarms", "tabs", "offscreen"],
   "host_permissions": ["<all_urls>"],
   "action": {
     "default_icon": {
@@ -33,7 +33,7 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["timer-end.mp3", "notification.html", "offscreen.html"],
+      "resources": ["timer-end.mp3", "notification.html", "offscreen.html", "offscreen.js"],
       "matches": ["<all_urls>"]
     }
   ]
