@@ -87,19 +87,17 @@ Used for managing timer state across browser tabs and windows.
 - Only used for extension's own UI updates
 - Ensures seamless user experience across browser sessions
 
-### 6. Host Permissions
-
-Used for content script injection to enable timer functionality across all websites.
+### 6. ActiveTab Permission
+Used for accessing the current tab when the user interacts with the extension.
 
 **Justification:**
-
-- Required for consistent timer functionality across all websites
-- Needed for content script injection to display timer UI
-- Does not read or modify website content
-- Only used for extension's own UI overlay
-- No interaction with webpage content or forms
-- Essential for providing seamless timer experience
-- Follows Chrome's content script isolation principles
+- More secure than broad host permissions
+- Only activates when user explicitly interacts with extension
+- Provides temporary access to the current tab
+- Access limited to active tab only
+- No persistent content access
+- Follows Chrome's recommended security practices
+- Better user privacy protection
 
 ## Security and Privacy
 
@@ -126,7 +124,7 @@ All requested permissions are essential for core functionality:
 - Audio: For completion sound
 - Background: For timer accuracy
 - Tabs: For syncing timer state across browser tabs and windows (no content access)
-- Host: For displaying timer UI overlay across all websites (no content access)
+- ActiveTab: For displaying timer UI in response to user interaction (temporary access)
 
 ## Testing and Validation
 
