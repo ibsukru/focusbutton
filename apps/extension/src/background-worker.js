@@ -6,6 +6,7 @@ let timer = {
   timeLeft: 0,
   isRunning: false,
   lastTick: 0,
+  updateLock: false,  // Add lock to prevent concurrent updates
 };
 
 // Restore timer state on startup
@@ -27,23 +28,38 @@ chrome.action.onClicked.addListener(function () {
 });
 
 async function updateTimerState() {
-  if (!timer.isRunning) return;
-
-  console.log("Updating timer state:", timer);
-  const state = {
-    type: "TIMER_UPDATE",
-    time: timer.timeLeft,
-    isCountingDown: timer.isRunning,
-    isPaused: false,
-    isFinished: timer.timeLeft === 0,
-  };
-
+  if (timer.updateLock) {
+    return;  // Skip update if locked
+  }
+  
+  timer.updateLock = true;
   try {
+    const state = {
+      type: "TIMER_UPDATE",
+      time: timer.timeLeft,
+      isCountingDown: timer.isRunning,
+      isPaused: false,
+      isFinished: timer.timeLeft === 0,
+    };
+
+    // Update storage first
     await chrome.storage.local.set({
       focusbutton_timer_state: state,
     });
+
+    // Then notify tabs
+    const tabs = await chrome.tabs.query({});
+    await Promise.all(tabs.map(tab => 
+      chrome.tabs.sendMessage(tab.id, {
+        type: "TIMER_UPDATE",
+        time: timer.timeLeft,
+        isCountingDown: timer.isRunning
+      }).catch(() => {/* Ignore inactive tab errors */})
+    ));
   } catch (error) {
     console.error("Error updating timer state:", error);
+  } finally {
+    timer.updateLock = false;
   }
 }
 
@@ -70,33 +86,24 @@ async function setupOffscreenDocument() {
 setupOffscreenDocument().catch(console.error);
 
 function tick() {
-  if (!timer.isRunning || timer.timeLeft <= 0) {
-    stopTimer();
-    return;
+  if (!timer.isRunning || timer.updateLock) {
+    return;  // Skip tick if locked or not running
   }
 
   const now = Date.now();
   if (now - timer.lastTick < 900) {
-    // Prevent ticks that are too close together
-    return;
+    return;  // Prevent too frequent ticks
   }
 
-  console.log("Timer tick:", timer.timeLeft);
-  timer.timeLeft = Math.max(0, timer.timeLeft - 1);
-  timer.lastTick = now;
-  updateTimerState();
-
-  if (timer.timeLeft === 0) {
+  const newTime = Math.max(0, timer.timeLeft - 1);
+  
+  if (newTime === 0) {
     stopTimer();
-
+    
     // Play notification sound using offscreen document
-    console.log("Playing notification sound");
     setupOffscreenDocument().then(() => {
-      chrome.runtime
-        .sendMessage({ type: "PLAY_SOUND" })
-        .catch((error) =>
-          console.error("Error sending play sound message:", error)
-        );
+      chrome.runtime.sendMessage({ type: "PLAY_SOUND" })
+        .catch(error => console.error("Error sending play sound message:", error));
     });
 
     // Show notification
@@ -108,27 +115,31 @@ function tick() {
       requireInteraction: true,
       silent: true,
     });
-
-    // No need to notify tabs since we're playing sound in offscreen document
+  } else {
+    timer.timeLeft = newTime;
+    timer.lastTick = now;
+    updateTimerState();
   }
 }
 
 async function startTimer(duration) {
-  console.log("Starting timer with duration:", duration);
-  await stopTimer();
-
+  if (timer.updateLock) {
+    return;  // Skip if locked
+  }
+  
+  // Clear any existing timer
+  stopTimer();
+  
+  // Reset and start new timer
   timer = {
     intervalId: null,
     timeLeft: duration,
     isRunning: true,
     lastTick: Date.now(),
+    updateLock: false,
   };
 
-  // Only create interval if it doesn't exist
-  if (!timer.intervalId) {
-    timer.intervalId = setInterval(tick, 1000);
-  }
-
+  timer.intervalId = setInterval(tick, 1000);
   await updateTimerState();
 }
 
