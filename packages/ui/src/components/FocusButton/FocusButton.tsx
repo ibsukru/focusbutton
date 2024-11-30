@@ -135,22 +135,21 @@ export default function FocusButton() {
       };
 
       if (isExtension) {
+        // In extension mode, just send message to start timer
         sendMessage({
           type: "START_TIMER",
           duration: duration,
         });
       } else {
+        // Web mode - use local timer
         localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-      }
+        
+        timerRef.current = setInterval(() => {
+          setTime((prevTime) => {
+            const newTime = Math.max(0, prevTime - 1);
+            console.log("Timer tick:", { prevTime, newTime });
+            setDisplayTime(newTime);
 
-      // Web mode - use local timer
-      timerRef.current = setInterval(() => {
-        setTime((prevTime) => {
-          const newTime = Math.max(0, prevTime - 1);
-          console.log("Timer tick:", { prevTime, newTime });
-          setDisplayTime(newTime);
-
-          if (!isExtension) {
             // Update localStorage with current state
             const currentState: TimerState = {
               time: newTime,
@@ -159,20 +158,20 @@ export default function FocusButton() {
               startTime: startTime,
             };
             localStorage.setItem(STORAGE_KEY, JSON.stringify(currentState));
-          }
 
-          if (newTime === 0) {
-            console.log("Timer reached 0");
-            if (timerRef.current) {
-              clearInterval(timerRef.current);
-              timerRef.current = null;
+            if (newTime === 0) {
+              console.log("Timer reached 0");
+              if (timerRef.current) {
+                clearInterval(timerRef.current);
+                timerRef.current = null;
+              }
+              handleTimerEnd();
             }
-            handleTimerEnd();
-          }
 
-          return newTime;
-        });
-      }, 1000);
+            return newTime;
+          });
+        }, 1000);
+      }
 
       trackEvent("timer_start", { duration });
     },
@@ -209,7 +208,7 @@ export default function FocusButton() {
               setIsCountingDown(true);
               setIsPaused(false);
               setIsFinished(false);
-              startCountdown(remainingTime);
+              // Don't call startCountdown here, let extension handle it
             }
           }
         } else {
@@ -243,6 +242,31 @@ export default function FocusButton() {
 
     loadSavedState();
   }, [mounted, isExtension, startCountdown]);
+
+  // Handle timer updates from extension
+  useEffect(() => {
+    if (!isExtension) return;
+
+    const messageListener = (message: any) => {
+      console.log("Got timer message:", message);
+      if (message.type === "TIMER_UPDATE") {
+        const { time: newTime, isCountingDown: newIsCountingDown } = message;
+        console.log("Updating timer state from extension:", { newTime, newIsCountingDown });
+        
+        // Update timer state from extension
+        setTime(newTime);
+        setDisplayTime(newTime);
+        setIsCountingDown(newIsCountingDown);
+        setIsPaused(false);
+        setIsFinished(newTime === 0);
+      }
+    };
+
+    chrome.runtime.onMessage.addListener(messageListener);
+    return () => {
+      chrome.runtime.onMessage.removeListener(messageListener);
+    };
+  }, [isExtension]);
 
   // Initialize audio without playing
   useEffect(() => {
@@ -612,7 +636,7 @@ export default function FocusButton() {
         }
       }
     },
-    [time, isCountingDown, isPaused, startCountdown, handleTimerEnd],
+    [time, isCountingDown, startCountdown, handleTimerEnd],
   );
 
   useEffect(() => {
