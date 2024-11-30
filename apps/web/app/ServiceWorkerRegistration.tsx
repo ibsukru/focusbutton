@@ -15,7 +15,7 @@ export default function ServiceWorkerRegistration() {
           },
           function (err) {
             console.log("ServiceWorker registration failed: ", err);
-          }
+          },
         );
       });
     }
