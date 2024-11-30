@@ -280,9 +280,9 @@ export default function FocusButton() {
         console.log("Current state:", currentStateRef.current);
 
         // Always update if we have a valid state
-        if (state && typeof state.time === 'number') {
+        if (state && typeof state.time === "number") {
           console.log("Processing state update");
-            
+
           // Use a callback to ensure we have the latest state
           setTime((currentTime) => {
             if (currentTime !== state.time) {
@@ -298,7 +298,9 @@ export default function FocusButton() {
 
           setIsCountingDown((current) => {
             if (current !== state.isCountingDown) {
-              console.log(`Updating isCountingDown from ${current} to ${state.isCountingDown}`);
+              console.log(
+                `Updating isCountingDown from ${current} to ${state.isCountingDown}`,
+              );
               return state.isCountingDown;
             }
             return current;
@@ -306,7 +308,9 @@ export default function FocusButton() {
 
           setIsPaused((current) => {
             if (current !== state.isPaused) {
-              console.log(`Updating isPaused from ${current} to ${state.isPaused}`);
+              console.log(
+                `Updating isPaused from ${current} to ${state.isPaused}`,
+              );
               return state.isPaused;
             }
             return current;
@@ -314,7 +318,9 @@ export default function FocusButton() {
 
           setIsFinished((current) => {
             if (current !== state.isFinished) {
-              console.log(`Updating isFinished from ${current} to ${state.isFinished}`);
+              console.log(
+                `Updating isFinished from ${current} to ${state.isFinished}`,
+              );
               return state.isFinished;
             }
             return current;

@@ -11,7 +11,7 @@ function copyAssets() {
       // Copy manifest.json
       copyFileSync(
         resolve(__dirname, "manifest.json"),
-        resolve(__dirname, "dist/manifest.json")
+        resolve(__dirname, "dist/manifest.json"),
       );
 
       // Copy icons
@@ -24,12 +24,12 @@ function copyAssets() {
         if (file === "index.html") {
           copyFileSync(
             resolve(__dirname, file),
-            resolve(__dirname, `dist/${file}`)
+            resolve(__dirname, `dist/${file}`),
           );
         } else {
           copyFileSync(
             resolve(__dirname, `src/${file}`),
-            resolve(__dirname, `dist/${file}`)
+            resolve(__dirname, `dist/${file}`),
           );
         }
       });
@@ -38,20 +38,20 @@ function copyAssets() {
       ["background-worker.js", "content-script.js"].forEach((file) => {
         copyFileSync(
           resolve(__dirname, `src/${file}`),
-          resolve(__dirname, `dist/${file}`)
+          resolve(__dirname, `dist/${file}`),
         );
       });
 
       // Copy offscreen.js
       copyFileSync(
         resolve(__dirname, "src/offscreen.js"),
-        resolve(__dirname, "dist/offscreen.js")
+        resolve(__dirname, "dist/offscreen.js"),
       );
 
       // Copy notification sound
       copyFileSync(
         resolve(__dirname, "timer-end.mp3"),
-        resolve(__dirname, "dist/timer-end.mp3")
+        resolve(__dirname, "dist/timer-end.mp3"),
       );
     },
   };
