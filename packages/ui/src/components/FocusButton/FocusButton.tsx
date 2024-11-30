@@ -295,7 +295,7 @@ export default function FocusButton() {
       sendMessage({
         type: "STOP_TIMER",
       });
-      
+
       // Also update local state immediately for better UX
       setTime(0);
       setDisplayTime(0);
