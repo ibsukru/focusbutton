@@ -356,17 +356,14 @@ export default function FocusButton() {
   }, [isExtension]);
 
   const playNotificationSound = async () => {
+    // Only play sound in web mode, extension handles it via offscreen document
+    if (isExtension) {
+      return;
+    }
+
     try {
       const audio = new Audio();
-
-      if (isExtension) {
-        // For extension, use chrome.runtime.getURL
-        audio.src = chrome.runtime.getURL("timer-end.mp3");
-      } else {
-        // For web, use relative path
-        audio.src = "/timer-end.mp3";
-      }
-
+      audio.src = "/timer-end.mp3";
       audio.volume = 0.5;
 
       // Initialize audio context if needed
@@ -745,40 +742,16 @@ export default function FocusButton() {
     if (isExtension) {
       const handleMessage = (message: any) => {
         if (message.type === "PLAY_SOUND") {
-          // Play the notification sound
-          const audio = new Audio();
-
-          if (isExtension) {
-            // For extension, use chrome.runtime.getURL
-            audio.src = chrome.runtime.getURL("timer-end.mp3");
-          } else {
-            // For web, use relative path
-            audio.src = "/timer-end.mp3";
-          }
-
-          audio.volume = 0.5;
-
-          // Initialize audio context if needed
-          if (audioContextRef.current?.state === "suspended") {
-            audioContextRef.current.resume();
-          }
-
-          // Preload and play
-          audio.load();
-          audio.play().catch(console.error);
-
-          // If this is an auto-close tab, close after sound
-          const urlParams = new URLSearchParams(window.location.search);
-          if (urlParams.get("autoclose") === "true") {
-            setTimeout(() => {
-              window.close();
-            }, 2000);
-          }
+          // Skip playing sound in extension mode, handled by offscreen document
+          return;
         }
+        // ... handle other messages
       };
 
       chrome.runtime.onMessage.addListener(handleMessage);
-      return () => chrome.runtime.onMessage.removeListener(handleMessage);
+      return () => {
+        chrome.runtime.onMessage.removeListener(handleMessage);
+      };
     }
   }, []);
 
