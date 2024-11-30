@@ -139,73 +139,131 @@ export default function FocusButton() {
   }, []);
 
   const startCountdown = useCallback(
-    (customDuration?: number) => {
-      // Initialize audio on user interaction
-      initializeAudio();
-
-      // Clear any existing interval
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-        timerRef.current = null;
+    (duration?: number) => {
+      if (duration !== undefined) {
+        setTime(duration);
+        setDisplayTime(duration);
       }
 
-      const duration = customDuration ?? time;
-      const startTime = Date.now();
+      // Clear any existing timer
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
 
+      // Set state
       setIsCountingDown(true);
-      setIsFinished(false);
       setIsPaused(false);
-      setTime(duration);
-      setDisplayTime(duration);
+      setIsFinished(false);
 
       if (isExtension) {
-        // In extension mode, send message to start timer
         sendMessage({
           type: "START_TIMER",
-          duration: duration,
+          duration: duration || time,
         });
       } else {
-        // Web mode - handle locally
-        const state: TimerState = {
-          time: duration,
-          isCountingDown: true,
-          isPaused: false,
-          startTime: startTime,
-        };
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-
+        // Web mode - start local timer
         timerRef.current = setInterval(() => {
           setTime((prevTime) => {
             const newTime = Math.max(0, prevTime - 1);
             setDisplayTime(newTime);
 
             if (newTime === 0) {
-              if (timerRef.current) {
-                clearInterval(timerRef.current);
-                timerRef.current = null;
-              }
               handleTimerEnd();
-              return 0;
+              clearInterval(timerRef.current);
+              timerRef.current = null;
             }
-
-            // Update localStorage with current state
-            const currentState: TimerState = {
-              time: newTime,
-              isCountingDown: true,
-              isPaused: false,
-              startTime: startTime,
-            };
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(currentState));
-
             return newTime;
           });
         }, 1000);
+
+        // Save state to localStorage
+        const state: TimerState = {
+          time: duration || time,
+          isCountingDown: true,
+          isPaused: false,
+          startTime: Date.now(),
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
       }
 
-      trackEvent("timer_start", { duration });
+      trackEvent("timer_start", { duration: duration || time });
     },
-    [time, isExtension, sendMessage, handleTimerEnd, initializeAudio]
+    [time, isExtension, sendMessage, handleTimerEnd]
   );
+
+  const handleClick = () => {
+    if (!isCountingDown && time > 0) {
+      startCountdown();
+    } else if (isCountingDown && !isPaused) {
+      handlePause();
+    } else if (isPaused) {
+      handleResume();
+    }
+  };
+
+  const handlePause = () => {
+    console.log("Pausing timer");
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+
+    // Set state first
+    setIsPaused(true);
+    setIsCountingDown(true); // Keep this true for proper button visibility
+
+    // Then update extension
+    if (isExtension) {
+      sendMessage({ type: "PAUSE_TIMER" });
+      // Ensure storage is updated
+      chrome.storage.local.set({
+        focusbutton_timer_state: {
+          type: "TIMER_UPDATE",
+          isCountingDown: true,
+          time: time,
+          isPaused: true,
+          isFinished: false,
+        },
+      });
+    } else {
+      // Save state to localStorage for web mode
+      const state: TimerState = {
+        time: time,
+        isCountingDown: true,
+        isPaused: true,
+        startTime: Date.now(),
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    trackEvent("timer_pause", { timeLeft: time });
+  };
+
+  const handleResume = () => {
+    console.log("Resuming timer");
+
+    // Set state first
+    setIsPaused(false);
+    setIsCountingDown(true);
+
+    if (isExtension) {
+      sendMessage({ type: "RESUME_TIMER" });
+      // Ensure storage is updated
+      chrome.storage.local.set({
+        focusbutton_timer_state: {
+          type: "TIMER_UPDATE",
+          isCountingDown: true,
+          time: time,
+          isPaused: false,
+          isFinished: false,
+        },
+      });
+    } else {
+      startCountdown();
+    }
+
+    trackEvent("timer_resume", { timeLeft: time });
+  };
 
   // Set mounted state
   useEffect(() => {
@@ -330,25 +388,23 @@ export default function FocusButton() {
 
     console.log("Setting up storage listener");
 
-    const storageListener = (changes: {
-      [key: string]: chrome.storage.StorageChange;
-    }) => {
+    const storageListener = (changes: any) => {
       const state = changes.focusbutton_timer_state?.newValue;
-      const now = Date.now();
+      if (!state) return;
 
-      // Skip if we just updated the state ourselves
+      console.log("Storage state updated:", state);
+
+      // Skip if this update was triggered by us
+      const now = Date.now();
       if (now - lastBackgroundUpdateRef.current < updateThrottleMs) {
         return;
       }
 
-      if (state && state.type === "TIMER_UPDATE") {
-        console.log("Processing state update from background");
-        setTime(state.time);
-        setDisplayTime(state.time);
-        setIsCountingDown(state.isCountingDown);
-        setIsPaused(state.isPaused);
-        setIsFinished(state.isFinished);
-      }
+      setTime(state.time);
+      setDisplayTime(state.time);
+      setIsCountingDown(state.isCountingDown);
+      setIsPaused(state.isPaused);
+      setIsFinished(state.isFinished);
     };
 
     chrome.storage.onChanged.addListener(storageListener);
@@ -520,6 +576,20 @@ export default function FocusButton() {
         }
         setTime(0);
         setDisplayTime(0);
+
+        // For extension mode, explicitly stop the timer
+        if (isExtension) {
+          sendMessage({ type: "STOP_TIMER" });
+          chrome.storage.local.set({
+            focusbutton_timer_state: {
+              type: "TIMER_UPDATE",
+              isCountingDown: false,
+              time: 0,
+              isPaused: false,
+              isFinished: true,
+            },
+          });
+        }
         return;
       }
 
@@ -528,6 +598,19 @@ export default function FocusButton() {
       // Batch state updates together
       setTime(newTime);
       setDisplayTime(newTime);
+
+      // Update extension state
+      if (isExtension) {
+        chrome.storage.local.set({
+          focusbutton_timer_state: {
+            type: "TIMER_UPDATE",
+            isCountingDown: false,
+            time: newTime,
+            isPaused: false,
+            isFinished: false,
+          },
+        });
+      }
     };
 
     // Use requestAnimationFrame for smoother updates
@@ -552,32 +635,6 @@ export default function FocusButton() {
     if (time > 0) {
       startCountdown();
     }
-  };
-
-  const handleClick = () => {
-    if (!isCountingDown && time > 0) {
-      startCountdown();
-    } else if (isCountingDown && !isPaused) {
-      handlePause();
-    } else if (isPaused) {
-      startCountdown();
-    }
-  };
-
-  const handlePause = () => {
-    console.log("Pausing timer");
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-      timerRef.current = null;
-    }
-    setIsPaused(true);
-    trackEvent("timer_pause", { timeLeft: time });
-  };
-
-  const handleResume = () => {
-    console.log("Resuming timer");
-    startCountdown();
-    trackEvent("timer_resume", { timeLeft: time });
   };
 
   const handleVisibilityChange = useCallback(
