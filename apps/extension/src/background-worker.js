@@ -89,10 +89,7 @@ function tick() {
 
     // Play notification sound using offscreen document
     console.log("Playing notification sound");
-    
-    // Create offscreen document if it doesn't exist
     setupOffscreenDocument().then(() => {
-      // Send message to offscreen document to play sound
       chrome.runtime.sendMessage({ type: "PLAY_SOUND" })
         .catch(error => console.error("Error sending play sound message:", error));
     });
@@ -107,14 +104,7 @@ function tick() {
       silent: true,
     });
 
-    // Notify all tabs to play sound (as backup)
-    chrome.tabs.query({}, function (tabs) {
-      tabs.forEach((tab) => {
-        chrome.tabs.sendMessage(tab.id, { type: "PLAY_SOUND" }).catch(() => {
-          // Ignore errors for inactive tabs
-        });
-      });
-    });
+    // No need to notify tabs since we're playing sound in offscreen document
   }
 }
 
