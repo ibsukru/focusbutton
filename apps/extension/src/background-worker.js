@@ -1,215 +1,248 @@
 console.log("Background worker starting...");
 
-// Background timer state
-let timer = {
-  intervalId: null,
-  timeLeft: 0,
-  isRunning: false,
-  lastTick: 0,
-  updateLock: false,  // Add lock to prevent concurrent updates
-};
-
-// Restore timer state on startup
-chrome.storage.local.get(["focusbutton_timer_state"], (result) => {
-  console.log("Restoring timer state:", result);
-  const state = result.focusbutton_timer_state;
-  if (state?.type === "TIMER_UPDATE" && state.isCountingDown) {
-    startTimer(state.time);
-  }
+// Keep service worker alive
+chrome.runtime.onInstalled.addListener(async () => {
+  console.log("Extension installed");
+  // Clear any existing alarms
+  await chrome.alarms.clearAll();
 });
 
 // Handle extension icon click
-chrome.action.onClicked.addListener(function () {
+chrome.action.onClicked.addListener(async () => {
   console.log("Extension icon clicked");
-  chrome.tabs.create({
-    url: "/index.html",
-    active: true,
+  
+  const extensionUrl = chrome.runtime.getURL("index.html");
+  console.log("Opening extension at:", extensionUrl);
+  
+  // Check if we already have a tab open
+  const tabs = await chrome.tabs.query({
+    url: extensionUrl
   });
+  
+  if (tabs.length > 0) {
+    // Focus existing tab
+    await chrome.tabs.update(tabs[0].id, { active: true });
+    await chrome.windows.update(tabs[0].windowId, { focused: true });
+  } else {
+    // Create new tab
+    await chrome.tabs.create({
+      url: extensionUrl,
+      active: true
+    });
+  }
 });
 
-async function updateTimerState() {
-  if (timer.updateLock) {
-    return;  // Skip update if locked
-  }
-  
-  timer.updateLock = true;
+// Background timer state
+let timer = {
+  timeLeft: 0,
+  isRunning: false,
+  lastTick: 0,
+};
+
+// Keep track of when the last tick occurred
+let lastTickTime = 0;
+
+// Initialize timer state
+chrome.runtime.onStartup.addListener(async () => {
+  console.log("Extension starting up");
+  await initializeTimerState();
+});
+
+// Also initialize on install
+chrome.runtime.onInstalled.addListener(async () => {
+  console.log("Extension installed");
+  await initializeTimerState();
+});
+
+async function initializeTimerState() {
   try {
-    const state = {
-      type: "TIMER_UPDATE",
-      time: timer.timeLeft,
-      isCountingDown: timer.isRunning,
-      isPaused: false,
-      isFinished: timer.timeLeft === 0,
-    };
-
-    // Update storage first
-    await chrome.storage.local.set({
-      focusbutton_timer_state: state,
-    });
-
-    // Then notify tabs
-    const tabs = await chrome.tabs.query({});
-    await Promise.all(tabs.map(tab => 
-      chrome.tabs.sendMessage(tab.id, {
-        type: "TIMER_UPDATE",
-        time: timer.timeLeft,
-        isCountingDown: timer.isRunning
-      }).catch(() => {/* Ignore inactive tab errors */})
-    ));
+    const result = await chrome.storage.local.get(["focusbutton_timer_state"]);
+    console.log("Restoring timer state:", result);
+    const state = result.focusbutton_timer_state;
+    
+    if (state?.isCountingDown && !state.isPaused && state.time > 0) {
+      console.log("Resuming timer with time:", state.time);
+      await startTimer(state.time);
+    }
   } catch (error) {
-    console.error("Error updating timer state:", error);
-  } finally {
-    timer.updateLock = false;
+    console.error("Error initializing timer state:", error);
   }
 }
 
-// Create or get the offscreen document
-async function setupOffscreenDocument() {
-  // Check if we already have an offscreen document
-  if (await chrome.offscreen.hasDocument()) {
+function tick() {
+  if (!timer.isRunning) {
+    console.log("Timer not running, skipping tick");
     return;
   }
 
-  // Create an offscreen document
-  await chrome.offscreen
-    .createDocument({
-      url: "offscreen.html",
-      reasons: ["AUDIO_PLAYBACK"],
-      justification: "Playing timer end notification sound",
-    })
-    .catch((error) => {
-      console.error("Error creating offscreen document:", error);
-    });
-}
-
-// Initialize offscreen document
-setupOffscreenDocument().catch(console.error);
-
-function tick() {
-  if (!timer.isRunning || timer.updateLock) {
-    return;  // Skip tick if locked or not running
-  }
-
   const now = Date.now();
-  if (now - timer.lastTick < 900) {
-    return;  // Prevent too frequent ticks
+  
+  // Ensure we don't tick too frequently
+  if (now - lastTickTime < 900) { // Allow for some timing variation
+    return;
   }
 
-  const newTime = Math.max(0, timer.timeLeft - 1);
+  console.log('Tick: current time:', timer.timeLeft);
+  lastTickTime = now;
   
+  const newTime = Math.max(0, timer.timeLeft - 1);
+  timer.timeLeft = newTime;
+  timer.lastTick = now;
+
+  // Update state and check for timer completion
   if (newTime === 0) {
-    stopTimer();
+    console.log("Timer completed");
+    stopTimer().catch(console.error);
     
     // Play notification sound using offscreen document
     setupOffscreenDocument().then(() => {
       chrome.runtime.sendMessage({ type: "PLAY_SOUND" })
         .catch(error => console.error("Error sending play sound message:", error));
     });
-
-    // Show notification
-    chrome.notifications.create("timer-complete", {
-      type: "basic",
-      iconUrl: "/icons/icon-128.png",
-      title: "Time's up!",
-      message: "Your focus session has ended.",
-      requireInteraction: true,
-      silent: true,
-    });
   } else {
-    timer.timeLeft = newTime;
-    timer.lastTick = now;
-    updateTimerState();
+    // Only update state if timer is still running
+    updateTimerState().catch(console.error);
   }
 }
 
 async function startTimer(duration) {
-  if (timer.updateLock) {
-    return;  // Skip if locked
-  }
+  console.log("Starting timer with duration:", duration);
   
-  // Clear any existing timer
-  stopTimer();
-  
-  // Reset and start new timer
+  // Stop any existing timer
+  await stopTimer();
+
+  // Initialize timer state
   timer = {
-    intervalId: null,
     timeLeft: duration,
     isRunning: true,
     lastTick: Date.now(),
-    updateLock: false,
   };
+  lastTickTime = Date.now();
 
-  timer.intervalId = setInterval(tick, 1000);
+  // Create alarms for redundancy
+  await chrome.alarms.clear('timerTick');
+  await chrome.alarms.clear('timerBackup');
+  
+  await chrome.alarms.create('timerTick', { 
+    periodInMinutes: 1/60, // Every second
+    when: Date.now() + 1000 // Start in 1 second
+  });
+
+  // Create a backup alarm that fires every minute
+  await chrome.alarms.create('timerBackup', {
+    periodInMinutes: 1,
+    when: Date.now() + 60000
+  });
+  
+  // Update state immediately
   await updateTimerState();
+  
+  console.log("Timer started:", timer);
 }
 
 async function stopTimer() {
   console.log("Stopping timer");
-  if (timer.intervalId) {
-    clearInterval(timer.intervalId);
-    timer.intervalId = null;
-  }
-  timer.timeLeft = 0;
   timer.isRunning = false;
+  timer.timeLeft = 0;
   timer.lastTick = 0;
 
-  // Update state to show timer is stopped
-  const state = {
-    type: "TIMER_UPDATE",
-    time: 0,
-    isCountingDown: false,
-    isPaused: false,
-    isFinished: true,
-  };
+  // Clear the alarm
+  await chrome.alarms.clear("timerTick");
 
-  chrome.storage.local.set({
-    focusbutton_timer_state: state,
-  });
-
-  // Notify all tabs about timer stop
-  chrome.runtime.sendMessage({
-    type: "TIMER_UPDATE",
-    time: 0,
-    isCountingDown: false,
-  }).catch((error) => {
-    console.log("Error sending timer update:", error);
+  // Update state one last time to ensure UI reflects stopped state
+  await updateTimerState();
+  
+  // Send final state update to mark as finished
+  await chrome.storage.local.set({
+    focusbutton_timer_state: {
+      type: "TIMER_UPDATE",
+      isCountingDown: false,
+      time: 0,
+      isPaused: false,
+      isFinished: true
+    }
   });
 }
 
-// Handle messages
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  console.log("Got message:", message, "from:", sender);
-
-  (async () => {
-    try {
-      if (message.type === "START_TIMER") {
-        console.log("Starting timer from message:", message);
-        await startTimer(message.duration);
-        sendResponse({ success: true });
-      } else if (message.type === "STOP_TIMER") {
-        console.log("Stopping timer from message:", message);
-        await stopTimer();
-        sendResponse({ success: true });
-      } else if (message.type === "GET_TIMER_STATE") {
-        console.log("Getting timer state");
-        sendResponse({
-          success: true,
-          state: {
-            time: timer.timeLeft,
-            isCountingDown: timer.isRunning,
-            isPaused: false,
-            isFinished: timer.timeLeft === 0,
-          },
-        });
-      } else {
-        console.warn("Unexpected message type:", message);
-        sendResponse({ success: false, error: "Unknown message type" });
-      }
-    } catch (error) {
-      console.error("Error handling message:", error);
-      sendResponse({ success: false, error: error.message });
+// Handle alarm ticks
+chrome.alarms.onAlarm.addListener((alarm) => {
+  console.log("Alarm fired:", alarm.name, "at:", Date.now());
+  
+  if (alarm.name === 'timerTick') {
+    tick();
+  } else if (alarm.name === 'timerBackup') {
+    // Backup alarm ensures we haven't lost too much time
+    const now = Date.now();
+    if (timer.isRunning && now - lastTickTime > 2000) {
+      console.log("Backup alarm: correcting missed ticks");
+      const missedSeconds = Math.floor((now - lastTickTime) / 1000);
+      timer.timeLeft = Math.max(0, timer.timeLeft - missedSeconds);
+      lastTickTime = now;
+      updateTimerState().catch(console.error);
     }
-  })();
+  }
+});
 
+// Handle messages from the popup
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  console.log("Received message:", request);
+  
+  if (request.type === "START_TIMER") {
+    startTimer(request.duration).catch(console.error);
+    sendResponse({ success: true });
+  } else if (request.type === "STOP_TIMER") {
+    stopTimer().catch(console.error);
+    sendResponse({ success: true });
+  } else if (request.type === "GET_TIMER_STATE") {
+    sendResponse({
+      success: true,
+      state: {
+        timeLeft: timer.timeLeft,
+        isRunning: timer.isRunning
+      }
+    });
+  }
+  
+  // Return true to indicate we'll send a response asynchronously
   return true;
+});
+
+// Update timer state in storage and notify all tabs
+async function updateTimerState() {
+  const state = {
+    type: "TIMER_UPDATE",
+    time: timer.timeLeft,
+    isCountingDown: timer.isRunning,
+    isPaused: false,
+    isFinished: timer.timeLeft === 0
+  };
+
+  console.log("Updating timer state:", state);
+
+  try {
+    // Update storage - this will trigger storage listeners in tabs
+    await chrome.storage.local.set({
+      focusbutton_timer_state: state
+    });
+  } catch (error) {
+    console.error("Error updating timer state:", error);
+  }
+}
+
+// Setup offscreen document for audio
+async function setupOffscreenDocument() {
+  if (await chrome.offscreen.hasDocument()) return;
+  
+  await chrome.offscreen.createDocument({
+    url: 'offscreen.html',
+    reasons: ['AUDIO_PLAYBACK'],
+    justification: 'Playing timer completion sound'
+  });
+}
+
+// Cleanup timer on extension unload
+chrome.runtime.onSuspend.addListener(() => {
+  if (timer.isRunning) {
+    chrome.alarms.clearAll();
+  }
 });

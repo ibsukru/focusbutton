@@ -11,7 +11,7 @@ function copyAssets() {
       // Copy manifest.json
       copyFileSync(
         resolve(__dirname, "manifest.json"),
-        resolve(__dirname, "dist/manifest.json"),
+        resolve(__dirname, "dist/manifest.json")
       );
 
       // Copy icons
@@ -19,61 +19,68 @@ function copyAssets() {
         recursive: true,
       });
 
-      // Copy background script directly without bundling
+      // Copy HTML files
+      ["index.html", "offscreen.html", "notification.html"].forEach((file) => {
+        if (file === "index.html") {
+          copyFileSync(
+            resolve(__dirname, file),
+            resolve(__dirname, `dist/${file}`)
+          );
+        } else {
+          copyFileSync(
+            resolve(__dirname, `src/${file}`),
+            resolve(__dirname, `dist/${file}`)
+          );
+        }
+      });
 
-      copyFileSync(
-        resolve(__dirname, "src/background-worker.js"),
-        resolve(__dirname, "dist/background-worker.js"),
-      );
+      // Copy background and content scripts
+      ["background-worker.js", "content-script.js"].forEach((file) => {
+        copyFileSync(
+          resolve(__dirname, `src/${file}`),
+          resolve(__dirname, `dist/${file}`)
+        );
+      });
 
-      copyFileSync(
-        resolve(__dirname, "src/content-script.js"),
-        resolve(__dirname, "dist/content-script.js"),
-      );
-
-      // Copy offscreen files
-      copyFileSync(
-        resolve(__dirname, "src/offscreen.html"),
-        resolve(__dirname, "dist/offscreen.html"),
-      );
-
+      // Copy offscreen.js
       copyFileSync(
         resolve(__dirname, "src/offscreen.js"),
-        resolve(__dirname, "dist/offscreen.js"),
+        resolve(__dirname, "dist/offscreen.js")
       );
 
       // Copy notification sound
       copyFileSync(
-        resolve(__dirname, "../../packages/ui/public/timer-end.mp3"),
-        resolve(__dirname, "dist/timer-end.mp3"),
+        resolve(__dirname, "timer-end.mp3"),
+        resolve(__dirname, "dist/timer-end.mp3")
       );
     },
   };
 }
 
 export default defineConfig({
-  plugins: [
-    react({
-      // Disable React Strict Mode
-    }),
-    copyAssets(),
-  ],
+  plugins: [react(), copyAssets()],
   build: {
     outDir: "dist",
+    emptyOutDir: true,
     rollupOptions: {
       input: {
-        index: resolve(__dirname, "index.html"),
+        main: resolve(__dirname, "src/index.tsx"),
       },
       output: {
         entryFileNames: "[name].js",
-        chunkFileNames: "[name].js",
-        assetFileNames: "[name].[ext]",
+        chunkFileNames: "[name].[hash].js",
+        assetFileNames: (assetInfo) => {
+          if (assetInfo.name === "style.css") return "style.css";
+          return "[name].[hash].[ext]";
+        },
       },
     },
+    sourcemap: true,
+    minify: true,
   },
   resolve: {
     alias: {
-      "@": resolve(__dirname, "src"),
+      "@": resolve(__dirname, "./src"),
     },
   },
 });
