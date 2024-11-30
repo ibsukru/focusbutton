@@ -5,20 +5,25 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:firefox": "vite --mode firefox",
     "build": "tsc && vite build",
+    "build:firefox": "tsc && vite build --mode firefox",
     "preview": "vite preview"
   },
   "dependencies": {
     "@focusbutton/ui": "*",
+    "lucide-react": "^0.462.0",
+    "next-themes": "^0.4.3",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "next-themes": "^0.4.3",
-    "lucide-react": "^0.462.0"
+    "webextension-polyfill": "^0.10.0"
   },
   "devDependencies": {
+    "@crxjs/vite-plugin": "^2.0.0-beta.19",
+    "@types/chrome": "^0.0.260",
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
-    "@types/chrome": "^0.0.260",
+    "@types/webextension-polyfill": "^0.10.0",
     "@vitejs/plugin-react": "^4.2.1",
     "sass": "^1.69.0",
     "typescript": "^5.0.2",

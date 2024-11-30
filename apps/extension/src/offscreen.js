@@ -1,56 +1,47 @@
-console.log('Offscreen document loaded');
+console.log("Offscreen document loaded");
 
-let audioContext = null;
-let audioBuffer = null;
+// Get the audio element
+const audio = document.getElementById("notificationSound");
 
-// Initialize audio context and load sound
-async function initAudio() {
-  if (!audioContext) {
-    audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    
-    try {
-      const response = await fetch(chrome.runtime.getURL('timer-end.mp3'));
-      const arrayBuffer = await response.arrayBuffer();
-      audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-      console.log('Audio initialized successfully');
-    } catch (error) {
-      console.error('Error initializing audio:', error);
-    }
+// Initialize audio when the document loads
+document.addEventListener("DOMContentLoaded", () => {
+  console.log("Document loaded, initializing...");
+
+  if (audio) {
+    audio.load();
+    console.log("Audio element initialized");
+  } else {
+    console.error("Audio element not found");
   }
-}
+});
 
-// Play the sound
-async function playSound() {
-  if (!audioContext || !audioBuffer) {
-    await initAudio();
-  }
-  
-  try {
-    const source = audioContext.createBufferSource();
-    source.buffer = audioBuffer;
-    source.connect(audioContext.destination);
-    source.start(0);
-    return true;
-  } catch (error) {
-    console.error('Error playing sound:', error);
-    return false;
-  }
-}
-
-// Listen for messages
+// Listen for messages from the service worker
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  console.log('Offscreen received message:', message);
-  
-  if (message.type === 'PLAY_SOUND') {
-    playSound()
-      .then(success => {
-        console.log('Sound played:', success ? 'successfully' : 'failed');
-        sendResponse({ success });
+  console.log("Offscreen received message:", message);
+
+  // Only handle messages targeted for offscreen document
+  if (message.target !== "offscreen") {
+    return;
+  }
+
+  if (message.type === "PLAY_SOUND") {
+    if (!audio) {
+      console.error("Audio element not found");
+      return;
+    }
+
+    // Reset the audio to the beginning
+    audio.currentTime = 0;
+    audio.volume = 1.0;
+
+    // Play the sound
+    audio
+      .play()
+      .then(() => {
+        console.log("Sound played successfully");
       })
-      .catch(error => {
-        console.error('Error in playSound:', error);
-        sendResponse({ success: false, error: error.message });
+      .catch((error) => {
+        console.error("Error playing sound:", error);
       });
-    return true; // Keep the message channel open
   }
 });

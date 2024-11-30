@@ -1,9 +1,16 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
-<head>
-  <title>Offscreen Document</title>
-</head>
-<body>
-  <script src="offscreen.js"></script>
-</body>
+  <head>
+    <title>Offscreen Document</title>
+  </head>
+  <body>
+    <!-- Audio element for timer completion sound -->
+    <audio id="notificationSound" src="../timer-end.mp3" preload="auto"></audio>
+
+    <!-- Load the offscreen script -->
+    <script src="offscreen.js"></script>
+
+    <!-- Debugging element -->
+    <div id="debug" style="display: none"></div>
+  </body>
 </html>

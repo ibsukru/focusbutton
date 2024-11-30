@@ -21,25 +21,27 @@
     }
   },
   "background": {
-    "service_worker": "background-worker.js",
-    "type": "module"
+    "service_worker": "background-worker.js"
   },
   "icons": {
     "16": "icons/icon-16.png",
     "48": "icons/icon-48.png",
     "128": "icons/icon-128.png"
   },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  },
   "web_accessible_resources": [
     {
       "resources": [
-        "index.html",
-        "assets/*",
         "timer-end.mp3",
+        "sound.html",
         "notification.html",
         "offscreen.html",
-        "offscreen.js"
+        "offscreen.js",
+        "assets/*"
       ],
-      "matches": []
+      "matches": ["<all_urls>"]
     }
   ]
 }

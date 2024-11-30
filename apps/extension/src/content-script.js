@@ -1,12 +1,19 @@
+import { browserAPI } from "./browser-api";
 console.log("Content script loaded");
 
-// Check if we're in a Chrome extension context
-const isExtension =
-  typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.id;
+// More robust check for extension context
+const isExtension = (() => {
+  try {
+    return !!(browserAPI && browserAPI.runtime);
+  } catch (e) {
+    console.warn("Extension context check failed:", e);
+    return false;
+  }
+})();
 
 if (isExtension) {
   // Listen for messages from the background script
-  chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  browserAPI.runtime.onMessage.addListener((message, sender, sendResponse) => {
     console.log("Content script received message:", message);
 
     // Forward the message to the page
@@ -33,7 +40,7 @@ if (isExtension) {
         "Content script forwarding message to background:",
         event.data.payload
       );
-      chrome.runtime.sendMessage(event.data.payload);
+      browserAPI.runtime.sendMessage(event.data.payload);
     }
   });
 } else {
