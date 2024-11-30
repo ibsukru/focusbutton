@@ -3,8 +3,7 @@
   "name": "FocusButton",
   "version": "1.0.0",
   "description": "Track your focus time with a simple press and hold button",
-  "permissions": ["storage", "notifications", "alarms", "tabs", "offscreen"],
-  "host_permissions": ["<all_urls>"],
+  "permissions": ["storage", "notifications", "tabs", "offscreen"],
   "action": {
     "default_icon": {
       "16": "icons/icon-16.png",
