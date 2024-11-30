@@ -89,7 +89,7 @@ export default function FocusButton() {
         console.error("Error sending message:", e);
       }
     },
-    [isExtension]
+    [isExtension],
   );
 
   const handleTimerEnd = useCallback(() => {
@@ -188,7 +188,7 @@ export default function FocusButton() {
 
       trackEvent("timer_start", { duration: duration || time });
     },
-    [time, isExtension, sendMessage, handleTimerEnd]
+    [time, isExtension, sendMessage, handleTimerEnd],
   );
 
   const handleClick = () => {
@@ -284,7 +284,7 @@ export default function FocusButton() {
           if (state?.isCountingDown && !state.isPaused && state.time > 0) {
             const currentTime = Date.now();
             const elapsedTime = Math.floor(
-              (currentTime - state.startTime) / 1000
+              (currentTime - state.startTime) / 1000,
             );
             const remainingTime = Math.max(0, state.time - elapsedTime);
 
@@ -305,7 +305,7 @@ export default function FocusButton() {
             if (state.isCountingDown && !state.isPaused) {
               const currentTime = Date.now();
               const elapsedTime = Math.floor(
-                (currentTime - state.startTime) / 1000
+                (currentTime - state.startTime) / 1000,
               );
               const remainingTime = Math.max(0, state.time - elapsedTime);
 
@@ -652,7 +652,7 @@ export default function FocusButton() {
               startTime: now,
               isCountingDown: true,
               isPaused: false,
-            })
+            }),
           );
         }
       } else {
@@ -687,7 +687,7 @@ export default function FocusButton() {
         }
       }
     },
-    [time, isCountingDown, startCountdown, handleTimerEnd]
+    [time, isCountingDown, startCountdown, handleTimerEnd],
   );
 
   useEffect(() => {
@@ -704,12 +704,12 @@ export default function FocusButton() {
 
     document.addEventListener(
       "visibilitychange",
-      handleVisibilityChangeWrapper
+      handleVisibilityChangeWrapper,
     );
     return () => {
       document.removeEventListener(
         "visibilitychange",
-        handleVisibilityChangeWrapper
+        handleVisibilityChangeWrapper,
       );
     };
   }, [handleVisibilityChange]);
@@ -736,7 +736,7 @@ export default function FocusButton() {
     // Function to get or create the meta tag
     const getOrCreateThemeMetaTag = () => {
       let meta = document.querySelector(
-        "meta[name='theme-color']"
+        "meta[name='theme-color']",
       ) as HTMLMetaElement;
       if (!meta) {
         meta = document.createElement("meta");
@@ -748,7 +748,7 @@ export default function FocusButton() {
 
     const getOrCreateBackgroundMetaTag = () => {
       let meta = document.querySelector(
-        "meta[name='background-color']"
+        "meta[name='background-color']",
       ) as HTMLMetaElement;
       if (!meta) {
         meta = document.createElement("meta");
