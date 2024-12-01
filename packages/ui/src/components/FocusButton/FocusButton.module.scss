@@ -80,7 +80,7 @@
   color: var(--foreground);
 
   &.mounted {
-    animation: slideUp 0.2s ease-in-out;
+    animation: slideUp 0.3s ease-in-out;
   }
 
   &.counting {
@@ -111,7 +111,7 @@
 
   &.visible {
     opacity: 1;
-    animation: slideUp 0.2s ease-in-out;
+    animation: slideUp 0.3s ease-in-out;
 
     button {
       cursor: pointer;
