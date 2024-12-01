@@ -5,8 +5,7 @@ import styles from "./FocusButton.module.scss";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import type { BrowserAPIType } from "@focusbutton/extension/src/browser-api";
 import { useTheme } from "next-themes";
-import React from "react";
-import type { Extension } from "webextension-polyfill-ts";
+import clsx from "clsx";
 
 // Add global type declaration for browser
 declare global {
@@ -26,10 +25,10 @@ declare global {
           sendMessage: (message: any) => Promise<any>;
           onMessage: {
             addListener: (
-              callback: (message: any, sender: any, sendResponse: any) => void,
+              callback: (message: any, sender: any, sendResponse: any) => void
             ) => void;
             removeListener: (
-              callback: (message: any, sender: any, sendResponse: any) => void,
+              callback: (message: any, sender: any, sendResponse: any) => void
             ) => void;
           };
         };
@@ -37,7 +36,7 @@ declare global {
           onClicked: {
             addListener: (callback: (notificationId: string) => void) => void;
             removeListener: (
-              callback: (notificationId: string) => void,
+              callback: (notificationId: string) => void
             ) => void;
           };
           clear: (notificationId: string) => Promise<void>;
@@ -95,7 +94,6 @@ const getStorageData = async () => {
 };
 
 export default function FocusButton() {
-  const [mounted, setMounted] = useState(false);
   const [isExtension, setIsExtension] = useState(false);
   const [time, setTime] = useState(0);
   const [displayTime, setDisplayTime] = useState(0);
@@ -114,6 +112,10 @@ export default function FocusButton() {
   const lastBackgroundUpdateRef = useRef<any>(null);
   const updateThrottleMs = 100;
   const { resolvedTheme, setTheme } = useTheme();
+
+  // Add global type declaration for browser
+  const [initialMount, setInitialMount] = useState(true);
+  const [isMounted, setIsMounted] = useState(false);
 
   // Add startTimeRef declaration
   const startTimeRef = useRef<number>(0);
@@ -177,7 +179,7 @@ export default function FocusButton() {
         return null;
       }
     },
-    [isExtension],
+    [isExtension]
   );
 
   const handleTimerEnd = useCallback(() => {
@@ -338,7 +340,7 @@ export default function FocusButton() {
 
       trackEvent("timer_start", { duration: duration || time });
     },
-    [time, isExtension, sendMessage, handleTimerEnd, updateTimer],
+    [time, isExtension, sendMessage, handleTimerEnd, updateTimer]
   );
 
   const handleCancel = useCallback(() => {
@@ -470,12 +472,17 @@ export default function FocusButton() {
 
   // Set mounted state
   useEffect(() => {
-    setMounted(true);
+    setIsMounted(true);
+    // After initial animation, set initialMount to false
+    const timer = setTimeout(() => {
+      setInitialMount(false);
+    }, 300); // slightly longer than animation duration
+    return () => clearTimeout(timer);
   }, []);
 
   // Update state restoration for cross-browser compatibility
   useEffect(() => {
-    if (!mounted || stateRestoredRef.current) return;
+    if (!isMounted || stateRestoredRef.current) return;
 
     const restoreState = async () => {
       try {
@@ -497,7 +504,7 @@ export default function FocusButton() {
 
           if (savedState.isCountingDown && !savedState.isPaused) {
             const elapsed = Math.floor(
-              (Date.now() - savedState.startTime) / 1000,
+              (Date.now() - savedState.startTime) / 1000
             );
             const remaining = Math.max(0, savedState.time - elapsed);
 
@@ -518,7 +525,7 @@ export default function FocusButton() {
     };
 
     restoreState();
-  }, [mounted, isExtension, getStorageData, startCountdown, handleTimerEnd]);
+  }, [isMounted, isExtension, getStorageData, startCountdown, handleTimerEnd]);
 
   // Update storage listener for cross-browser compatibility
   useEffect(() => {
@@ -542,7 +549,7 @@ export default function FocusButton() {
 
           if (newState.isCountingDown && !newState.isPaused) {
             const elapsed = Math.floor(
-              (Date.now() - newState.startTime) / 1000,
+              (Date.now() - newState.startTime) / 1000
             );
             const remaining = Math.max(0, newState.time - elapsed);
 
@@ -848,7 +855,7 @@ export default function FocusButton() {
               startTime: now,
               isCountingDown: true,
               isPaused: false,
-            }),
+            })
           );
         }
       } else {
@@ -883,7 +890,7 @@ export default function FocusButton() {
         }
       }
     },
-    [time, isCountingDown, startCountdown, handleTimerEnd],
+    [time, isCountingDown, startCountdown, handleTimerEnd]
   );
 
   useEffect(() => {
@@ -900,12 +907,12 @@ export default function FocusButton() {
 
     document.addEventListener(
       "visibilitychange",
-      handleVisibilityChangeWrapper,
+      handleVisibilityChangeWrapper
     );
     return () => {
       document.removeEventListener(
         "visibilitychange",
-        handleVisibilityChangeWrapper,
+        handleVisibilityChangeWrapper
       );
     };
   }, [handleVisibilityChange]);
@@ -984,7 +991,7 @@ export default function FocusButton() {
     // Function to get or create the meta tag
     const getOrCreateThemeMetaTag = () => {
       let meta = document.querySelector(
-        "meta[name='theme-color']",
+        "meta[name='theme-color']"
       ) as HTMLMetaElement;
       if (!meta) {
         meta = document.createElement("meta");
@@ -996,7 +1003,7 @@ export default function FocusButton() {
 
     const getOrCreateBackgroundMetaTag = () => {
       let meta = document.querySelector(
-        "meta[name='background-color']",
+        "meta[name='background-color']"
       ) as HTMLMetaElement;
       if (!meta) {
         meta = document.createElement("meta");
@@ -1130,7 +1137,7 @@ export default function FocusButton() {
   }, [isExtension]);
 
   // Don't render anything until mounted
-  if (!mounted) {
+  if (!isMounted) {
     return;
   }
 
@@ -1138,11 +1145,12 @@ export default function FocusButton() {
     <div className={styles.page}>
       <main className={styles.main}>
         <div
-          className={`${styles.focusButton} ${
-            isCountingDown ? styles.counting : ""
-          } ${isPaused ? styles.paused : ""} ${
-            isFinished ? styles.finished : ""
-          }`}
+          className={clsx(styles.focusButton, {
+            [styles.mounted]: initialMount && isMounted,
+            [styles.counting]: isCountingDown && !isPaused,
+            [styles.paused]: isPaused,
+            [styles.finished]: isFinished,
+          })}
         >
           <div className={styles.timeDisplay}>
             <button

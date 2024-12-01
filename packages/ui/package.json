@@ -4,6 +4,7 @@
   "main": "src/index.ts",
   "types": "src/index.ts",
   "dependencies": {
+    "clsx": "^2.1.1",
     "react": "^18.2.0"
   }
 }

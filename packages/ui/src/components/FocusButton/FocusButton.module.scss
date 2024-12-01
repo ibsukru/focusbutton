@@ -73,18 +73,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  animation: slideUp 0.2s ease-in-out;
 
   // Glassy effect with dark text
   background: var(--background);
   border: 1px solid var(--shade-2);
   color: var(--foreground);
 
-  // Text
-
-  &:hover {
-    // background: rgba(72, 199, 142, 0.9);
-    // border: 1px solid rgba(72, 199, 142, 0.4);
+  &.mounted {
+    animation: slideUp 0.2s ease-in-out;
   }
 
   &.counting {
