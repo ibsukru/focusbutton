@@ -25,10 +25,10 @@ declare global {
           sendMessage: (message: any) => Promise<any>;
           onMessage: {
             addListener: (
-              callback: (message: any, sender: any, sendResponse: any) => void,
+              callback: (message: any, sender: any, sendResponse: any) => void
             ) => void;
             removeListener: (
-              callback: (message: any, sender: any, sendResponse: any) => void,
+              callback: (message: any, sender: any, sendResponse: any) => void
             ) => void;
           };
         };
@@ -36,7 +36,7 @@ declare global {
           onClicked: {
             addListener: (callback: (notificationId: string) => void) => void;
             removeListener: (
-              callback: (notificationId: string) => void,
+              callback: (notificationId: string) => void
             ) => void;
           };
           clear: (notificationId: string) => Promise<void>;
@@ -192,7 +192,7 @@ export default function FocusButton() {
         return null;
       }
     },
-    [isExtension],
+    [isExtension]
   );
 
   const handleTimerEnd = useCallback(() => {
@@ -206,7 +206,7 @@ export default function FocusButton() {
       if (browserAPI) {
         browserAPI.notifications.create({
           type: "basic",
-          iconUrl: "icon-128.png",
+          iconUrl: "/icons/icon-128.png",
           title: "Focus Timer",
           message: "Time's up! Take a break.",
         });
@@ -315,7 +315,7 @@ export default function FocusButton() {
 
       trackEvent("timer_start", { duration: duration || time });
     },
-    [time, isExtension, sendMessage, handleTimerEnd],
+    [time, isExtension, sendMessage, handleTimerEnd]
   );
 
   const handleCancel = useCallback(() => {
@@ -489,7 +489,7 @@ export default function FocusButton() {
 
           if (savedState.isCountingDown && !savedState.isPaused) {
             const elapsed = Math.floor(
-              (Date.now() - savedState.startTime) / 1000,
+              (Date.now() - savedState.startTime) / 1000
             );
             const remaining = Math.max(0, savedState.time - elapsed);
 
@@ -534,7 +534,7 @@ export default function FocusButton() {
 
           if (newState.isCountingDown && !newState.isPaused) {
             const elapsed = Math.floor(
-              (Date.now() - newState.startTime) / 1000,
+              (Date.now() - newState.startTime) / 1000
             );
             const remaining = Math.max(0, newState.time - elapsed);
 
@@ -659,7 +659,7 @@ export default function FocusButton() {
       if (browserAPI) {
         browserAPI.notifications.create("timer_end", {
           type: "basic",
-          iconUrl: "/icon-128.png",
+          iconUrl: "/icons/icon-128.png",
           title: "Time's up!",
           message: "Your focus session has ended.",
         });
@@ -668,14 +668,14 @@ export default function FocusButton() {
       if (Notification.permission === "granted") {
         new Notification("Time's up!", {
           body: "Your focus session has ended.",
-          icon: "/icon-128.png",
+          icon: "/icons/icon-128.png",
         });
       } else if (Notification.permission !== "denied") {
         Notification.requestPermission().then((permission) => {
           if (permission === "granted") {
             new Notification("Time's up!", {
               body: "Your focus session has ended.",
-              icon: "/icon-128.png",
+              icon: "/icons/icon-128.png",
             });
           }
         });
@@ -811,54 +811,40 @@ export default function FocusButton() {
   const handleVisibilityChange = useCallback(
     (now: number) => {
       if (document.hidden) {
-        // App going to background
-        if (isCountingDown && !isPaused && timerRef.current) {
-          console.log("App going to background, saving timer state");
-          clearInterval(timerRef.current);
-          timerRef.current = null;
-          localStorage.setItem(
-            "focusTimer",
-            JSON.stringify({
-              timeLeft: time,
-              startTime: now,
-              isCountingDown: true,
-              isPaused: false,
-            }),
-          );
-        }
-      } else {
-        // App coming to foreground
-        const savedTimer = localStorage.getItem("focusTimer");
-        if (savedTimer) {
-          try {
-            const {
-              timeLeft,
-              startTime,
-              isCountingDown: wasCountingDown,
-              isPaused: wasPaused,
-            } = JSON.parse(savedTimer);
+        return;
+      }
 
-            if (wasCountingDown && !wasPaused) {
-              console.log("App coming to foreground, restoring timer state");
-              const elapsedSeconds = Math.floor((now - startTime) / 1000);
-              const newTime = Math.max(0, timeLeft - elapsedSeconds);
+      // App coming to foreground
+      const savedTimer = localStorage.getItem("focusTimer");
+      if (savedTimer) {
+        try {
+          const {
+            timeLeft,
+            startTime,
+            isCountingDown: wasCountingDown,
+            isPaused: wasPaused,
+          } = JSON.parse(savedTimer);
 
-              if (newTime === 0) {
-                console.log("Timer completed while in background");
-                handleTimerEnd();
-              } else if (newTime > 0) {
-                // Resume countdown if time remaining
-                startCountdown(newTime);
-              }
+          if (wasCountingDown && !wasPaused) {
+            console.log("App coming to foreground, restoring timer state");
+            const elapsedSeconds = Math.floor((now - startTime) / 1000);
+            const newTime = Math.max(0, timeLeft - elapsedSeconds);
+
+            if (newTime === 0) {
+              console.log("Timer completed while in background");
+              handleTimerEnd();
+            } else if (newTime > 0) {
+              // Resume countdown if time remaining
+              startCountdown(newTime);
             }
-          } catch (error) {
-            console.error("Error parsing saved timer:", error);
           }
-          localStorage.removeItem("focusTimer");
+        } catch (error) {
+          console.error("Error parsing saved timer:", error);
         }
+        localStorage.removeItem("focusTimer");
       }
     },
-    [time, isCountingDown, startCountdown, handleTimerEnd],
+    [time, isCountingDown, startCountdown, handleTimerEnd]
   );
 
   useEffect(() => {
@@ -875,12 +861,12 @@ export default function FocusButton() {
 
     document.addEventListener(
       "visibilitychange",
-      handleVisibilityChangeWrapper,
+      handleVisibilityChangeWrapper
     );
     return () => {
       document.removeEventListener(
         "visibilitychange",
-        handleVisibilityChangeWrapper,
+        handleVisibilityChangeWrapper
       );
     };
   }, [handleVisibilityChange]);
@@ -959,7 +945,7 @@ export default function FocusButton() {
     // Function to get or create the meta tag
     const getOrCreateThemeMetaTag = () => {
       let meta = document.querySelector(
-        "meta[name='theme-color']",
+        "meta[name='theme-color']"
       ) as HTMLMetaElement;
       if (!meta) {
         meta = document.createElement("meta");
@@ -971,7 +957,7 @@ export default function FocusButton() {
 
     const getOrCreateBackgroundMetaTag = () => {
       let meta = document.querySelector(
-        "meta[name='background-color']",
+        "meta[name='background-color']"
       ) as HTMLMetaElement;
       if (!meta) {
         meta = document.createElement("meta");
