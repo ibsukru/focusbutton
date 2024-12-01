@@ -25,10 +25,10 @@ declare global {
           sendMessage: (message: any) => Promise<any>;
           onMessage: {
             addListener: (
-              callback: (message: any, sender: any, sendResponse: any) => void,
+              callback: (message: any, sender: any, sendResponse: any) => void
             ) => void;
             removeListener: (
-              callback: (message: any, sender: any, sendResponse: any) => void,
+              callback: (message: any, sender: any, sendResponse: any) => void
             ) => void;
           };
         };
@@ -36,7 +36,7 @@ declare global {
           onClicked: {
             addListener: (callback: (notificationId: string) => void) => void;
             removeListener: (
-              callback: (notificationId: string) => void,
+              callback: (notificationId: string) => void
             ) => void;
           };
           clear: (notificationId: string) => Promise<void>;
@@ -91,6 +91,19 @@ const getStorageData = async () => {
     console.error("Error getting storage data:", error);
     return null;
   }
+};
+
+const formatTimeValues = (timeInSeconds: number): string => {
+  const hours = Math.floor(timeInSeconds / 3600);
+  const minutes = Math.floor((timeInSeconds % 3600) / 60);
+  const seconds = timeInSeconds % 60;
+
+  const formatNumber = (num: number) => num.toString().padStart(2, '0');
+
+  if (hours > 0) {
+    return `${formatNumber(hours)}:${formatNumber(minutes)}:${formatNumber(seconds)}`;
+  }
+  return `${formatNumber(minutes)}:${formatNumber(seconds)}`;
 };
 
 export default function FocusButton() {
@@ -179,7 +192,7 @@ export default function FocusButton() {
         return null;
       }
     },
-    [isExtension],
+    [isExtension]
   );
 
   const handleTimerEnd = useCallback(() => {
@@ -302,7 +315,7 @@ export default function FocusButton() {
 
       trackEvent("timer_start", { duration: duration || time });
     },
-    [time, isExtension, sendMessage, handleTimerEnd],
+    [time, isExtension, sendMessage, handleTimerEnd]
   );
 
   const handleCancel = useCallback(() => {
@@ -476,7 +489,7 @@ export default function FocusButton() {
 
           if (savedState.isCountingDown && !savedState.isPaused) {
             const elapsed = Math.floor(
-              (Date.now() - savedState.startTime) / 1000,
+              (Date.now() - savedState.startTime) / 1000
             );
             const remaining = Math.max(0, savedState.time - elapsed);
 
@@ -521,7 +534,7 @@ export default function FocusButton() {
 
           if (newState.isCountingDown && !newState.isPaused) {
             const elapsed = Math.floor(
-              (Date.now() - newState.startTime) / 1000,
+              (Date.now() - newState.startTime) / 1000
             );
             const remaining = Math.max(0, newState.time - elapsed);
 
@@ -626,53 +639,19 @@ export default function FocusButton() {
     }
   };
 
-  const requestNotificationPermission = async () => {
-    if (!("Notification" in window)) {
-      return "denied";
-    }
+  const isNotificationSupported = typeof Notification !== "undefined";
 
-    try {
-      return await Notification.requestPermission();
-    } catch (error) {
-      console.error("Error requesting notification permission:", error);
-      return "denied";
-    }
-  };
+  const requestNotificationPermission = useCallback(async () => {
+    if (!isNotificationSupported) return;
 
-  const showNotification = async (): Promise<void> => {
-    // Check if the browser supports notifications
-    if (!("Notification" in window)) {
-      console.log("This browser does not support notifications");
-      return;
-    }
-
-    try {
-      // Check if we need permission
-      if (Notification.permission !== "granted") {
-        const permission = await requestNotificationPermission();
-        if (permission !== "granted") {
-          console.log("Notification permission denied");
-          return;
-        }
+    if (Notification.permission === "default") {
+      try {
+        await Notification.requestPermission();
+      } catch (error) {
+        console.log("Error requesting notification permission:", error);
       }
-
-      // Show notification
-      if (isExtension) {
-        // Extension notifications handled by background worker
-        return;
-      } else {
-        // Web notification
-        new Notification("Time's up!", {
-          body: "Your focus session has ended.",
-          icon: "/icons/icon-128.png",
-          requireInteraction: true,
-          silent: true, // We handle sound separately
-        });
-      }
-    } catch (error) {
-      console.error("Error showing notification:", error);
     }
-  };
+  }, []);
 
   const sendNotification = useCallback(() => {
     if (isExtension) {
@@ -685,7 +664,7 @@ export default function FocusButton() {
           message: "Your focus session has ended.",
         });
       }
-    } else {
+    } else if (isNotificationSupported) {
       if (Notification.permission === "granted") {
         new Notification("Time's up!", {
           body: "Your focus session has ended.",
@@ -704,14 +683,6 @@ export default function FocusButton() {
     }
   }, [isExtension]);
 
-  const formatTimeValues = (totalSeconds: number) => {
-    const minutes = Math.max(0, Math.floor(totalSeconds / 60));
-    const seconds = Math.max(0, Math.floor(totalSeconds % 60));
-    return `${minutes}:${seconds.toString().padStart(2, "0")}`;
-  };
-
-  const buttonRef = useRef<HTMLButtonElement>(null);
-
   const startAdjustment = (adjustment: number) => {
     // Stop any existing countdown
     if (timerRef.current) {
@@ -723,7 +694,11 @@ export default function FocusButton() {
     setIsFinished(false);
 
     // Only request notification permission on up click
-    if (adjustment > 0 && Notification.permission === "default") {
+    if (
+      adjustment > 0 &&
+      isNotificationSupported &&
+      Notification.permission === "default"
+    ) {
       requestNotificationPermission().catch((error) => {
         console.log("Permission request failed:", error);
       });
@@ -848,7 +823,7 @@ export default function FocusButton() {
               startTime: now,
               isCountingDown: true,
               isPaused: false,
-            }),
+            })
           );
         }
       } else {
@@ -883,7 +858,7 @@ export default function FocusButton() {
         }
       }
     },
-    [time, isCountingDown, startCountdown, handleTimerEnd],
+    [time, isCountingDown, startCountdown, handleTimerEnd]
   );
 
   useEffect(() => {
@@ -900,12 +875,12 @@ export default function FocusButton() {
 
     document.addEventListener(
       "visibilitychange",
-      handleVisibilityChangeWrapper,
+      handleVisibilityChangeWrapper
     );
     return () => {
       document.removeEventListener(
         "visibilitychange",
-        handleVisibilityChangeWrapper,
+        handleVisibilityChangeWrapper
       );
     };
   }, [handleVisibilityChange]);
@@ -984,7 +959,7 @@ export default function FocusButton() {
     // Function to get or create the meta tag
     const getOrCreateThemeMetaTag = () => {
       let meta = document.querySelector(
-        "meta[name='theme-color']",
+        "meta[name='theme-color']"
       ) as HTMLMetaElement;
       if (!meta) {
         meta = document.createElement("meta");
@@ -996,7 +971,7 @@ export default function FocusButton() {
 
     const getOrCreateBackgroundMetaTag = () => {
       let meta = document.querySelector(
-        "meta[name='background-color']",
+        "meta[name='background-color']"
       ) as HTMLMetaElement;
       if (!meta) {
         meta = document.createElement("meta");
