@@ -1,5 +1,4 @@
 import { browserAPI } from "./browser-api";
-console.log("Content script loaded");
 
 // More robust check for extension context
 const isExtension = (() => {
