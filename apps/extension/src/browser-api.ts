@@ -26,7 +26,7 @@ export type BrowserAPIType = {
   getURL: (path: string) => string;
   sendMessage: <M, R = any>(
     message: M,
-    options?: Runtime.SendMessageOptionsType
+    options?: Runtime.SendMessageOptionsType,
   ) => Promise<R | undefined>;
   injectContentScript: (tabId: number) => Promise<any>;
   getStorageData: (key: string) => Promise<any>;
@@ -60,7 +60,7 @@ export const browserAPI: BrowserAPIType = {
 
   async sendMessage<M, R = any>(
     message: M,
-    options?: Runtime.SendMessageOptionsType
+    options?: Runtime.SendMessageOptionsType,
   ): Promise<R | undefined> {
     const api = browserInstance;
     try {
