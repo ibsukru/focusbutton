@@ -141,7 +141,7 @@ async function startTimer(duration) {
   console.log("Timer started:", timer);
 }
 
-async function stopTimer() {
+async function stopTimer(isCanceled = false) {
   console.log("Stopping timer");
   timer.isRunning = false;
   timer.timeLeft = 0;
@@ -160,11 +160,17 @@ async function stopTimer() {
     source: "background",
     timestamp: Date.now(),
     isFinalState: true,
+    isCanceled,
   };
 
   await chrome.storage.local.set({
     focusbutton_timer_state: state,
   });
+
+  // Only play notification if timer wasn't canceled
+  if (!isCanceled) {
+    await playNotificationSound();
+  }
 }
 
 async function updateState(state) {
@@ -255,7 +261,6 @@ async function tick() {
 
       await updateState(state);
       await stopTimer();
-      await playNotificationSound();
     } else {
       await updateState(state);
     }
@@ -423,7 +428,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         break;
 
       case "STOP_TIMER":
-        stopTimer().catch(console.error);
+        stopTimer(request.isCanceled).catch(console.error);
         break;
 
       case "PAUSE_TIMER":

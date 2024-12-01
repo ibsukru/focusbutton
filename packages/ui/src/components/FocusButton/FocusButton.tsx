@@ -26,10 +26,10 @@ declare global {
           sendMessage: (message: any) => Promise<any>;
           onMessage: {
             addListener: (
-              callback: (message: any, sender: any, sendResponse: any) => void,
+              callback: (message: any, sender: any, sendResponse: any) => void
             ) => void;
             removeListener: (
-              callback: (message: any, sender: any, sendResponse: any) => void,
+              callback: (message: any, sender: any, sendResponse: any) => void
             ) => void;
           };
         };
@@ -37,7 +37,7 @@ declare global {
           onClicked: {
             addListener: (callback: (notificationId: string) => void) => void;
             removeListener: (
-              callback: (notificationId: string) => void,
+              callback: (notificationId: string) => void
             ) => void;
           };
           clear: (notificationId: string) => Promise<void>;
@@ -58,10 +58,12 @@ interface TimerState {
   time: number;
   isCountingDown: boolean;
   isPaused: boolean;
-  startTime: number;
-  isFinalState?: boolean;
+  isFinished: boolean;
   source?: string;
   timestamp?: number;
+  startTime: number;
+  isFinalState?: boolean;
+  isCanceled?: boolean;
 }
 
 interface TimerMessage {
@@ -112,6 +114,9 @@ export default function FocusButton() {
   const lastBackgroundUpdateRef = useRef<any>(null);
   const updateThrottleMs = 100;
   const { resolvedTheme, setTheme } = useTheme();
+
+  // Add startTimeRef declaration
+  const startTimeRef = useRef<number>(0);
 
   // Check for extension context after mount
   useEffect(() => {
@@ -172,7 +177,7 @@ export default function FocusButton() {
         return null;
       }
     },
-    [isExtension],
+    [isExtension]
   );
 
   const handleTimerEnd = useCallback(() => {
@@ -181,25 +186,34 @@ export default function FocusButton() {
     }
     isTimerEndingRef.current = true;
 
-    // Play sound and show notification
-    if (!isExtension) {
-      playNotificationSound();
-      showNotification().catch((error) => {
-        console.error("Error showing notification:", error);
-      });
+    if (isExtension) {
+      const browserAPI = getBrowserAPI();
+      if (browserAPI) {
+        browserAPI.notifications.create({
+          type: "basic",
+          iconUrl: "icon-128.png",
+          title: "Focus Timer",
+          message: "Time's up! Take a break.",
+        });
+      }
+    } else {
+      // Only play notification for web version if timer wasn't canceled
+      const state = localStorage.getItem(STORAGE_KEY);
+      if (state) {
+        const timerState = JSON.parse(state);
+        if (!timerState.isCanceled) {
+          playNotificationSound();
+        }
+      }
     }
 
-    setIsCountingDown(false);
-    setIsFinished(true);
-    setIsPaused(false);
+    setTime(0);
     setDisplayTime(0);
+    setIsCountingDown(false);
+    setIsPaused(false);
+    setIsFinished(true);
 
-    if (isExtension) {
-      sendMessage({
-        type: "TIMER_END",
-      });
-    } else {
-      // Clear web timer state
+    if (!isExtension) {
       localStorage.removeItem(STORAGE_KEY);
     }
 
@@ -209,7 +223,31 @@ export default function FocusButton() {
     setTimeout(() => {
       isTimerEndingRef.current = false;
     }, 1000);
-  }, [isExtension, sendMessage]);
+  }, [isExtension]);
+
+  const updateTimer = useCallback(() => {
+    if (!isCountingDown || isPaused || isTimerEndingRef.current) {
+      return;
+    }
+
+    const now = Date.now();
+    const elapsed = Math.floor((now - startTimeRef.current) / 1000);
+    const remaining = Math.max(0, time - elapsed);
+
+    if (remaining === 0 && !isTimerEndingRef.current) {
+      console.log("Web timer reached zero");
+      // Clear the interval before calling handleTimerEnd
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+      handleTimerEnd();
+      return;
+    }
+
+    console.log("Web timer update:", remaining);
+    setDisplayTime(remaining);
+  }, [isCountingDown, isPaused, time, handleTimerEnd]);
 
   const initializeAudio = useCallback(() => {
     if (!audioContextRef.current) {
@@ -241,6 +279,7 @@ export default function FocusButton() {
       setIsFinished(false);
 
       const now = Date.now();
+      startTimeRef.current = now; // Set the start time reference
 
       if (isExtension) {
         console.log("Starting extension timer");
@@ -283,19 +322,7 @@ export default function FocusButton() {
         console.log("Starting web timer");
         // Web mode - start local timer
         timerRef.current = setInterval(() => {
-          setTime((prevTime) => {
-            const newTime = Math.max(0, prevTime - 1);
-            setDisplayTime(newTime);
-            console.log("Web timer update:", newTime);
-
-            if (newTime === 0) {
-              console.log("Web timer reached zero");
-              handleTimerEnd();
-              clearInterval(timerRef.current);
-              timerRef.current = null;
-            }
-            return newTime;
-          });
+          updateTimer();
         }, 1000);
 
         // Save state to localStorage
@@ -304,29 +331,43 @@ export default function FocusButton() {
           isCountingDown: true,
           isPaused: false,
           startTime: now,
+          isFinished: false,
         };
         localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
       }
 
       trackEvent("timer_start", { duration: duration || time });
     },
-    [time, isExtension, sendMessage, handleTimerEnd],
+    [time, isExtension, sendMessage, handleTimerEnd, updateTimer]
   );
 
   const handleCancel = useCallback(() => {
+    // Prevent multiple cancellations
+    if (isTimerEndingRef.current) {
+      return;
+    }
+    isTimerEndingRef.current = true;
+
+    // Clear any existing timer interval
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+
     if (isExtension) {
       const browserAPI = getBrowserAPI();
       if (browserAPI) {
-        sendMessage({ type: "STOP_TIMER" });
+        sendMessage({ type: "STOP_TIMER", isCanceled: true });
         browserAPI.storage.local.set({
           [STORAGE_KEY]: {
             type: "TIMER_UPDATE",
-            isCountingDown: false,
             time: 0,
             isPaused: false,
             isFinished: true,
             source: "web",
             timestamp: Date.now(),
+            isFinalState: true,
+            isCanceled: true,
           },
         });
       }
@@ -343,6 +384,11 @@ export default function FocusButton() {
     }
 
     trackEvent("timer_cancel");
+
+    // Reset the flag after a short delay
+    setTimeout(() => {
+      isTimerEndingRef.current = false;
+    }, 1000);
   }, [isExtension, sendMessage]);
 
   const handleClick = () => {
@@ -387,6 +433,7 @@ export default function FocusButton() {
         isCountingDown: true,
         isPaused: true,
         startTime: Date.now(),
+        isFinished: false,
       };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     }
@@ -450,7 +497,7 @@ export default function FocusButton() {
 
           if (savedState.isCountingDown && !savedState.isPaused) {
             const elapsed = Math.floor(
-              (Date.now() - savedState.startTime) / 1000,
+              (Date.now() - savedState.startTime) / 1000
             );
             const remaining = Math.max(0, savedState.time - elapsed);
 
@@ -495,7 +542,7 @@ export default function FocusButton() {
 
           if (newState.isCountingDown && !newState.isPaused) {
             const elapsed = Math.floor(
-              (Date.now() - newState.startTime) / 1000,
+              (Date.now() - newState.startTime) / 1000
             );
             const remaining = Math.max(0, newState.time - elapsed);
 
@@ -801,7 +848,7 @@ export default function FocusButton() {
               startTime: now,
               isCountingDown: true,
               isPaused: false,
-            }),
+            })
           );
         }
       } else {
@@ -836,7 +883,7 @@ export default function FocusButton() {
         }
       }
     },
-    [time, isCountingDown, startCountdown, handleTimerEnd],
+    [time, isCountingDown, startCountdown, handleTimerEnd]
   );
 
   useEffect(() => {
@@ -853,12 +900,12 @@ export default function FocusButton() {
 
     document.addEventListener(
       "visibilitychange",
-      handleVisibilityChangeWrapper,
+      handleVisibilityChangeWrapper
     );
     return () => {
       document.removeEventListener(
         "visibilitychange",
-        handleVisibilityChangeWrapper,
+        handleVisibilityChangeWrapper
       );
     };
   }, [handleVisibilityChange]);
@@ -937,7 +984,7 @@ export default function FocusButton() {
     // Function to get or create the meta tag
     const getOrCreateThemeMetaTag = () => {
       let meta = document.querySelector(
-        "meta[name='theme-color']",
+        "meta[name='theme-color']"
       ) as HTMLMetaElement;
       if (!meta) {
         meta = document.createElement("meta");
@@ -949,7 +996,7 @@ export default function FocusButton() {
 
     const getOrCreateBackgroundMetaTag = () => {
       let meta = document.querySelector(
-        "meta[name='background-color']",
+        "meta[name='background-color']"
       ) as HTMLMetaElement;
       if (!meta) {
         meta = document.createElement("meta");
