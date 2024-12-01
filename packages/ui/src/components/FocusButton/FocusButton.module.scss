@@ -108,7 +108,6 @@
   opacity: 0;
   transition: opacity 0.3s ease;
   white-space: nowrap;
-  animation: slideUp 0.2s ease-in-out;
 
   button {
     cursor: default;
@@ -116,6 +115,7 @@
 
   &.visible {
     opacity: 1;
+    animation: slideUp 0.2s ease-in-out;
 
     button {
       cursor: pointer;
