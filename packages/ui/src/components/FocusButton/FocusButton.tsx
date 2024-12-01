@@ -3,8 +3,10 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import styles from "./FocusButton.module.scss";
 import { ChevronDown, ChevronUp } from "lucide-react";
+import type { BrowserAPIType } from "@focusbutton/extension/src/browser-api";
 import { useTheme } from "next-themes";
 import React from "react";
+import type { Extension } from "webextension-polyfill-ts";
 
 // Add global type declaration for browser
 declare global {
@@ -22,12 +24,20 @@ declare global {
         };
         runtime: {
           sendMessage: (message: any) => Promise<any>;
+          onMessage: {
+            addListener: (
+              callback: (message: any, sender: any, sendResponse: any) => void
+            ) => void;
+            removeListener: (
+              callback: (message: any, sender: any, sendResponse: any) => void
+            ) => void;
+          };
         };
         notifications: {
           onClicked: {
             addListener: (callback: (notificationId: string) => void) => void;
             removeListener: (
-              callback: (notificationId: string) => void,
+              callback: (notificationId: string) => void
             ) => void;
           };
           clear: (notificationId: string) => Promise<void>;
@@ -44,15 +54,43 @@ declare global {
     | undefined;
 }
 
-const STORAGE_KEY = "focusbutton_timer_state";
-
 interface TimerState {
   time: number;
   isCountingDown: boolean;
   isPaused: boolean;
   startTime: number;
   isFinalState?: boolean;
+  source?: string;
+  timestamp?: number;
 }
+
+interface TimerMessage {
+  type: string;
+  running?: boolean;
+  remainingTime?: number;
+}
+
+const STORAGE_KEY = "focusbutton_timer_state";
+
+const getBrowserAPI = (): BrowserAPIType | null => {
+  if (typeof window !== "undefined" && typeof browser !== "undefined") {
+    return browser as unknown as BrowserAPIType;
+  }
+  return null;
+};
+
+const getStorageData = async () => {
+  const browserAPI = getBrowserAPI();
+  if (!browserAPI) return null;
+
+  try {
+    const result = await browserAPI.storage.local.get(STORAGE_KEY);
+    return result[STORAGE_KEY];
+  } catch (error) {
+    console.error("Error getting storage data:", error);
+    return null;
+  }
+};
 
 export default function FocusButton() {
   const [mounted, setMounted] = useState(false);
@@ -79,8 +117,8 @@ export default function FocusButton() {
   useEffect(() => {
     const checkExtension =
       typeof window !== "undefined" &&
-      typeof chrome !== "undefined" &&
-      chrome?.runtime?.id !== undefined;
+      typeof browser !== "undefined" &&
+      (browser.runtime as any)?.id !== undefined;
     setIsExtension(checkExtension);
   }, []);
 
@@ -118,18 +156,23 @@ export default function FocusButton() {
 
       try {
         console.log("Sending message:", msg);
-        chrome.runtime.sendMessage(msg, (response) => {
-          if (chrome.runtime.lastError) {
-            console.error("Error sending message:", chrome.runtime.lastError);
-            return;
-          }
-          console.log("Message response:", response);
-        });
-      } catch (e) {
-        console.error("Error sending message:", e);
+        const browserRuntime = (browser as any)?.runtime;
+        return browserRuntime
+          ?.sendMessage(msg)
+          .then((response: any) => {
+            console.log("Message response:", response);
+            return response;
+          })
+          .catch((error: any) => {
+            console.error("Message sending error:", error);
+            return null;
+          });
+      } catch (error) {
+        console.error("Error in sendMessage:", error);
+        return null;
       }
     },
-    [isExtension],
+    [isExtension]
   );
 
   const handleTimerEnd = useCallback(() => {
@@ -178,8 +221,11 @@ export default function FocusButton() {
     }
   }, []);
 
+  // Timer control functions with proper types
   const startCountdown = useCallback(
     (duration?: number) => {
+      console.log("Starting countdown with duration:", duration ?? time);
+
       if (duration !== undefined) {
         setTime(duration);
         setDisplayTime(duration);
@@ -190,33 +236,60 @@ export default function FocusButton() {
         clearInterval(timerRef.current);
       }
 
-      // Set state
       setIsCountingDown(true);
       setIsPaused(false);
       setIsFinished(false);
 
+      const now = Date.now();
+
       if (isExtension) {
+        console.log("Starting extension timer");
         // Start local timer for smooth UI updates
         timerRef.current = setInterval(() => {
           setDisplayTime((prevTime) => {
             const newTime = Math.max(0, prevTime - 1);
+            console.log("Local timer update:", newTime);
+            if (newTime === 0) {
+              console.log("Timer reached zero");
+              clearInterval(timerRef.current);
+              timerRef.current = null;
+              handleTimerEnd();
+            }
             return newTime;
           });
         }, 1000);
 
-        // Start background timer
-        sendMessage({
-          type: "START_TIMER",
-          duration: duration || time,
-        });
+        const browserAPI = getBrowserAPI();
+        if (browserAPI) {
+          // Update extension state
+          browserAPI.storage.local.set({
+            [STORAGE_KEY]: {
+              type: "TIMER_UPDATE",
+              isCountingDown: true,
+              time: duration ?? time,
+              isPaused: false,
+              source: "ui",
+              timestamp: now,
+            },
+          });
+
+          // Send message to background
+          sendMessage({
+            type: "START_TIMER",
+            duration: duration ?? time,
+          });
+        }
       } else {
+        console.log("Starting web timer");
         // Web mode - start local timer
         timerRef.current = setInterval(() => {
           setTime((prevTime) => {
             const newTime = Math.max(0, prevTime - 1);
             setDisplayTime(newTime);
+            console.log("Web timer update:", newTime);
 
             if (newTime === 0) {
+              console.log("Web timer reached zero");
               handleTimerEnd();
               clearInterval(timerRef.current);
               timerRef.current = null;
@@ -227,18 +300,50 @@ export default function FocusButton() {
 
         // Save state to localStorage
         const state: TimerState = {
-          time: duration || time,
+          time: duration ?? time,
           isCountingDown: true,
           isPaused: false,
-          startTime: Date.now(),
+          startTime: now,
         };
         localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
       }
 
       trackEvent("timer_start", { duration: duration || time });
     },
-    [time, isExtension, sendMessage, handleTimerEnd],
+    [time, isExtension, sendMessage, handleTimerEnd]
   );
+
+  const handleCancel = useCallback(() => {
+    if (isExtension) {
+      const browserAPI = getBrowserAPI();
+      if (browserAPI) {
+        sendMessage({ type: "STOP_TIMER" });
+        browserAPI.storage.local.set({
+          [STORAGE_KEY]: {
+            type: "TIMER_UPDATE",
+            isCountingDown: false,
+            time: 0,
+            isPaused: false,
+            isFinished: true,
+            source: "web",
+            timestamp: Date.now(),
+          },
+        });
+      }
+    }
+
+    setTime(0);
+    setDisplayTime(0);
+    setIsCountingDown(false);
+    setIsPaused(false);
+    setIsFinished(true);
+
+    if (!isExtension) {
+      localStorage.removeItem(STORAGE_KEY);
+    }
+
+    trackEvent("timer_cancel");
+  }, [isExtension, sendMessage]);
 
   const handleClick = () => {
     if (!isCountingDown && time > 0) {
@@ -265,7 +370,7 @@ export default function FocusButton() {
     if (isExtension) {
       sendMessage({ type: "PAUSE_TIMER" });
       // Ensure storage is updated
-      chrome.storage.local.set({
+      browser?.storage?.local?.set?.({
         focusbutton_timer_state: {
           type: "TIMER_UPDATE",
           isCountingDown: true,
@@ -299,7 +404,7 @@ export default function FocusButton() {
     if (isExtension) {
       sendMessage({ type: "RESUME_TIMER" });
       // Ensure storage is updated
-      chrome.storage.local.set({
+      browser?.storage.local.set({
         focusbutton_timer_state: {
           type: "TIMER_UPDATE",
           isCountingDown: true,
@@ -321,60 +426,96 @@ export default function FocusButton() {
     setMounted(true);
   }, []);
 
-  // Load saved state on mount
+  // Update state restoration for cross-browser compatibility
   useEffect(() => {
     if (!mounted || stateRestoredRef.current) return;
 
-    const loadSavedState = async () => {
+    const restoreState = async () => {
       try {
+        let savedState: TimerState | null = null;
+
         if (isExtension) {
-          const result = await chrome.storage.local.get([
-            "focusbutton_timer_state",
-          ]);
-          const state = result.focusbutton_timer_state;
-          if (state) {
-            setTime(state.time);
-            setDisplayTime(state.time);
-            setIsCountingDown(state.isCountingDown);
-            setIsPaused(state.isPaused);
-            setIsFinished(state.isFinished);
-
-            // Restart countdown if it was running
-            if (state.isCountingDown && !state.isPaused && state.time > 0) {
-              startCountdown(state.time);
-            }
-          }
+          savedState = await getStorageData();
         } else {
-          const savedState = localStorage.getItem(STORAGE_KEY);
-          if (savedState) {
-            const state: TimerState = JSON.parse(savedState);
-            if (state.isCountingDown && !state.isPaused) {
-              const currentTime = Date.now();
-              const elapsedTime = Math.floor(
-                (currentTime - state.startTime) / 1000,
-              );
-              const remainingTime = Math.max(0, state.time - elapsedTime);
-
-              if (remainingTime > 0) {
-                console.log("Restoring web timer with:", remainingTime);
-                setTime(remainingTime);
-                setDisplayTime(remainingTime);
-                setIsCountingDown(true);
-                setIsPaused(false);
-                setIsFinished(false);
-                startCountdown(remainingTime);
-              }
-            }
+          const stateStr = localStorage.getItem(STORAGE_KEY);
+          if (stateStr) {
+            savedState = JSON.parse(stateStr);
           }
         }
+
+        if (savedState && !savedState.isFinalState) {
+          setTime(savedState.time);
+          setIsCountingDown(savedState.isCountingDown);
+          setIsPaused(savedState.isPaused);
+
+          if (savedState.isCountingDown && !savedState.isPaused) {
+            const elapsed = Math.floor(
+              (Date.now() - savedState.startTime) / 1000
+            );
+            const remaining = Math.max(0, savedState.time - elapsed);
+
+            if (remaining > 0) {
+              startCountdown(remaining);
+            } else {
+              handleTimerEnd();
+            }
+          } else {
+            setDisplayTime(savedState.time);
+          }
+        }
+
         stateRestoredRef.current = true;
       } catch (error) {
-        console.error("Error loading saved state:", error);
+        console.error("Error restoring timer state:", error);
       }
     };
 
-    loadSavedState();
-  }, [mounted, isExtension]);
+    restoreState();
+  }, [mounted, isExtension, getStorageData, startCountdown, handleTimerEnd]);
+
+  // Update storage listener for cross-browser compatibility
+  useEffect(() => {
+    if (!isExtension) return;
+
+    const browserAPI = getBrowserAPI();
+    if (!browserAPI) return;
+
+    const handleStorageChange = (changes: any) => {
+      const timerChange = changes[STORAGE_KEY];
+      if (timerChange && timerChange.newValue) {
+        const newState = timerChange.newValue;
+
+        if (
+          newState.source === "extension" &&
+          newState.timestamp > lastStateUpdateRef.current
+        ) {
+          setTime(newState.time);
+          setIsCountingDown(newState.isCountingDown);
+          setIsPaused(newState.isPaused);
+
+          if (newState.isCountingDown && !newState.isPaused) {
+            const elapsed = Math.floor(
+              (Date.now() - newState.startTime) / 1000
+            );
+            const remaining = Math.max(0, newState.time - elapsed);
+
+            if (remaining > 0) {
+              startCountdown(remaining);
+            } else {
+              handleTimerEnd();
+            }
+          } else {
+            setDisplayTime(newState.time);
+          }
+        }
+      }
+    };
+
+    browserAPI.storage.onChanged.addListener(handleStorageChange);
+    return () => {
+      browserAPI.storage.onChanged.removeListener(handleStorageChange);
+    };
+  }, [isExtension, getBrowserAPI, startCountdown, handleTimerEnd]);
 
   // Track last state update
   const STATE_UPDATE_THROTTLE = 100;
@@ -385,118 +526,10 @@ export default function FocusButton() {
   useEffect(() => {
     if (!isExtension) return;
 
+    const browserAPI = getBrowserAPI();
+    if (!browserAPI) return;
+
     const handleStorageChange = async (changes: any) => {
-      const state = changes.focusbutton_timer_state?.newValue;
-      if (state && state.source === "background") {
-        lastBackgroundStateRef.current = state;
-
-        // If this is a final state, only update once
-        if (state.isFinalState && isFinished) {
-          return;
-        }
-
-        // Force update state
-        setTime(state.time);
-        setDisplayTime(state.time);
-        setIsCountingDown(state.isCountingDown);
-        setIsPaused(state.isPaused);
-        setIsFinished(state.isFinished);
-
-        // Log state change
-        console.log("State updated from background:", {
-          time: state.time,
-          isCountingDown: state.isCountingDown,
-          isPaused: state.isPaused,
-          isFinished: state.isFinished,
-        });
-      }
-    };
-
-    chrome.storage.onChanged.addListener(handleStorageChange);
-    return () => chrome.storage.onChanged.removeListener(handleStorageChange);
-  }, [isExtension, isFinished]);
-
-  // Consolidated state update function
-  const updateTimerState = useCallback(() => {
-    const now = Date.now();
-    if (now - lastStateUpdateRef.current < STATE_UPDATE_THROTTLE) {
-      return;
-    }
-
-    lastStateUpdateRef.current = now;
-
-    if (!isExtension || !mounted) return;
-
-    // Skip update if this state came from background
-    const lastBackgroundState = lastBackgroundStateRef.current;
-    if (
-      lastBackgroundState &&
-      lastBackgroundState.time === time &&
-      lastBackgroundState.isCountingDown === isCountingDown &&
-      lastBackgroundState.isPaused === isPaused &&
-      lastBackgroundState.isFinished === isFinished
-    ) {
-      return;
-    }
-
-    // Don't update if we have a final state
-    if (lastBackgroundState?.isFinalState) {
-      return;
-    }
-
-    console.log("Storing timer state:", {
-      isCountingDown,
-      time,
-      isPaused,
-      isFinished,
-    });
-
-    const state = {
-      type: "TIMER_UPDATE",
-      isCountingDown: isCountingDown && time > 0,
-      time: time,
-      isPaused: isPaused,
-      isFinished: isFinished || time === 0,
-      source: "ui",
-      timestamp: now,
-    };
-
-    chrome.storage.local.set({ focusbutton_timer_state: state });
-  }, [isExtension, mounted, isCountingDown, time, isPaused, isFinished]);
-
-  // Single effect for state updates
-  useEffect(() => {
-    if (!mounted) return;
-
-    // Don't update if we have a final state
-    if (lastBackgroundStateRef.current?.isFinalState) {
-      return;
-    }
-
-    if (isCountingDown) {
-      updateTimerState();
-
-      const state: TimerState = {
-        time,
-        isCountingDown,
-        isPaused,
-        startTime: Date.now(),
-      };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    } else if (!lastBackgroundStateRef.current?.isFinished) {
-      // Only update if not a final state from background
-      updateTimerState();
-      localStorage.removeItem(STORAGE_KEY);
-    }
-  }, [time, isCountingDown, isPaused, isFinished, mounted, updateTimerState]);
-
-  // Setup storage listener
-  useEffect(() => {
-    if (!isExtension || !mounted) return;
-
-    console.log("Setting up storage listener");
-
-    const storageListener = (changes: any) => {
       const state = changes.focusbutton_timer_state?.newValue;
       if (!state) return;
 
@@ -521,9 +554,10 @@ export default function FocusButton() {
       setIsFinished(state.isFinished);
     };
 
-    chrome.storage.onChanged.addListener(storageListener);
-    return () => chrome.storage.onChanged.removeListener(storageListener);
-  }, [isExtension, mounted]);
+    browserAPI.storage.onChanged.addListener(handleStorageChange);
+    return () =>
+      browserAPI.storage.onChanged.removeListener(handleStorageChange);
+  }, [isExtension]);
 
   // Remove timer message handler since we're using storage
   useEffect(() => {
@@ -535,8 +569,8 @@ export default function FocusButton() {
         }
       };
 
-      chrome.runtime.onMessage.addListener(handleMessage);
-      return () => chrome.runtime.onMessage.removeListener(handleMessage);
+      browser?.runtime.onMessage.addListener(handleMessage);
+      return () => browser?.runtime.onMessage.removeListener(handleMessage);
     }
   }, []);
 
@@ -688,11 +722,14 @@ export default function FocusButton() {
         }
         setTime(0);
         setDisplayTime(0);
+        setIsCountingDown(false);
+        setIsPaused(false);
+        setIsFinished(true);
 
         // For extension mode, explicitly stop the timer
         if (isExtension) {
           sendMessage({ type: "STOP_TIMER" });
-          chrome.storage.local.set({
+          browser?.storage.local.set({
             focusbutton_timer_state: {
               type: "TIMER_UPDATE",
               isCountingDown: false,
@@ -713,7 +750,7 @@ export default function FocusButton() {
 
       // Update extension state
       if (isExtension) {
-        chrome.storage.local.set({
+        browser?.storage.local.set({
           focusbutton_timer_state: {
             type: "TIMER_UPDATE",
             isCountingDown: false,
@@ -764,7 +801,7 @@ export default function FocusButton() {
               startTime: now,
               isCountingDown: true,
               isPaused: false,
-            }),
+            })
           );
         }
       } else {
@@ -799,7 +836,7 @@ export default function FocusButton() {
         }
       }
     },
-    [time, isCountingDown, startCountdown, handleTimerEnd],
+    [time, isCountingDown, startCountdown, handleTimerEnd]
   );
 
   useEffect(() => {
@@ -816,15 +853,67 @@ export default function FocusButton() {
 
     document.addEventListener(
       "visibilitychange",
-      handleVisibilityChangeWrapper,
+      handleVisibilityChangeWrapper
     );
     return () => {
       document.removeEventListener(
         "visibilitychange",
-        handleVisibilityChangeWrapper,
+        handleVisibilityChangeWrapper
       );
     };
   }, [handleVisibilityChange]);
+
+  // Handle keyboard events with proper types
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (!isCountingDown || time === 0) return;
+
+      switch (event.key) {
+        case "Escape":
+          handleCancel();
+          break;
+        case " ":
+          event.preventDefault();
+          if (isPaused) {
+            startCountdown(time);
+          } else {
+            const browserAPI = getBrowserAPI();
+            if (isExtension && browserAPI) {
+              browserAPI.storage.local.set({
+                [STORAGE_KEY]: {
+                  type: "TIMER_UPDATE",
+                  isCountingDown: true,
+                  time: time,
+                  isPaused: true,
+                  source: "web",
+                  timestamp: Date.now(),
+                },
+              });
+            }
+            setIsPaused(true);
+          }
+          break;
+      }
+    };
+
+    const handleKeyUp = (event: KeyboardEvent) => {
+      if (event.key === "ArrowUp" || event.key === "ArrowDown") {
+        event.preventDefault();
+        if (adjustIntervalRef.current) {
+          stopAdjustment();
+        }
+      }
+    };
+
+    // Add event listeners
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
+    };
+  }, [isCountingDown, time, startCountdown, handleCancel, isExtension]);
 
   // Remove finished state after animation or when timer is adjusted
   useEffect(() => {
@@ -848,7 +937,7 @@ export default function FocusButton() {
     // Function to get or create the meta tag
     const getOrCreateThemeMetaTag = () => {
       let meta = document.querySelector(
-        "meta[name='theme-color']",
+        "meta[name='theme-color']"
       ) as HTMLMetaElement;
       if (!meta) {
         meta = document.createElement("meta");
@@ -860,7 +949,7 @@ export default function FocusButton() {
 
     const getOrCreateBackgroundMetaTag = () => {
       let meta = document.querySelector(
-        "meta[name='background-color']",
+        "meta[name='background-color']"
       ) as HTMLMetaElement;
       if (!meta) {
         meta = document.createElement("meta");
@@ -886,153 +975,112 @@ export default function FocusButton() {
         }
       };
 
-      chrome.runtime.onMessage.addListener(handleMessage);
+      browser?.runtime.onMessage.addListener(handleMessage);
       return () => {
-        chrome.runtime.onMessage.removeListener(handleMessage);
+        browser?.runtime.onMessage.removeListener(handleMessage);
       };
+    }
+  }, []);
+
+  const updateTimerState = useCallback((message: TimerMessage) => {
+    if (!message.remainingTime) return;
+
+    setTime(message.remainingTime);
+    setDisplayTime(message.remainingTime);
+
+    if (message.running !== undefined) {
+      setIsCountingDown(message.running);
+      setIsPaused(!message.running);
     }
   }, []);
 
   useEffect(() => {
     if (isExtension) {
-      const handleNotificationClick = async (notificationId: string) => {
-        // Clear notification
-        await chrome.notifications.clear(notificationId);
+      const handleMessage = (message: any) => {
+        console.log("Received message:", message);
 
-        // Focus or create tab
-        const tabs = await chrome.tabs.query({
-          url: chrome.runtime.getURL("/index.html"),
-        });
-        if (tabs.length > 0 && tabs[0].id !== undefined) {
-          await chrome.tabs.update(tabs[0].id, { active: true });
-          await chrome.windows.update(tabs[0].windowId, { focused: true });
-        } else {
-          await chrome.tabs.create({ url: "/index.html", active: true });
-        }
-      };
+        if (message.type === "TIMER_UPDATE") {
+          console.log("Timer update message:", {
+            remainingTime: message.remainingTime,
+            running: message.running,
+            isPaused: message.isPaused,
+          });
 
-      chrome.notifications.onClicked.addListener(handleNotificationClick);
-      return () =>
-        chrome.notifications.onClicked.removeListener(handleNotificationClick);
-    }
-  }, []);
+          if (message.remainingTime !== undefined) {
+            console.log("Updating time to:", message.remainingTime);
+            setTime(message.remainingTime);
+            setDisplayTime(message.remainingTime);
 
-  useEffect(() => {
-    // Store timer state for background script
-    if (isExtension) {
-      // Debounce storage updates
-      const timeoutId = setTimeout(() => {
-        console.log("Storing timer state:", {
-          isCountingDown,
-          time,
-          isPaused,
-          isFinished,
-        });
-        chrome.storage.local.set({
-          focusbutton_timer_state: {
-            type: "TIMER_UPDATE",
-            isCountingDown: isCountingDown && time > 0,
-            time: time,
-            isPaused: isPaused,
-            isFinished: isFinished || time === 0,
-          },
-        });
-      }, 100); // 100ms debounce
+            // Start or update local timer for smooth UI updates
+            if (message.running && !message.isPaused) {
+              console.log("Starting local countdown timer");
+              if (timerRef.current) {
+                console.log("Clearing existing timer");
+                clearInterval(timerRef.current);
+              }
+              timerRef.current = setInterval(() => {
+                setDisplayTime((prevTime) => {
+                  const newTime = Math.max(0, prevTime - 1);
+                  console.log("Local timer update:", newTime);
+                  if (newTime === 0) {
+                    console.log("Timer reached zero, clearing interval");
+                    clearInterval(timerRef.current);
+                    timerRef.current = null;
+                    handleTimerEnd();
+                  }
+                  return newTime;
+                });
+              }, 1000);
+            } else if (timerRef.current) {
+              console.log("Stopping local countdown timer");
+              clearInterval(timerRef.current);
+              timerRef.current = null;
+            }
+          }
 
-      return () => clearTimeout(timeoutId);
-    }
-  }, [isExtension, isCountingDown, time, isPaused, isFinished]);
-
-  // Handle keyboard events
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      // Handle ESC key for cancel
-      if (event.key === "Escape") {
-        event.preventDefault();
-        if (isCountingDown || time > 0) {
-          handleCancel();
-        }
-        return;
-      }
-
-      // Prevent default behavior for arrow keys
-      if (event.key === "ArrowUp" || event.key === "ArrowDown") {
-        event.preventDefault();
-
-        // Only handle if not counting down and no adjustment is in progress
-        if (!adjustIntervalRef.current) {
-          if (event.key === "ArrowUp") {
-            startAdjustment(60);
-          } else if (event.key === "ArrowDown" && time > 0) {
-            startAdjustment(-60);
+          if (message.running !== undefined) {
+            console.log("Updating timer state:", {
+              running: message.running,
+              paused: !message.running,
+            });
+            setIsCountingDown(message.running);
+            setIsPaused(!message.running);
           }
         }
-      }
-    };
+        return true; // Required for Chrome extension message handling
+      };
 
-    const handleKeyUp = (event: KeyboardEvent) => {
-      if (event.key === "ArrowUp" || event.key === "ArrowDown") {
-        event.preventDefault();
-        if (adjustIntervalRef.current) {
-          stopAdjustment();
+      console.log("Setting up message listener");
+      chrome.runtime.onMessage.addListener(handleMessage);
+      return () => {
+        console.log("Cleaning up message listener");
+        chrome.runtime.onMessage.removeListener(handleMessage);
+        if (timerRef.current) {
+          console.log("Cleaning up timer");
+          clearInterval(timerRef.current);
+          timerRef.current = null;
         }
-      }
-    };
+      };
+    }
+  }, [isExtension, handleTimerEnd]);
 
-    // Add event listeners
-    window.addEventListener("keydown", handleKeyDown);
-    window.addEventListener("keyup", handleKeyUp);
-
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-      window.removeEventListener("keyup", handleKeyUp);
-    };
-  }, [isCountingDown, time, startAdjustment, stopAdjustment]);
-
-  // Check timer state on mount
   useEffect(() => {
     if (isExtension) {
-      chrome.runtime.sendMessage({ type: "GET_TIMER_STATE" }, (response) => {
-        if (response.running) {
-          setTime(response.remainingTime);
-          setDisplayTime(response.remainingTime);
-          setIsCountingDown(true);
-          startCountdown(response.remainingTime);
-        }
-      });
+      const browserAPI = getBrowserAPI();
+      if (!browserAPI) return;
+
+      browserAPI.runtime
+        .sendMessage({ type: "GET_TIMER_STATE" })
+        .then((response: TimerMessage) => {
+          if (response?.running) {
+            setTime(response.remainingTime || 0);
+            setDisplayTime(response.remainingTime || 0);
+            setIsCountingDown(true);
+            setIsPaused(false);
+          }
+        });
     }
-  }, []);
-
-  // Handle cancel button click
-  const handleCancel = () => {
-    if (isExtension) {
-      // Send stop message to background worker
-      sendMessage({
-        type: "STOP_TIMER",
-      });
-
-      // Also update local state immediately for better UX
-      setTime(0);
-      setDisplayTime(0);
-      setIsCountingDown(false);
-      setIsPaused(false);
-      setIsFinished(true);
-    } else {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-        timerRef.current = null;
-      }
-      setTime(0);
-      setDisplayTime(0);
-      setIsCountingDown(false);
-      setIsPaused(false);
-      setIsFinished(true);
-
-      // Clear localStorage state
-      localStorage.removeItem(STORAGE_KEY);
-    }
-    trackEvent("timer_cancel");
-  };
+  }, [isExtension]);
 
   // Don't render anything until mounted
   if (!mounted) {

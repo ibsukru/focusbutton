@@ -20,7 +20,8 @@
     }
   },
   "background": {
-    "scripts": ["background-worker.js"]
+    "service_worker": "background-worker.js",
+    "type": "module"
   },
   "icons": {
     "16": "icons/icon-16.png",

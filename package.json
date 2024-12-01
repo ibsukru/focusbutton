@@ -9,10 +9,12 @@
     "prepare": "husky"
   },
   "devDependencies": {
+    "@types/webextension-polyfill": "^0.12.1",
     "husky": "^9.1.7",
     "prettier": "^3.2.5",
     "turbo": "^2.3.3",
-    "typescript": "5.5.4"
+    "typescript": "5.5.4",
+    "webextension-polyfill-ts": "^0.26.0"
   },
   "engines": {
     "node": ">=18"

@@ -1,9 +1,29 @@
-import { defineConfig, loadEnv } from "vite";
+import { defineConfig, loadEnv, Plugin, UserConfig, ConfigEnv } from "vite";
 import react from "@vitejs/plugin-react";
 import { resolve } from "path";
-import { copyFileSync, mkdirSync, existsSync } from "fs";
+import { copyFileSync, mkdirSync, existsSync, writeFileSync } from "fs";
+import * as esbuild from "esbuild";
 
-export default defineConfig(({ mode }) => {
+function chromeExtensionPlugin(): Plugin {
+  return {
+    name: "chrome-extension",
+    enforce: "post",
+    generateBundle(options, bundle) {
+      for (const [fileName, chunk] of Object.entries(bundle)) {
+        if (chunk.type === "chunk") {
+          if (
+            fileName.includes("background-worker") ||
+            fileName.includes("content-script")
+          ) {
+            // Removed IIFE wrapping
+          }
+        }
+      }
+    },
+  };
+}
+
+export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
   const env = loadEnv(mode, process.cwd(), "");
   const isFirefox = env.VITE_BROWSER === "firefox";
 
@@ -20,6 +40,7 @@ export default defineConfig(({ mode }) => {
       "windows",
       "activeTab",
       "scripting",
+      "offscreen",
     ],
     content_scripts: [
       {
@@ -33,15 +54,12 @@ export default defineConfig(({ mode }) => {
         "48": "icons/icon-48.png",
         "128": "icons/icon-128.png",
       },
+      // Removed default_popup to allow opening in a separate page
     },
-    background: isFirefox
-      ? {
-          scripts: ["background-worker.js"],
-        }
-      : {
-          service_worker: "background-worker.js",
-          type: "module",
-        },
+    background: {
+      service_worker: "background-worker.js",
+      type: "module",
+    },
     icons: {
       "16": "icons/icon-16.png",
       "48": "icons/icon-48.png",
@@ -49,92 +67,113 @@ export default defineConfig(({ mode }) => {
     },
     web_accessible_resources: [
       {
-        resources: ["timer-end.mp3", "assets/*"],
+        resources: [
+          "timer-end.mp3",
+          "assets/*",
+          "offscreen.html",
+          "offscreen.js",
+          "index.html",
+        ],
         matches: ["<all_urls>"],
       },
     ],
-    browser_specific_settings: isFirefox
-      ? {
-          gecko: {
-            id: "focusbutton@example.com",
-            strict_min_version: "109.0",
-          },
-        }
-      : undefined,
   };
-
-  const manifest = manifestBase;
 
   return {
     plugins: [
       react(),
+      chromeExtensionPlugin(),
       {
-        name: "copy-assets",
-        writeBundle() {
-          // Create dist directory if it doesn't exist
-          if (!existsSync("dist")) {
-            mkdirSync("dist");
-          }
-
-          // Create icons directory
-          if (!existsSync("dist/icons")) {
-            mkdirSync("dist/icons");
-          }
-
-          // Copy icon files
-          const iconFiles = ["icon-16.png", "icon-48.png", "icon-128.png"];
-          iconFiles.forEach((file) => {
-            const sourcePath = resolve("src/icons", file);
-            if (existsSync(sourcePath)) {
-              copyFileSync(sourcePath, resolve("dist/icons", file));
-            }
+        name: "build-extension-scripts",
+        enforce: "post",
+        async writeBundle() {
+          // Build background and content scripts separately
+          await esbuild.build({
+            entryPoints: {
+              "background-worker": resolve(
+                __dirname,
+                "src/background-worker.js"
+              ),
+              "content-script": resolve(__dirname, "src/content-script.js"),
+            },
+            bundle: true,
+            format: "esm",
+            outdir: "dist",
+            sourcemap: true,
+            target: "chrome58",
+            minify: false,
+            define: {
+              chrome: "chrome",
+              browser: "browser",
+            },
           });
-
-          // Copy sound file
-          const soundFile = resolve("src", "timer-end.mp3");
-          if (existsSync(soundFile)) {
-            copyFileSync(soundFile, resolve("dist", "timer-end.mp3"));
-          }
-
-          // Copy offscreen files
-          const offscreenFiles = ["offscreen.html", "offscreen.js"];
-          offscreenFiles.forEach((file) => {
-            const sourcePath = resolve("src", file);
-            if (existsSync(sourcePath)) {
-              copyFileSync(sourcePath, resolve("dist", file));
-            }
-          });
+        },
+      },
+      {
+        name: "copy-offscreen",
+        enforce: "post",
+        async writeBundle() {
+          // Copy offscreen files to dist root
+          copyFileSync(
+            resolve(__dirname, "src/offscreen.html"),
+            resolve(__dirname, "dist/offscreen.html")
+          );
+          copyFileSync(
+            resolve(__dirname, "src/offscreen.js"),
+            resolve(__dirname, "dist/offscreen.js")
+          );
         },
       },
       {
         name: "write-manifest",
-        generateBundle() {
-          this.emitFile({
-            type: "asset",
-            fileName: "manifest.json",
-            source: JSON.stringify(manifest, null, 2),
-          });
+        enforce: "post",
+        closeBundle() {
+          const manifest = {
+            ...manifestBase,
+            ...(isFirefox
+              ? {
+                  browser_specific_settings: {
+                    gecko: {
+                      id: "focusbutton@example.com",
+                      strict_min_version: "109.0",
+                    },
+                  },
+                }
+              : {}),
+          };
+
+          // Ensure dist directory exists
+          if (!existsSync("dist")) {
+            mkdirSync("dist", { recursive: true });
+          }
+
+          // Write manifest directly to dist folder
+          writeFileSync(
+            resolve(__dirname, "dist/manifest.json"),
+            JSON.stringify(manifest, null, 2),
+            "utf-8"
+          );
         },
       },
     ],
-    define: {
-      "process.env.BROWSER": JSON.stringify(env.VITE_BROWSER || "chrome"),
-    },
     build: {
-      outDir: "dist",
-      emptyOutDir: true,
       rollupOptions: {
         input: {
-          main: resolve(__dirname, "index.html"),
-          "background-worker": resolve(__dirname, "src/background-worker.js"),
-          "content-script": resolve(__dirname, "src/content-script.js"),
+          index: resolve(__dirname, "index.html"),
         },
         output: {
-          entryFileNames: "[name].js",
-          chunkFileNames: "assets/[name].[hash].js",
-          assetFileNames: "assets/[name].[ext]",
+          entryFileNames: "assets/[name]-[hash].js",
+          format: "es",
+          dir: "dist",
         },
       },
+      sourcemap: true,
+      minify: false,
+      outDir: "dist",
+      emptyOutDir: true,
+    },
+    define: {
+      "process.env.BROWSER": JSON.stringify(env.VITE_BROWSER || "chrome"),
     },
   };
 });

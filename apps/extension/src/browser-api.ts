@@ -16,13 +16,32 @@ const getBrowserAPI = (): typeof browser => {
 
 const browserInstance = getBrowserAPI();
 
-export const browserAPI = {
+export type BrowserAPIType = {
+  runtime: typeof browserInstance.runtime;
+  storage: typeof browserInstance.storage;
+  tabs: typeof browserInstance.tabs;
+  notifications: typeof browserInstance.notifications;
+  windows: typeof browserInstance.windows;
+  scripting: typeof browserInstance.scripting;
+  getURL: (path: string) => string;
+  sendMessage: <M, R = any>(
+    message: M,
+    options?: Runtime.SendMessageOptionsType
+  ) => Promise<R | undefined>;
+  injectContentScript: (tabId: number) => Promise<any>;
+  getStorageData: (key: string) => Promise<any>;
+  setStorageData: (key: string, value: any) => Promise<void>;
+};
+
+export const browserAPI: BrowserAPIType = {
   runtime: browserInstance.runtime,
   storage: browserInstance.storage,
   tabs: browserInstance.tabs,
   notifications: browserInstance.notifications,
   windows: browserInstance.windows,
   scripting: browserInstance.scripting,
+
+  getURL: browserInstance.runtime.getURL,
 
   async injectContentScript(tabId: number) {
     const api = getBrowserAPI();
@@ -39,9 +58,9 @@ export const browserAPI = {
     }
   },
 
-  async sendMessage<R = any>(
-    message: string,
-    options?: Runtime.SendMessageOptionsType,
+  async sendMessage<M, R = any>(
+    message: M,
+    options?: Runtime.SendMessageOptionsType
   ): Promise<R | undefined> {
     const api = browserInstance;
     try {
