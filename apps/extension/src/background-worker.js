@@ -120,21 +120,24 @@ const startTimer = async (duration) => {
       const now = Date.now();
       const elapsed = Math.floor((now - timer.lastTick) / 1000);
 
+      // Only update if at least 1 second has passed
       if (elapsed >= 1) {
         timer.lastTick = now;
-        timer.timeLeft = Math.max(0, timer.timeLeft - elapsed);
+        timer.timeLeft = Math.max(0, timer.timeLeft - 1); // Decrement by exactly 1 second
 
         // Update state
+        const state = {
+          type: "TIMER_UPDATE",
+          isCountingDown: timer.timeLeft > 0,
+          time: timer.timeLeft,
+          isPaused: false,
+          source: "background",
+          timestamp: now,
+          startTime: timer.startTime,
+        };
+
         await chrome.storage.local.set({
-          focusbutton_timer_state: {
-            type: "TIMER_UPDATE",
-            isCountingDown: timer.timeLeft > 0,
-            time: timer.timeLeft,
-            isPaused: false,
-            source: "background",
-            timestamp: now,
-            startTime: timer.startTime,
-          },
+          focusbutton_timer_state: state,
         });
 
         if (timer.timeLeft === 0) {
@@ -153,7 +156,7 @@ const startTimer = async (duration) => {
           });
         }
       }
-    }, 100);
+    }, 1000); // Update every second exactly
   } catch (error) {
     console.error("Error starting timer:", error);
     throw error;
