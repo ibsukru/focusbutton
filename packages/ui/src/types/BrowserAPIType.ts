@@ -71,7 +71,7 @@ export interface BrowserAPIType {
   storage: {
     local: {
       get: <T = any>(
-        keys?: string | string[] | { [key: string]: T }
+        keys?: string | string[] | { [key: string]: T },
       ) => Promise<{ [key: string]: T }>;
       set: <T = any>(items: { [key: string]: T }) => Promise<void>;
     };
@@ -88,22 +88,22 @@ export interface BrowserAPIType {
         callback: (
           message: TimerMessage,
           sender: MessageSender,
-          sendResponse: () => void
-        ) => void
+          sendResponse: () => void,
+        ) => void,
       ) => void;
       removeListener: (
         callback: (
           message: TimerMessage,
           sender: MessageSender,
-          sendResponse: () => void
-        ) => void
+          sendResponse: () => void,
+        ) => void,
       ) => void;
     };
   };
   notifications: {
     create: (
       notificationId: string,
-      options: NotificationOptions
+      options: NotificationOptions,
     ) => Promise<string>;
     onClicked: {
       addListener: (callback: (notificationId: string) => void) => void;
@@ -115,7 +115,7 @@ export interface BrowserAPIType {
     query: (queryInfo: TabQueryInfo) => Promise<any>;
     update: (
       tabId: number,
-      updateProperties: TabUpdateProperties
+      updateProperties: TabUpdateProperties,
     ) => Promise<any>;
     create: (createProperties: TabCreateProperties) => Promise<any>;
   };
