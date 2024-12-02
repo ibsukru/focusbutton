@@ -775,21 +775,26 @@ export default function FocusButton() {
       const startTime = adjustStartTimeRef.current ?? now;
       const elapsedSeconds = Math.floor((now - startTime) / 1000);
       const progressInSecond = ((now - startTime) % 1000) / 1000;
-      const totalAdjustment = elapsedSeconds * 300 + Math.floor(progressInSecond * 300);
+      const totalAdjustment =
+        elapsedSeconds * 300 + Math.floor(progressInSecond * 300);
 
-      let newTime = adjustment > 0
-        ? Math.min(initialTime + totalAdjustment, MAX_TIME)
-        : Math.max(initialTime - totalAdjustment, 0);
+      let newTime =
+        adjustment > 0
+          ? Math.min(initialTime + totalAdjustment, MAX_TIME)
+          : Math.max(initialTime - totalAdjustment, 0);
 
       // Stop if we hit limits
-      if ((newTime === 0 && lastTime > 0) || (newTime === MAX_TIME && lastTime < MAX_TIME)) {
+      if (
+        (newTime === 0 && lastTime > 0) ||
+        (newTime === MAX_TIME && lastTime < MAX_TIME)
+      ) {
         if (adjustIntervalRef.current) {
           clearInterval(adjustIntervalRef.current);
           adjustIntervalRef.current = null;
         }
         setTime(newTime);
         setDisplayTime(newTime);
-        
+
         // Update storage with final time
         if (isExtension) {
           const browserAPI = getBrowserAPI();
