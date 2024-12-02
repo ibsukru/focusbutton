@@ -6,9 +6,11 @@
   "scripts": {
     "dev": "vite",
     "dev:firefox": "vite --mode firefox",
-    "build": "tsc && vite build",
-    "build:firefox": "tsc && vite build --mode firefox",
-    "preview": "vite preview"
+    "build": "tsc && vite build && npm run zip",
+    "build:firefox": "tsc && vite build --mode firefox && npm run zip:firefox",
+    "preview": "vite preview",
+    "zip": "cd dist && zip -r ../dist.zip .",
+    "zip:firefox": "cd dist && zip -r ../dist-firefox.zip ."
   },
   "dependencies": {
     "@focusbutton/ui": "*",
