@@ -606,7 +606,9 @@ export default function FocusButton() {
 
     const restoreTimerState = async () => {
       try {
-        const result = await chrome.storage.local.get(["focusbutton_timer_state"]);
+        const result = await chrome.storage.local.get([
+          "focusbutton_timer_state",
+        ]);
         const state = result.focusbutton_timer_state;
 
         if (!state) return;
