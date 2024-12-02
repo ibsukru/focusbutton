@@ -119,7 +119,7 @@ const startTimer = async (duration) => {
     timerIntervalId = setInterval(async () => {
       const now = Date.now();
       const elapsed = Math.floor((now - timer.lastTick) / 1000);
-      
+
       if (elapsed >= 1) {
         timer.lastTick = now;
         timer.timeLeft = Math.max(0, timer.timeLeft - elapsed);
@@ -128,7 +128,7 @@ const startTimer = async (duration) => {
         await chrome.storage.local.set({
           focusbutton_timer_state: {
             type: "TIMER_UPDATE",
-            isCountingDown: true,
+            isCountingDown: timer.timeLeft > 0,
             time: timer.timeLeft,
             isPaused: false,
             source: "background",
@@ -154,7 +154,6 @@ const startTimer = async (duration) => {
         }
       }
     }, 100);
-
   } catch (error) {
     console.error("Error starting timer:", error);
     throw error;
@@ -609,7 +608,7 @@ chrome.runtime.onMessage.addListener((message) => {
 // Handle extension icon click
 chrome.action.onClicked.addListener(() => {
   chrome.tabs.create({
-    url: 'index.html'
+    url: "index.html",
   });
 });
 
