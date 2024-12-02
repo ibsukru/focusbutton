@@ -521,7 +521,7 @@ async function playNotificationSound() {
     await chrome.notifications.create("timer-complete", {
       type: "basic",
       iconUrl: chrome.runtime.getURL("icons/icon-128.png"),
-      title: "Timer Complete",
+      title: "Time's up!",
       message: "Your focus session has ended. Click to open FocusButton.",
       priority: 2,
       requireInteraction: true,
@@ -534,7 +534,7 @@ async function playNotificationSound() {
       await chrome.notifications.create("timer-complete", {
         type: "basic",
         iconUrl: chrome.runtime.getURL("icons/icon-128.png"),
-        title: "Timer Complete",
+        title: "Time's up!",
         message: "Your focus session has ended. Click to open FocusButton.",
         priority: 2,
         requireInteraction: true,

@@ -221,33 +221,36 @@ export default function FocusButton() {
   );
 
   const handleTimerEnd = useCallback(() => {
-    if (isTimerEndingRef.current) {
-      return;
-    }
-    isTimerEndingRef.current = true;
+    console.log("Timer reached zero");
+    setIsCountingDown(false);
+    setIsPaused(false);
+    setTime(0);
+    setDisplayTime(0);
+    setIsFinished(true);
 
-    try {
-      if (isExtension) {
-        // Play sound via background worker
-        sendMessage({ type: "PLAY_SOUND" });
-
-        // Show notification via background worker
-        sendMessage({ type: "SHOW_NOTIFICATION" });
-      } else {
-        // Web mode - play sound directly
-        playNotificationSound();
-        // Show native notification
-        sendNotification();
+    // Clear timer state immediately
+    if (!isExtension) {
+      localStorage.removeItem(STORAGE_KEY);
+    } else {
+      const browserAPI = getBrowserAPI();
+      if (browserAPI?.storage?.local) {
+        browserAPI.storage.local.remove(STORAGE_KEY);
       }
+    }
 
-      setIsCountingDown(false);
-      setIsPaused(false);
-      setTime(0);
-      setDisplayTime(0);
+    // Clear interval
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
 
-      trackEvent("timer_complete");
-    } finally {
-      isTimerEndingRef.current = false;
+    // Play sound and show notification
+    if (isExtension) {
+      sendMessage({ type: "PLAY_SOUND" });
+      sendMessage({ type: "SHOW_NOTIFICATION", title: "Time's up!" });
+    } else {
+      playNotificationSound();
+      sendNotification();
     }
   }, [isExtension, sendMessage]);
 
@@ -479,9 +482,15 @@ export default function FocusButton() {
 
   // Update state restoration for cross-browser compatibility
   useEffect(() => {
-    if (!isMounted || stateRestoredRef.current) return;
+    if (!isMounted) return;
 
     const restoreState = async () => {
+      // Prevent multiple restorations
+      if (isCountingDown || timerRef.current || isFinished) {
+        console.log("Timer already running or finished, skipping restore");
+        return;
+      }
+
       try {
         let savedState: TimerState | null = null;
 
@@ -494,36 +503,61 @@ export default function FocusButton() {
           }
         }
 
-        if (savedState && !savedState.isFinalState) {
-          setTime(savedState.time);
-          setIsCountingDown(savedState.isCountingDown);
-          setIsPaused(savedState.isPaused);
-
-          if (savedState.isCountingDown && !savedState.isPaused) {
-            console.log("App coming to foreground, restoring timer state");
-            const elapsed = Math.floor(
-              (Date.now() - savedState.startTime) / 1000
-            );
-            const remaining = Math.max(0, savedState.time - elapsed);
-
-            if (remaining > 0) {
-              startCountdown(remaining);
-            } else {
-              handleTimerEnd();
-            }
-          } else {
-            setDisplayTime(savedState.time);
-          }
+        if (!savedState || savedState.isFinished) {
+          console.log("No saved state or timer was finished");
+          return;
         }
 
-        stateRestoredRef.current = true;
+        // Calculate remaining time
+        const elapsed =
+          savedState.isCountingDown && !savedState.isPaused
+            ? Math.floor((Date.now() - savedState.startTime) / 1000)
+            : 0;
+        const remaining = Math.max(0, savedState.time - elapsed);
+
+        if (remaining === 0) {
+          console.log("No time remaining, clearing state");
+          if (!isExtension) {
+            localStorage.removeItem(STORAGE_KEY);
+          } else {
+            const browserAPI = getBrowserAPI();
+            if (browserAPI?.storage?.local) {
+              browserAPI.storage.local.remove(STORAGE_KEY);
+            }
+          }
+          return;
+        }
+
+        console.log("Restoring timer state:", {
+          time: remaining,
+          isCountingDown: savedState.isCountingDown,
+          isPaused: savedState.isPaused,
+        });
+
+        setTime(remaining);
+        setIsCountingDown(savedState.isCountingDown);
+        setIsPaused(savedState.isPaused);
+
+        if (savedState.isCountingDown && !savedState.isPaused) {
+          console.log("Starting countdown with remaining time:", remaining);
+          startCountdown(remaining);
+        } else {
+          setDisplayTime(remaining);
+        }
       } catch (error) {
         console.error("Error restoring timer state:", error);
       }
     };
 
     restoreState();
-  }, [isMounted, isExtension, getStorageData, startCountdown, handleTimerEnd]);
+  }, [
+    isMounted,
+    isExtension,
+    getStorageData,
+    startCountdown,
+    isCountingDown,
+    isFinished,
+  ]);
 
   // Update storage listener for cross-browser compatibility
   useEffect(() => {
