@@ -105,7 +105,7 @@ async function startTimer(duration) {
   }
 
   // Stop any existing timer
-  await stopTimer();
+  // await stopTimer();
 
   const now = Date.now();
 
@@ -182,7 +182,7 @@ async function stopTimer(isCanceled = false) {
 
     // Only play notification if timer wasn't canceled
     if (!isCanceled) {
-      // await playNotificationSound();
+      await playNotificationSound();
     }
   } finally {
     timer.isCompleting = false;
