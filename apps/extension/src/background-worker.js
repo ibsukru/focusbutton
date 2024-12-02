@@ -4,6 +4,7 @@ let timer = {
   isRunning: false,
   lastTick: Date.now(),
   isPaused: false,
+  isCompleting: false, // Add flag to prevent multiple completions
 };
 
 // Keep track of when the last tick occurred
@@ -71,6 +72,7 @@ async function initializeTimerState() {
       isRunning: false,
       lastTick: Date.now(),
       isPaused: false,
+      isCompleting: false,
     };
 
     // Clear any existing storage
@@ -113,6 +115,7 @@ async function startTimer(duration) {
     isRunning: true,
     lastTick: now,
     isPaused: false,
+    isCompleting: false,
   };
   lastTickTime = now;
 
@@ -143,33 +146,46 @@ async function startTimer(duration) {
 
 async function stopTimer(isCanceled = false) {
   console.log("Stopping timer");
-  timer.isRunning = false;
-  timer.timeLeft = 0;
-  timer.lastTick = 0;
-  timer.isPaused = false;
 
-  // Clear the alarm
-  await chrome.alarms.clear("timerTick");
+  // Prevent multiple completions
+  if (timer.isCompleting) {
+    console.log("Timer already completing, ignoring stop request");
+    return;
+  }
 
-  const state = {
-    type: "TIMER_UPDATE",
-    isCountingDown: false,
-    time: 0,
-    isPaused: false,
-    isFinished: true,
-    source: "background",
-    timestamp: Date.now(),
-    isFinalState: true,
-    isCanceled,
-  };
+  timer.isCompleting = true;
 
-  await chrome.storage.local.set({
-    focusbutton_timer_state: state,
-  });
+  try {
+    timer.isRunning = false;
+    timer.timeLeft = 0;
+    timer.lastTick = 0;
+    timer.isPaused = false;
 
-  // Only play notification if timer wasn't canceled
-  if (!isCanceled) {
-    await playNotificationSound();
+    // Clear the alarm
+    await chrome.alarms.clear("timerTick");
+
+    const state = {
+      type: "TIMER_UPDATE",
+      isCountingDown: false,
+      time: 0,
+      isPaused: false,
+      isFinished: true,
+      source: "background",
+      timestamp: Date.now(),
+      isFinalState: true,
+      isCanceled,
+    };
+
+    await chrome.storage.local.set({
+      focusbutton_timer_state: state,
+    });
+
+    // Only play notification if timer wasn't canceled
+    if (!isCanceled) {
+      // await playNotificationSound();
+    }
+  } finally {
+    timer.isCompleting = false;
   }
 }
 
@@ -192,7 +208,7 @@ async function updateState(state) {
 
 async function tick() {
   // Don't tick if timer is not running or is paused
-  if (!timer.isRunning || timer.isPaused) {
+  if (!timer.isRunning || timer.isPaused || timer.isCompleting) {
     return;
   }
 
@@ -218,18 +234,7 @@ async function tick() {
   // Ensure timeLeft is a valid number
   if (typeof timer.timeLeft !== "number" || isNaN(timer.timeLeft)) {
     console.error("Invalid timer.timeLeft:", timer.timeLeft);
-    timer.timeLeft = 0;
-    timer.isRunning = false;
-    await updateState({
-      type: "TIMER_UPDATE",
-      isCountingDown: false,
-      time: 0,
-      isPaused: false,
-      isFinished: true,
-      source: "background",
-      timestamp: now,
-      persistOnReload: false,
-    });
+    await stopTimer();
     return;
   }
 
@@ -242,26 +247,20 @@ async function tick() {
     timer.timeLeft = newTime;
     console.log("Timer tick, new time:", newTime);
 
-    const state = {
-      type: "TIMER_UPDATE",
-      isCountingDown: newTime > 0,
-      time: newTime,
-      isPaused: timer.isPaused,
-      isFinished: newTime === 0,
-      source: "background",
-      timestamp: now,
-      persistOnReload: timer.isRunning && !timer.isPaused,
-    };
-
     if (newTime === 0) {
       console.log("Timer completed");
-      timer.isRunning = false;
-      timer.lastTick = 0;
-      state.isFinalState = true;
-
-      await updateState(state);
       await stopTimer();
     } else {
+      const state = {
+        type: "TIMER_UPDATE",
+        isCountingDown: true,
+        time: newTime,
+        isPaused: timer.isPaused,
+        isFinished: false,
+        source: "background",
+        timestamp: now,
+        persistOnReload: timer.isRunning && !timer.isPaused,
+      };
       await updateState(state);
     }
   }

@@ -25,10 +25,10 @@ declare global {
           sendMessage: (message: any) => Promise<any>;
           onMessage: {
             addListener: (
-              callback: (message: any, sender: any, sendResponse: any) => void,
+              callback: (message: any, sender: any, sendResponse: any) => void
             ) => void;
             removeListener: (
-              callback: (message: any, sender: any, sendResponse: any) => void,
+              callback: (message: any, sender: any, sendResponse: any) => void
             ) => void;
           };
         };
@@ -36,7 +36,7 @@ declare global {
           onClicked: {
             addListener: (callback: (notificationId: string) => void) => void;
             removeListener: (
-              callback: (notificationId: string) => void,
+              callback: (notificationId: string) => void
             ) => void;
           };
           clear: (notificationId: string) => Promise<void>;
@@ -74,9 +74,18 @@ interface TimerMessage {
 const STORAGE_KEY = "focusbutton_timer_state";
 
 const getBrowserAPI = (): BrowserAPIType | null => {
-  if (typeof window !== "undefined" && typeof browser !== "undefined") {
+  if (typeof window === "undefined") return null;
+
+  // Check for Chrome API first
+  if (typeof chrome !== "undefined" && chrome.runtime) {
+    return chrome as unknown as BrowserAPIType;
+  }
+
+  // Fallback to Firefox API
+  if (typeof browser !== "undefined" && (browser as any).runtime) {
     return browser as unknown as BrowserAPIType;
   }
+
   return null;
 };
 
@@ -135,11 +144,23 @@ export default function FocusButton() {
 
   // Check for extension context after mount
   useEffect(() => {
-    const checkExtension =
-      typeof window !== "undefined" &&
-      typeof browser !== "undefined" &&
-      (browser.runtime as any)?.id !== undefined;
-    setIsExtension(checkExtension);
+    const checkExtension = () => {
+      // Check if we're in a browser extension context
+      if (
+        typeof chrome !== "undefined" &&
+        chrome.runtime &&
+        chrome.runtime.id
+      ) {
+        return true;
+      }
+      // Fallback check for Firefox and other browsers
+      if (typeof browser !== "undefined" && (browser as any).runtime?.id) {
+        return true;
+      }
+      return false;
+    };
+
+    setIsExtension(checkExtension());
   }, []);
 
   // Keep track of current state for comparison
@@ -176,9 +197,13 @@ export default function FocusButton() {
 
       try {
         console.log("Sending message:", msg);
-        const browserRuntime = (browser as any)?.runtime;
-        return browserRuntime
-          ?.sendMessage(msg)
+        const browserAPI = getBrowserAPI();
+        if (!browserAPI) {
+          throw new Error("Browser API not available");
+        }
+
+        return browserAPI.runtime
+          .sendMessage(msg)
           .then((response: any) => {
             console.log("Message response:", response);
             return response;
@@ -192,7 +217,7 @@ export default function FocusButton() {
         return null;
       }
     },
-    [isExtension],
+    [isExtension]
   );
 
   const handleTimerEnd = useCallback(() => {
@@ -207,7 +232,7 @@ export default function FocusButton() {
         browserAPI.notifications.create({
           type: "basic",
           iconUrl: "/icons/icon-128.png",
-          title: "Focus Timer",
+          title: "Time's up!",
           message: "Time's up! Take a break.",
         });
       }
@@ -315,7 +340,7 @@ export default function FocusButton() {
 
       trackEvent("timer_start", { duration: duration || time });
     },
-    [time, isExtension, sendMessage, handleTimerEnd],
+    [time, isExtension, sendMessage, handleTimerEnd]
   );
 
   const handleCancel = useCallback(() => {
@@ -392,8 +417,9 @@ export default function FocusButton() {
     // Then update extension
     if (isExtension) {
       sendMessage({ type: "PAUSE_TIMER" });
+      const browserAPI = getBrowserAPI();
       // Ensure storage is updated
-      browser?.storage?.local?.set?.({
+      browserAPI?.storage?.local?.set?.({
         focusbutton_timer_state: {
           type: "TIMER_UPDATE",
           isCountingDown: true,
@@ -430,8 +456,9 @@ export default function FocusButton() {
 
     if (isExtension) {
       sendMessage({ type: "RESUME_TIMER" });
+
       // Ensure storage is updated
-      browser?.storage.local.set({
+      getBrowserAPI()?.storage.local.set({
         focusbutton_timer_state: {
           type: "TIMER_UPDATE",
           isCountingDown: true,
@@ -488,8 +515,9 @@ export default function FocusButton() {
           setIsPaused(savedState.isPaused);
 
           if (savedState.isCountingDown && !savedState.isPaused) {
+            console.log("App coming to foreground, restoring timer state");
             const elapsed = Math.floor(
-              (Date.now() - savedState.startTime) / 1000,
+              (Date.now() - savedState.startTime) / 1000
             );
             const remaining = Math.max(0, savedState.time - elapsed);
 
@@ -534,7 +562,7 @@ export default function FocusButton() {
 
           if (newState.isCountingDown && !newState.isPaused) {
             const elapsed = Math.floor(
-              (Date.now() - newState.startTime) / 1000,
+              (Date.now() - newState.startTime) / 1000
             );
             const remaining = Math.max(0, newState.time - elapsed);
 
@@ -608,8 +636,9 @@ export default function FocusButton() {
         }
       };
 
-      browser?.runtime.onMessage.addListener(handleMessage);
-      return () => browser?.runtime.onMessage.removeListener(handleMessage);
+      getBrowserAPI()?.runtime.onMessage.addListener(handleMessage);
+      return () =>
+        getBrowserAPI()?.runtime.onMessage.removeListener(handleMessage);
     }
   }, []);
 
@@ -752,7 +781,7 @@ export default function FocusButton() {
         // For extension mode, explicitly stop the timer
         if (isExtension) {
           sendMessage({ type: "STOP_TIMER" });
-          browser?.storage.local.set({
+          getBrowserAPI()?.storage.local.set({
             focusbutton_timer_state: {
               type: "TIMER_UPDATE",
               time: 0,
@@ -772,15 +801,18 @@ export default function FocusButton() {
 
       // Update extension state
       if (isExtension) {
-        browser?.storage.local.set({
-          focusbutton_timer_state: {
-            type: "TIMER_UPDATE",
-            isCountingDown: false,
-            time: newTime,
-            isPaused: false,
-            isFinished: false,
-          },
-        });
+        const browserAPI = getBrowserAPI();
+        if (browserAPI) {
+          browserAPI.storage.local.set({
+            [STORAGE_KEY]: {
+              type: "TIMER_UPDATE",
+              isCountingDown: false,
+              time: newTime,
+              isPaused: false,
+              isFinished: false,
+            },
+          });
+        }
       }
     };
 
@@ -844,7 +876,7 @@ export default function FocusButton() {
         localStorage.removeItem("focusTimer");
       }
     },
-    [time, isCountingDown, startCountdown, handleTimerEnd],
+    [time, isCountingDown, startCountdown, handleTimerEnd]
   );
 
   useEffect(() => {
@@ -861,12 +893,12 @@ export default function FocusButton() {
 
     document.addEventListener(
       "visibilitychange",
-      handleVisibilityChangeWrapper,
+      handleVisibilityChangeWrapper
     );
     return () => {
       document.removeEventListener(
         "visibilitychange",
-        handleVisibilityChangeWrapper,
+        handleVisibilityChangeWrapper
       );
     };
   }, [handleVisibilityChange]);
@@ -945,7 +977,7 @@ export default function FocusButton() {
     // Function to get or create the meta tag
     const getOrCreateThemeMetaTag = () => {
       let meta = document.querySelector(
-        "meta[name='theme-color']",
+        "meta[name='theme-color']"
       ) as HTMLMetaElement;
       if (!meta) {
         meta = document.createElement("meta");
@@ -957,7 +989,7 @@ export default function FocusButton() {
 
     const getOrCreateBackgroundMetaTag = () => {
       let meta = document.querySelector(
-        "meta[name='background-color']",
+        "meta[name='background-color']"
       ) as HTMLMetaElement;
       if (!meta) {
         meta = document.createElement("meta");
@@ -983,9 +1015,9 @@ export default function FocusButton() {
         }
       };
 
-      browser?.runtime.onMessage.addListener(handleMessage);
+      getBrowserAPI()?.runtime.onMessage.addListener(handleMessage);
       return () => {
-        browser?.runtime.onMessage.removeListener(handleMessage);
+        getBrowserAPI()?.runtime.onMessage.removeListener(handleMessage);
       };
     }
   }, []);
@@ -1184,7 +1216,7 @@ export default function FocusButton() {
         </div>
         <div
           className={`${styles.controls} ${
-            isCountingDown && time > 0 ? styles.visible : ""
+            isCountingDown || time > 0 ? styles.visible : ""
           }`}
         >
           <button onClick={handleClick}>{isPaused ? "Resume" : "Pause"}</button>
