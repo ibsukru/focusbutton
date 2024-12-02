@@ -103,15 +103,12 @@ const getStorageData = async () => {
 };
 
 const formatTimeValues = (timeInSeconds: number): string => {
-  const hours = Math.floor(timeInSeconds / 3600);
-  const minutes = Math.floor((timeInSeconds % 3600) / 60);
+  if (!timeInSeconds && timeInSeconds !== 0) return "00:00";
+  
+  const minutes = Math.floor(timeInSeconds / 60);
   const seconds = timeInSeconds % 60;
 
   const formatNumber = (num: number) => num.toString().padStart(2, "0");
-
-  if (hours > 0) {
-    return `${formatNumber(hours)}:${formatNumber(minutes)}:${formatNumber(seconds)}`;
-  }
   return `${formatNumber(minutes)}:${formatNumber(seconds)}`;
 };
 
@@ -731,6 +728,8 @@ export default function FocusButton() {
     }
   }, [isExtension]);
 
+  const MAX_TIME = 3600; // 60 minutes in seconds
+
   const startAdjustment = (adjustment: number) => {
     // Stop any existing countdown
     if (timerRef.current) {
@@ -780,70 +779,75 @@ export default function FocusButton() {
       const totalAdjustment =
         elapsedSeconds * 300 + Math.floor(progressInSecond * 300);
 
-      const newTime =
-        adjustment > 0
-          ? Math.min(initialTime + totalAdjustment, 3600)
-          : Math.max(initialTime - totalAdjustment, 0);
+      let newTime = adjustment > 0
+        ? Math.min(initialTime + totalAdjustment, MAX_TIME) // Cap at 60 minutes
+        : Math.max(initialTime - totalAdjustment, 0);
 
-      // Stop animation if we've reached 0
-      if (newTime === 0 && lastTime > 0) {
+      // Stop if we hit max time
+      if (newTime >= MAX_TIME && adjustment > 0) {
         if (adjustIntervalRef.current) {
           clearInterval(adjustIntervalRef.current);
           adjustIntervalRef.current = null;
         }
-        setTime(0);
-        setDisplayTime(0);
+        newTime = MAX_TIME;
+      }
+
+      // Stop animation if we've reached limits
+      if ((newTime === 0 && lastTime > 0) || (newTime === MAX_TIME && lastTime < MAX_TIME)) {
+        if (adjustIntervalRef.current) {
+          clearInterval(adjustIntervalRef.current);
+          adjustIntervalRef.current = null;
+        }
+        setTime(newTime);
+        setDisplayTime(newTime);
         setIsCountingDown(false);
         setIsPaused(false);
-        setIsFinished(true);
+        setIsFinished(newTime === 0);
 
-        // For extension mode, explicitly stop the timer
+        // For extension mode, update state
         if (isExtension) {
-          sendMessage({ type: "STOP_TIMER" });
-          getBrowserAPI()?.storage.local.set({
-            focusbutton_timer_state: {
-              type: "TIMER_UPDATE",
-              time: 0,
-              isPaused: false,
-              isFinished: true,
-            },
-          });
+          const browserAPI = getBrowserAPI();
+          if (browserAPI) {
+            browserAPI.storage.local.set({
+              [STORAGE_KEY]: {
+                type: "TIMER_UPDATE",
+                isCountingDown: false,
+                time: newTime,
+                isPaused: false,
+                isFinished: newTime === 0,
+                source: "ui",
+                timestamp: Date.now(),
+              },
+            });
+          }
+        } else {
+          // For web mode, update localStorage
+          if (newTime === 0) {
+            localStorage.removeItem(STORAGE_KEY);
+          } else {
+            localStorage.setItem(
+              STORAGE_KEY,
+              JSON.stringify({
+                time: newTime,
+                isCountingDown: false,
+                isPaused: false,
+                isFinished: false,
+                startTime: Date.now(),
+              })
+            );
+          }
         }
         return;
       }
 
       lastTime = newTime;
-
-      // Batch state updates together
       setTime(newTime);
       setDisplayTime(newTime);
-
-      // Update extension state
-      if (isExtension) {
-        const browserAPI = getBrowserAPI();
-        if (browserAPI) {
-          browserAPI.storage.local.set({
-            [STORAGE_KEY]: {
-              type: "TIMER_UPDATE",
-              isCountingDown: false,
-              time: newTime,
-              isPaused: false,
-              isFinished: false,
-            },
-          });
-        }
-      }
     };
 
-    // Use requestAnimationFrame for smoother updates
-    const animate = () => {
-      if (!adjustIntervalRef.current) return;
-      updateDisplay();
-      requestAnimationFrame(animate);
-    };
-
-    adjustIntervalRef.current = window.setInterval(() => {}, 1000); // Keep interval alive
-    requestAnimationFrame(animate);
+    // Start the adjustment animation
+    updateDisplay();
+    adjustIntervalRef.current = window.setInterval(updateDisplay, 16);
   };
 
   const stopAdjustment = () => {

@@ -32,29 +32,15 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
     name: "FocusButton",
     version: "1.0.0",
     description: "Track your focus time with a simple press and hold button",
-    permissions: [
-      "storage",
-      "notifications",
-      "tabs",
-      "alarms",
-      "windows",
-      "activeTab",
-      "scripting",
-      "offscreen",
-    ],
-    content_scripts: [
-      {
-        matches: ["<all_urls>"],
-        js: ["content-script.js"],
-      },
-    ],
+    permissions: ["storage", "notifications", "alarms", "offscreen", "tabs"],
+    host_permissions: [],  
+    content_scripts: [],   
     action: {
       default_icon: {
         "16": "icons/icon-16.png",
         "48": "icons/icon-48.png",
         "128": "icons/icon-128.png",
       },
-      // Removed default_popup to allow opening in a separate page
     },
     background: {
       service_worker: "background-worker.js",
@@ -74,10 +60,22 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
           "offscreen.js",
           "index.html",
         ],
-        matches: ["<all_urls>"],
+        matches: ["chrome-extension://*/*", "moz-extension://*/*"]  
       },
     ],
   };
+
+  const manifest = isFirefox
+    ? {
+        ...manifestBase,
+        browser_specific_settings: {
+          gecko: {
+            id: "focusbutton@example.com",
+            strict_min_version: "109.0",
+          },
+        },
+      }
+    : manifestBase;
 
   return {
     plugins: [
@@ -92,7 +90,7 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
             entryPoints: {
               "background-worker": resolve(
                 __dirname,
-                "src/background-worker.js",
+                "src/background-worker.js"
               ),
               "content-script": resolve(__dirname, "src/content-script.js"),
             },
@@ -116,11 +114,11 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
           // Copy offscreen files to dist root
           copyFileSync(
             resolve(__dirname, "src/offscreen.html"),
-            resolve(__dirname, "dist/offscreen.html"),
+            resolve(__dirname, "dist/offscreen.html")
           );
           copyFileSync(
             resolve(__dirname, "src/offscreen.js"),
-            resolve(__dirname, "dist/offscreen.js"),
+            resolve(__dirname, "dist/offscreen.js")
           );
         },
       },
@@ -128,20 +126,6 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
         name: "write-manifest",
         enforce: "post",
         closeBundle() {
-          const manifest = {
-            ...manifestBase,
-            ...(isFirefox
-              ? {
-                  browser_specific_settings: {
-                    gecko: {
-                      id: "focusbutton@example.com",
-                      strict_min_version: "109.0",
-                    },
-                  },
-                }
-              : {}),
-          };
-
           // Ensure dist directory exists
           if (!existsSync("dist")) {
             mkdirSync("dist", { recursive: true });
@@ -151,7 +135,7 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
           writeFileSync(
             resolve(__dirname, "dist/manifest.json"),
             JSON.stringify(manifest, null, 2),
-            "utf-8",
+            "utf-8"
           );
         },
       },
