@@ -33,8 +33,8 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
     version: "1.0.0",
     description: "Track your focus time with a simple press and hold button",
     permissions: ["storage", "notifications", "alarms", "offscreen", "tabs"],
-    host_permissions: [],  
-    content_scripts: [],   
+    host_permissions: [],
+    content_scripts: [],
     action: {
       default_icon: {
         "16": "icons/icon-16.png",
@@ -60,7 +60,7 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
           "offscreen.js",
           "index.html",
         ],
-        matches: ["chrome-extension://*/*", "moz-extension://*/*"]  
+        matches: ["chrome-extension://*/*", "moz-extension://*/*"],
       },
     ],
   };
@@ -90,7 +90,7 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
             entryPoints: {
               "background-worker": resolve(
                 __dirname,
-                "src/background-worker.js"
+                "src/background-worker.js",
               ),
               "content-script": resolve(__dirname, "src/content-script.js"),
             },
@@ -114,11 +114,11 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
           // Copy offscreen files to dist root
           copyFileSync(
             resolve(__dirname, "src/offscreen.html"),
-            resolve(__dirname, "dist/offscreen.html")
+            resolve(__dirname, "dist/offscreen.html"),
           );
           copyFileSync(
             resolve(__dirname, "src/offscreen.js"),
-            resolve(__dirname, "dist/offscreen.js")
+            resolve(__dirname, "dist/offscreen.js"),
           );
         },
       },
@@ -135,7 +135,7 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
           writeFileSync(
             resolve(__dirname, "dist/manifest.json"),
             JSON.stringify(manifest, null, 2),
-            "utf-8"
+            "utf-8",
           );
         },
       },

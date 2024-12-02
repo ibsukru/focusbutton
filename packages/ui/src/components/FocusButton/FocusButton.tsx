@@ -104,7 +104,7 @@ const getStorageData = async () => {
 
 const formatTimeValues = (timeInSeconds: number): string => {
   if (!timeInSeconds && timeInSeconds !== 0) return "00:00";
-  
+
   const minutes = Math.floor(timeInSeconds / 60);
   const seconds = timeInSeconds % 60;
 
@@ -779,9 +779,10 @@ export default function FocusButton() {
       const totalAdjustment =
         elapsedSeconds * 300 + Math.floor(progressInSecond * 300);
 
-      let newTime = adjustment > 0
-        ? Math.min(initialTime + totalAdjustment, MAX_TIME) // Cap at 60 minutes
-        : Math.max(initialTime - totalAdjustment, 0);
+      let newTime =
+        adjustment > 0
+          ? Math.min(initialTime + totalAdjustment, MAX_TIME) // Cap at 60 minutes
+          : Math.max(initialTime - totalAdjustment, 0);
 
       // Stop if we hit max time
       if (newTime >= MAX_TIME && adjustment > 0) {
@@ -793,7 +794,10 @@ export default function FocusButton() {
       }
 
       // Stop animation if we've reached limits
-      if ((newTime === 0 && lastTime > 0) || (newTime === MAX_TIME && lastTime < MAX_TIME)) {
+      if (
+        (newTime === 0 && lastTime > 0) ||
+        (newTime === MAX_TIME && lastTime < MAX_TIME)
+      ) {
         if (adjustIntervalRef.current) {
           clearInterval(adjustIntervalRef.current);
           adjustIntervalRef.current = null;
@@ -833,7 +837,7 @@ export default function FocusButton() {
                 isPaused: false,
                 isFinished: false,
                 startTime: Date.now(),
-              })
+              }),
             );
           }
         }
