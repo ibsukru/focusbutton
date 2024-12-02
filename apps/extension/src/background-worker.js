@@ -571,9 +571,10 @@ chrome.runtime.onMessage.addListener((message) => {
 });
 
 // Handle extension icon click
-chrome.action.onClicked.addListener(async () => {
-  const url = chrome.runtime.getURL("index.html");
-  await chrome.tabs.create({ url, active: true });
+chrome.action.onClicked.addListener(() => {
+  chrome.tabs.create({
+    url: 'index.html'
+  });
 });
 
 // Cleanup timer on extension unload

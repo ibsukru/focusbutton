@@ -38,29 +38,26 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
     action: {
       default_icon: {
         "16": "icons/icon-16.png",
+        "32": "icons/icon-32.png",
         "48": "icons/icon-48.png",
         "128": "icons/icon-128.png",
       },
+      default_title: "FocusButton",
+    },
+    icons: {
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png",
+      "48": "icons/icon-48.png",
+      "128": "icons/icon-128.png",
     },
     background: {
       service_worker: "background-worker.js",
       type: "module",
     },
-    icons: {
-      "16": "icons/icon-16.png",
-      "48": "icons/icon-48.png",
-      "128": "icons/icon-128.png",
-    },
     web_accessible_resources: [
       {
-        resources: [
-          "timer-end.mp3",
-          "assets/*",
-          "offscreen.html",
-          "offscreen.js",
-          "index.html",
-        ],
-        matches: ["chrome-extension://*/*", "moz-extension://*/*"],
+        resources: ["icons/*", "offscreen.html", "offscreen.js", "index.html"],
+        matches: ["chrome-extension://${chrome.runtime.id}/*"],
       },
     ],
   };
@@ -90,7 +87,7 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
             entryPoints: {
               "background-worker": resolve(
                 __dirname,
-                "src/background-worker.js",
+                "src/background-worker.js"
               ),
               "content-script": resolve(__dirname, "src/content-script.js"),
             },
@@ -114,11 +111,11 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
           // Copy offscreen files to dist root
           copyFileSync(
             resolve(__dirname, "src/offscreen.html"),
-            resolve(__dirname, "dist/offscreen.html"),
+            resolve(__dirname, "dist/offscreen.html")
           );
           copyFileSync(
             resolve(__dirname, "src/offscreen.js"),
-            resolve(__dirname, "dist/offscreen.js"),
+            resolve(__dirname, "dist/offscreen.js")
           );
         },
       },
@@ -135,7 +132,7 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
           writeFileSync(
             resolve(__dirname, "dist/manifest.json"),
             JSON.stringify(manifest, null, 2),
-            "utf-8",
+            "utf-8"
           );
         },
       },
