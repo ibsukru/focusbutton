@@ -140,7 +140,13 @@ const startTimer = async (duration) => {
           focusbutton_timer_state: state,
         });
 
+        // Log only significant changes
+        if (timer.timeLeft % 5 === 0 || timer.timeLeft <= 3) {
+          console.log(`Background timer: ${timer.timeLeft}s remaining`);
+        }
+
         if (timer.timeLeft === 0) {
+          console.log("Timer completed, playing notification");
           clearInterval(timerIntervalId);
           timerIntervalId = null;
           timer.isRunning = false;

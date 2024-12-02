@@ -483,123 +483,6 @@ export default function FocusButton() {
     return () => clearTimeout(timer);
   }, []);
 
-  // Update state restoration for cross-browser compatibility
-  useEffect(() => {
-    if (!isMounted) return;
-
-    const restoreState = async () => {
-      // Prevent multiple restorations
-      if (isCountingDown || timerRef.current || isFinished) {
-        console.log("Timer already running or finished, skipping restore");
-        return;
-      }
-
-      try {
-        let savedState: TimerState | null = null;
-
-        if (isExtension) {
-          savedState = await getStorageData();
-        } else {
-          const stateStr = localStorage.getItem(STORAGE_KEY);
-          if (stateStr) {
-            savedState = JSON.parse(stateStr);
-          }
-        }
-
-        if (!savedState || savedState.isFinished) {
-          console.log("No saved state or timer was finished");
-          return;
-        }
-
-        // Calculate remaining time
-        const elapsed =
-          savedState.isCountingDown && !savedState.isPaused
-            ? Math.floor((Date.now() - savedState.startTime) / 1000)
-            : 0;
-        const remaining = Math.max(0, savedState.time - elapsed);
-
-        if (remaining === 0) {
-          console.log("No time remaining, clearing state");
-          if (!isExtension) {
-            localStorage.removeItem(STORAGE_KEY);
-          } else {
-            const browserAPI = getBrowserAPI();
-            if (browserAPI?.storage?.local) {
-              browserAPI.storage.local.remove(STORAGE_KEY);
-            }
-          }
-          return;
-        }
-
-        console.log("Restoring timer state:", {
-          time: remaining,
-          isCountingDown: savedState.isCountingDown,
-          isPaused: savedState.isPaused,
-        });
-
-        setTime(remaining);
-        setIsCountingDown(savedState.isCountingDown);
-        setIsPaused(savedState.isPaused);
-
-        if (savedState.isCountingDown && !savedState.isPaused) {
-          console.log("Starting countdown with remaining time:", remaining);
-          startCountdown(remaining);
-        } else {
-          setDisplayTime(remaining);
-        }
-      } catch (error) {
-        console.error("Error restoring timer state:", error);
-      }
-    };
-
-    restoreState();
-  }, [
-    isMounted,
-    isExtension,
-    getStorageData,
-    startCountdown,
-    isCountingDown,
-    isFinished,
-  ]);
-
-  // Handle storage changes
-  useEffect(() => {
-    if (!isExtension) return;
-
-    let lastUpdateTimestamp = 0;
-    const UPDATE_THROTTLE = 200; // ms
-
-    const handleStorageChange = async (changes: any) => {
-      const timerState = changes.focusbutton_timer_state?.newValue;
-      if (!timerState) return;
-
-      // Skip if this is a reflection of our own update
-      if (timerState.source === "ui") {
-        return;
-      }
-
-      // Throttle updates
-      const now = Date.now();
-      if (now - lastUpdateTimestamp < UPDATE_THROTTLE) {
-        return;
-      }
-      lastUpdateTimestamp = now;
-
-      // Update UI state from background worker
-      setTime(timerState.time);
-      setIsCountingDown(timerState.isCountingDown);
-      setIsPaused(timerState.isPaused);
-
-      // Handle timer completion
-      if (timerState.time === 0 && !timerState.isCountingDown) {
-        handleTimerEnd();
-      }
-    };
-
-    chrome.storage.onChanged.addListener(handleStorageChange);
-    return () => chrome.storage.onChanged.removeListener(handleStorageChange);
-  }, [isExtension, handleTimerEnd]);
-
   // Restore timer state
   useEffect(() => {
     if (!isExtension) return;
@@ -611,13 +494,8 @@ export default function FocusButton() {
         ]);
         const state = result.focusbutton_timer_state;
 
-        if (!state) return;
-
-        // Only restore if timer is not already running
-        if (isCountingDown || time > 0) {
-          console.log("Timer already running, skipping restore");
-          return;
-        }
+        // Skip if no state or timer is already running
+        if (!state || isCountingDown || time > 0) return;
 
         setTime(state.time);
         setIsCountingDown(state.isCountingDown);
@@ -633,6 +511,43 @@ export default function FocusButton() {
 
     restoreTimerState();
   }, [isExtension, isCountingDown, time, handleTimerEnd]);
+
+  // Handle storage changes
+  useEffect(() => {
+    if (!isExtension) return;
+
+    let lastUpdateTimestamp = 0;
+    const UPDATE_THROTTLE = 200; // ms
+
+    const handleStorageChange = async (changes: any) => {
+      const timerState = changes.focusbutton_timer_state?.newValue;
+      if (!timerState || timerState.source === "ui") return;
+
+      // Throttle updates
+      const now = Date.now();
+      if (now - lastUpdateTimestamp < UPDATE_THROTTLE) return;
+      lastUpdateTimestamp = now;
+
+      // Update UI state from background worker
+      setTime(timerState.time);
+      setIsCountingDown(timerState.isCountingDown);
+      setIsPaused(timerState.isPaused);
+
+      // Only log significant state changes
+      if (timerState.time % 5 === 0 || timerState.time <= 3) {
+        console.log(`Timer: ${timerState.time}s remaining`);
+      }
+
+      // Handle timer completion
+      if (timerState.time === 0 && !timerState.isCountingDown) {
+        console.log("Timer completed");
+        handleTimerEnd();
+      }
+    };
+
+    chrome.storage.onChanged.addListener(handleStorageChange);
+    return () => chrome.storage.onChanged.removeListener(handleStorageChange);
+  }, [isExtension, handleTimerEnd]);
 
   // Track last state update
   const STATE_UPDATE_THROTTLE = 100;
