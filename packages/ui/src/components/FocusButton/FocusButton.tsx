@@ -263,6 +263,7 @@ export default function FocusButton() {
       // Clear any existing timer
       if (timerRef.current) {
         clearInterval(timerRef.current);
+        timerRef.current = null;
       }
 
       setIsCountingDown(true);
@@ -272,7 +273,7 @@ export default function FocusButton() {
       const now = Date.now();
       startTimeRef.current = now;
 
-      // Start local timer for smooth UI updates (same for both modes)
+      // Start local timer for smooth UI updates
       timerRef.current = setInterval(() => {
         setDisplayTime((prevTime) => {
           const newTime = Math.max(0, prevTime - 1);
@@ -379,6 +380,11 @@ export default function FocusButton() {
   }, [isExtension, sendMessage]);
 
   const handleClick = () => {
+    // Don't handle clicks during adjustment
+    if (adjustIntervalRef.current) {
+      return;
+    }
+
     if (!isCountingDown && time > 0) {
       startCountdown();
     } else if (isCountingDown && !isPaused) {
@@ -731,27 +737,24 @@ export default function FocusButton() {
   const MAX_TIME = 3600; // 60 minutes in seconds
 
   const startAdjustment = (adjustment: number) => {
-    // Stop any existing countdown
+    // Stop any existing countdown and clear state
     if (timerRef.current) {
       clearInterval(timerRef.current);
       timerRef.current = null;
     }
+
+    // Clear extension timer state immediately
+    if (isExtension) {
+      const browserAPI = getBrowserAPI();
+      if (browserAPI) {
+        browserAPI.storage.local.remove(STORAGE_KEY);
+        sendMessage({ type: "STOP_TIMER", isCanceled: true });
+      }
+    }
+
     setIsCountingDown(false);
     setIsPaused(false);
     setIsFinished(false);
-
-    // Only request notification permission on up click
-    if (
-      adjustment > 0 &&
-      isNotificationSupported &&
-      Notification.permission === "default"
-    ) {
-      requestNotificationPermission().catch((error) => {
-        console.log("Permission request failed:", error);
-      });
-    }
-
-    trackEvent("timer_adjust", { adjustment });
 
     // Clear any existing adjustment intervals
     if (adjustIntervalRef.current) {
@@ -766,49 +769,28 @@ export default function FocusButton() {
 
     const updateDisplay = () => {
       const now = Date.now();
-      // Throttle updates to prevent too frequent state changes
-      if (now - lastUpdateTime < 50) {
-        return;
-      }
+      if (now - lastUpdateTime < 50) return;
       lastUpdateTime = now;
 
-      // Add null check for adjustStartTimeRef.current
       const startTime = adjustStartTimeRef.current ?? now;
       const elapsedSeconds = Math.floor((now - startTime) / 1000);
       const progressInSecond = ((now - startTime) % 1000) / 1000;
-      const totalAdjustment =
-        elapsedSeconds * 300 + Math.floor(progressInSecond * 300);
+      const totalAdjustment = elapsedSeconds * 300 + Math.floor(progressInSecond * 300);
 
-      let newTime =
-        adjustment > 0
-          ? Math.min(initialTime + totalAdjustment, MAX_TIME) // Cap at 60 minutes
-          : Math.max(initialTime - totalAdjustment, 0);
+      let newTime = adjustment > 0
+        ? Math.min(initialTime + totalAdjustment, MAX_TIME)
+        : Math.max(initialTime - totalAdjustment, 0);
 
-      // Stop if we hit max time
-      if (newTime >= MAX_TIME && adjustment > 0) {
-        if (adjustIntervalRef.current) {
-          clearInterval(adjustIntervalRef.current);
-          adjustIntervalRef.current = null;
-        }
-        newTime = MAX_TIME;
-      }
-
-      // Stop animation if we've reached limits
-      if (
-        (newTime === 0 && lastTime > 0) ||
-        (newTime === MAX_TIME && lastTime < MAX_TIME)
-      ) {
+      // Stop if we hit limits
+      if ((newTime === 0 && lastTime > 0) || (newTime === MAX_TIME && lastTime < MAX_TIME)) {
         if (adjustIntervalRef.current) {
           clearInterval(adjustIntervalRef.current);
           adjustIntervalRef.current = null;
         }
         setTime(newTime);
         setDisplayTime(newTime);
-        setIsCountingDown(false);
-        setIsPaused(false);
-        setIsFinished(newTime === 0);
-
-        // For extension mode, update state
+        
+        // Update storage with final time
         if (isExtension) {
           const browserAPI = getBrowserAPI();
           if (browserAPI) {
@@ -818,27 +800,12 @@ export default function FocusButton() {
                 isCountingDown: false,
                 time: newTime,
                 isPaused: false,
-                isFinished: newTime === 0,
+                isFinished: false,
                 source: "ui",
                 timestamp: Date.now(),
+                startTime: Date.now(),
               },
             });
-          }
-        } else {
-          // For web mode, update localStorage
-          if (newTime === 0) {
-            localStorage.removeItem(STORAGE_KEY);
-          } else {
-            localStorage.setItem(
-              STORAGE_KEY,
-              JSON.stringify({
-                time: newTime,
-                isCountingDown: false,
-                isPaused: false,
-                isFinished: false,
-                startTime: Date.now(),
-              }),
-            );
           }
         }
         return;
@@ -849,7 +816,6 @@ export default function FocusButton() {
       setDisplayTime(newTime);
     };
 
-    // Start the adjustment animation
     updateDisplay();
     adjustIntervalRef.current = window.setInterval(updateDisplay, 16);
   };
@@ -859,12 +825,33 @@ export default function FocusButton() {
       clearInterval(adjustIntervalRef.current);
       adjustIntervalRef.current = null;
     }
-    setDisplayTime(time);
 
-    // Only start countdown if not already counting down and time > 0
-    if (time > 0 && !isCountingDown && !isPaused) {
-      startCountdown();
+    // Start countdown with current time
+    if (time > 0) {
+      startCountdown(time);
     }
+
+    // Update storage with final time
+    if (isExtension) {
+      const browserAPI = getBrowserAPI();
+      if (browserAPI) {
+        browserAPI.storage.local.set({
+          [STORAGE_KEY]: {
+            type: "TIMER_UPDATE",
+            isCountingDown: false,
+            time: time,
+            isPaused: false,
+            isFinished: false,
+            source: "ui",
+            timestamp: Date.now(),
+            startTime: Date.now(),
+          },
+        });
+      }
+    }
+
+    // Don't auto-start countdown after adjustment
+    setDisplayTime(time);
   };
 
   const handleVisibilityChange = useCallback(

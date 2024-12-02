@@ -5,6 +5,7 @@ let timer = {
   lastTick: Date.now(),
   isPaused: false,
   isCompleting: false, // Add flag to prevent multiple completions
+  startTime: 0,
 };
 
 // Keep track of when the last tick occurred
@@ -73,6 +74,7 @@ async function initializeTimerState() {
       lastTick: Date.now(),
       isPaused: false,
       isCompleting: false,
+      startTime: 0,
     };
 
     // Clear any existing storage
@@ -95,54 +97,69 @@ async function initializeTimerState() {
   }
 }
 
-async function startTimer(duration) {
-  console.log("Starting timer with duration:", duration);
+let timerIntervalId = null;
 
-  // Validate duration
-  if (!duration || duration <= 0) {
-    console.error("Invalid duration:", duration);
-    return;
+const startTimer = async (duration) => {
+  try {
+    // Stop any existing timer
+    if (timerIntervalId) {
+      clearInterval(timerIntervalId);
+      timerIntervalId = null;
+    }
+
+    // Initialize timer state
+    timer.isRunning = true;
+    timer.isPaused = false;
+    timer.timeLeft = duration;
+    timer.startTime = Date.now();
+    timer.lastTick = Date.now();
+    timer.isCompleting = false;
+
+    // Start timer interval
+    timerIntervalId = setInterval(async () => {
+      const now = Date.now();
+      const elapsed = Math.floor((now - timer.lastTick) / 1000);
+      
+      if (elapsed >= 1) {
+        timer.lastTick = now;
+        timer.timeLeft = Math.max(0, timer.timeLeft - elapsed);
+
+        // Update state
+        await chrome.storage.local.set({
+          focusbutton_timer_state: {
+            type: "TIMER_UPDATE",
+            isCountingDown: true,
+            time: timer.timeLeft,
+            isPaused: false,
+            source: "background",
+            timestamp: now,
+            startTime: timer.startTime,
+          },
+        });
+
+        if (timer.timeLeft === 0) {
+          clearInterval(timerIntervalId);
+          timerIntervalId = null;
+          timer.isRunning = false;
+          timer.isCompleting = true;
+
+          // Play sound and show notification
+          await playNotificationSound();
+          chrome.notifications.create("timer_end", {
+            type: "basic",
+            iconUrl: "/icons/icon-128.png",
+            title: "Time's up!",
+            message: "Your focus session has ended.",
+          });
+        }
+      }
+    }, 100);
+
+  } catch (error) {
+    console.error("Error starting timer:", error);
+    throw error;
   }
-
-  // Stop any existing timer
-  // await stopTimer();
-
-  const now = Date.now();
-
-  // Initialize timer state with exact duration
-  timer = {
-    timeLeft: Math.floor(duration), // Ensure integer value
-    isRunning: true,
-    lastTick: now,
-    isPaused: false,
-    isCompleting: false,
-  };
-  lastTickTime = now;
-
-  // Create alarm for countdown (every second)
-  await chrome.alarms.clear("timerTick");
-  await chrome.alarms.create("timerTick", {
-    periodInMinutes: 1 / 60, // Every second
-  });
-
-  // Send initial state with exact duration
-  const state = {
-    type: "TIMER_UPDATE",
-    isCountingDown: true,
-    time: Math.floor(duration), // Ensure integer value
-    isPaused: false,
-    isFinished: false,
-    source: "background",
-    timestamp: now,
-    persistOnReload: true,
-  };
-
-  await chrome.storage.local.set({
-    focusbutton_timer_state: state,
-  });
-
-  console.log("Timer started:", timer);
-}
+};
 
 async function stopTimer(isCanceled = false) {
   console.log("Stopping timer");
@@ -417,7 +434,14 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   try {
     switch (request.type) {
       case "START_TIMER":
-        if (typeof request.time === "number") {
+        if (typeof request.time === "number" && request.time > 0) {
+          // Stop any existing timer
+          if (timerIntervalId) {
+            clearInterval(timerIntervalId);
+            timerIntervalId = null;
+          }
+
+          // Start new timer
           startTimer(request.time).catch(console.error);
         } else {
           console.error("Invalid duration:", request.time);
@@ -427,29 +451,42 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         break;
 
       case "STOP_TIMER":
-        stopTimer(request.isCanceled).catch(console.error);
+        console.log("Stopping timer, isCanceled:", request.isCanceled);
+        if (timerIntervalId) {
+          clearInterval(timerIntervalId);
+          timerIntervalId = null;
+        }
+        timer.isRunning = false;
+        timer.isPaused = false;
+        timer.timeLeft = 0;
+        timer.startTime = 0;
+        timer.lastTick = 0;
+        timer.isCompleting = false;
         break;
 
       case "PAUSE_TIMER":
         console.log("Handling pause timer request");
         if (timer.isRunning && !timer.isPaused) {
-          pauseTimer().catch(console.error);
+          if (timerIntervalId) {
+            clearInterval(timerIntervalId);
+            timerIntervalId = null;
+          }
+          timer.isPaused = true;
+          timer.isRunning = false;
         }
         break;
 
       case "RESUME_TIMER":
         console.log("Handling resume timer request");
         if (!timer.isRunning && timer.isPaused && timer.timeLeft > 0) {
-          resumeTimer().catch(console.error);
+          timer.lastTick = Date.now();
+          startTimer(timer.timeLeft).catch(console.error);
         }
         break;
 
       case "GET_TIMER_STATE":
-        response.state = {
-          isRunning: timer.isRunning,
-          isPaused: timer.isPaused,
-          timeLeft: timer.timeLeft,
-        };
+        response.running = timer.isRunning && !timer.isPaused;
+        response.remainingTime = timer.timeLeft;
         break;
 
       default:
@@ -458,10 +495,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         response.error = "Unknown message type";
     }
 
-    // Send response after state is updated
     console.log("Sending response:", response);
     sendResponse(response);
-    return true; // Keep the message channel open for async response
+    return true;
   } catch (error) {
     console.error("Error handling message:", error);
     response.success = false;
