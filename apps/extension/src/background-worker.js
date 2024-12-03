@@ -657,19 +657,38 @@ async function playNotificationSound() {
 }
 
 // Listen for notification clicks
-chrome.notifications.onClicked.addListener((notificationId) => {
-  if (notificationId === "timer-complete") {
+if (navigator.userAgent.includes("Firefox")) {
+  browser.notifications.onClicked.addListener(async (notificationId) => {
+    console.log("Firefox notification clicked:", notificationId);
     // Get the extension's URL
-    const extensionURL = chrome.runtime.getURL("index.html");
+    const extensionURL = browser.runtime.getURL("index.html");
     // Create a new tab with the extension page
-    chrome.tabs.create({
-      url: extensionURL,
-      active: true,
-    });
-    // Close the notification
-    chrome.notifications.clear(notificationId);
-  }
-});
+    try {
+      await browser.tabs.create({
+        url: extensionURL,
+        active: true,
+      });
+      // Close the notification
+      await browser.notifications.clear(notificationId);
+    } catch (error) {
+      console.error("Error handling Firefox notification click:", error);
+    }
+  });
+} else {
+  chrome.notifications.onClicked.addListener((notificationId) => {
+    if (notificationId === "timer-complete") {
+      // Get the extension's URL
+      const extensionURL = chrome.runtime.getURL("index.html");
+      // Create a new tab with the extension page
+      chrome.tabs.create({
+        url: extensionURL,
+        active: true,
+      });
+      // Close the notification
+      chrome.notifications.clear(notificationId);
+    }
+  });
+}
 
 // Listen for close sound tab message
 chrome.runtime.onMessage.addListener((message) => {

@@ -1,15 +1,17 @@
-# FocusButton Chrome Extension
+# FocusButton Browser Extension
 
-A minimalist focus timer extension for Chrome that helps users maintain productivity through focused work sessions.
+A minimalist Pomodoro timer extension for Chrome and Firefox that helps users maintain productivity through focused work sessions.
 
 ## Features
 
-- Simple, distraction-free interface
-- Customizable focus session durations
-- Audio notifications for session completion
-- Dark mode support
-- Local storage for settings
-- Cross-device synchronization
+- 🎯 Simple, distraction-free interface
+- ⏱️ Customizable focus session durations
+- 🔔 Desktop notifications for session completion
+- 🎵 Audio notifications with custom sounds
+- 🌓 Dark mode support
+- 💾 Local storage for settings
+- 🔄 Cross-device synchronization
+- 🌐 Cross-browser support (Chrome & Firefox)
 
 ## API Usage Justifications
 
@@ -18,7 +20,6 @@ A minimalist focus timer extension for Chrome that helps users maintain producti
 Used exclusively for audio playback to notify users when focus sessions end.
 
 **Justification:**
-
 - Essential for user awareness when working in other tabs/applications
 - Crucial for accessibility (users with visual impairments)
 - Prevents users from unknowingly exceeding focus duration
@@ -28,7 +29,6 @@ Used exclusively for audio playback to notify users when focus sessions end.
 - Audio files bundled with extension
 
 **Implementation:**
-
 ```javascript
 chrome.offscreen.createDocument({
   url: "offscreen.html",
@@ -42,7 +42,6 @@ chrome.offscreen.createDocument({
 Used for storing timer state and user preferences.
 
 **Justification:**
-
 - Essential for maintaining timer state across sessions
 - Required for syncing preferences across devices
 - Stores only necessary data locally
@@ -54,7 +53,6 @@ Used for storing timer state and user preferences.
 Used for accurate timer functionality.
 
 **Justification:**
-
 - Required for reliable timer operation
 - More efficient than setInterval/setTimeout
 - Handles background operation correctly
@@ -66,7 +64,6 @@ Used for accurate timer functionality.
 Used for timer completion alerts.
 
 **Justification:**
-
 - Essential for user awareness
 - Respects system notification settings
 - Used only for important timer events
@@ -78,7 +75,6 @@ Used for timer completion alerts.
 Used for managing timer state across browser tabs and windows.
 
 **Justification:**
-
 - Essential for synchronizing timer state across multiple tabs
 - Required for consistent timer display in all extension instances
 - Needed for proper background worker communication
@@ -87,125 +83,85 @@ Used for managing timer state across browser tabs and windows.
 - Only used for extension's own UI updates
 - Ensures seamless user experience across browser sessions
 
-### 6. ActiveTab Permission
+## Installation
 
-Used for accessing the current tab when the user interacts with the extension.
+### From Source
 
-**Justification:**
+1. Clone the repository:
+```bash
+git clone https://github.com/ibsukru/focusbutton.git
+cd focusbutton
+```
 
-- More secure than broad host permissions
-- Only activates when user explicitly interacts with extension
-- Provides temporary access to the current tab
-- Access limited to active tab only
-- No persistent content access
-- Follows Chrome's recommended security practices
-- Better user privacy protection
-
-### 7. Scripting Permission
-
-Used for dynamically injecting content scripts when user interacts with the extension.
-
-**Justification:**
-
-- Works in conjunction with activeTab permission
-- Required for dynamic content script injection
-- Only activates on user interaction
-- More secure than static content scripts
-- Provides better control over script execution
-- Follows Chrome's recommended security practices
-- Enables on-demand functionality
-
-## Security and Privacy
-
-### Data Collection
-
-- Only collects necessary timer settings and preferences
-- No personal information collected
-- All data stored locally
-- Optional analytics for improving user experience
-
-### Data Storage
-
-- Uses Chrome's secure storage API
-- No external servers used
-- Data encrypted by Chrome
-- Regular cleanup of unused data
-
-### Permissions
-
-All requested permissions are essential for core functionality:
-
-- Storage: For saving timer settings
-- Notifications: For timer completion alerts
-- Audio: For completion sound
-- Background: For timer accuracy
-- Tabs: For syncing timer state across browser tabs and windows (no content access)
-- ActiveTab: For displaying timer UI in response to user interaction (temporary access)
-- Scripting: For dynamically injecting timer UI code when needed (user-activated)
-
-## Testing and Validation
-
-### Automated Testing
-
-- Unit tests for core functionality
-- Integration tests for API usage
-- Performance monitoring
-- Memory leak detection
-
-### Manual Testing
-
-- Cross-platform verification
-- Different Chrome versions
-- Various user scenarios
-- Edge case handling
-
-## Compliance
-
-### Chrome Web Store Policies
-
-- Follows all content policies
-- Clear privacy policy
-- Transparent functionality
-- No hidden features
-
-### Best Practices
-
-- Efficient resource usage
-- Proper error handling
-- Regular updates and maintenance
-- Responsive support
-
-## Support and Updates
-
-### Maintenance
-
-- Regular security updates
-- Performance optimizations
-- Bug fixes
-- Feature enhancements
-
-### User Support
-
-- GitHub issues tracking
-- Email support: ibsukru@gmail.com
-- Documentation updates
-- User feedback integration
-
-## Development
-
-### Building
-
+2. Install dependencies:
 ```bash
 npm install
+```
+
+3. Build the extension:
+```bash
+cd apps/extension
 npm run build
 ```
 
-### Testing
+4. Load in your browser:
+
+#### Chrome
+1. Open Chrome and go to `chrome://extensions/`
+2. Enable "Developer mode"
+3. Click "Load unpacked"
+4. Select the `dist` folder in `apps/extension`
+
+#### Firefox
+1. Open Firefox and go to `about:debugging#/runtime/this-firefox`
+2. Click "Load Temporary Add-on"
+3. Select any file in the `dist` folder in `apps/extension`
+
+## Development
+
+### Prerequisites
+- Node.js 16.x or later
+
+### Getting Started
+
+1. Install dependencies:
+```bash
+npm install
+```
+
+2. Start development server:
+```bash
+npm run dev
+```
+
+3. Load the extension in your browser (see Installation steps above)
+
+### Building for Production
 
 ```bash
-npm test
+npm run build
 ```
+
+The built extension will be in the `dist` folder.
+
+## Privacy Policy
+
+FocusButton respects your privacy:
+- No data collection or tracking
+- All data stored locally
+- No external services used
+- No analytics or telemetry
+
+## Contributing
+
+We welcome contributions! Please see our [Contributing Guide](../../CONTRIBUTING.md) for details.
 
 ## License
 
-MIT License - see LICENSE file for details
+This project is licensed under the MIT License - see the [LICENSE](../../LICENSE) file for details.
+
+## Support
+
+- 🐛 [Report bugs](https://github.com/ibsukru/focusbutton/issues)
+- 💡 [Request features](https://github.com/ibsukru/focusbutton/issues)
+- 📖 [Read documentation](https://github.com/ibsukru/focusbutton/wiki)

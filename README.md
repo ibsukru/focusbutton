@@ -1,81 +1,102 @@
-# Turborepo starter
+# FocusButton
 
-This is an official starter Turborepo.
+<div align="center">
+  <img src="apps/extension/public/icons/icon-128.png" alt="FocusButton Logo" width="128" height="128">
+  <h3>Stay focused and productive with FocusButton</h3>
+</div>
 
-## Using this example
+FocusButton is an open-source browser extension and web app that helps you stay focused and productive using the Pomodoro Technique. It features a clean interface, customizable timers, and cross-browser support.
 
-Run the following command:
+## Features
 
-```sh
-npx create-turbo@latest
+- 🎯 Simple and intuitive Pomodoro timer
+- 🔔 Desktop notifications when timer completes
+- 🎵 Customizable sound alerts
+- 🌐 Cross-browser support (Chrome & Firefox)
+- 💻 Web app version available
+- 🎨 Clean, modern interface
+- ⚡ Built with performance in mind
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js 16.x or later
+
+### Installation
+
+1. Clone the repository:
+```bash
+git clone https://github.com/ibsukru/focusbutton.git
+cd focusbutton
 ```
 
-## What's inside?
-
-This Turborepo includes the following packages/apps:
-
-### Apps and Packages
-
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
-
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
-
-### Utilities
-
-This Turborepo has some additional tools already setup for you:
-
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
-
-### Build
-
-To build all apps and packages, run the following command:
-
-```
-cd my-turborepo
-pnpm build
+2. Install dependencies:
+```bash
+npm install
 ```
 
-### Develop
-
-To develop all apps and packages, run the following command:
-
-```
-cd my-turborepo
-pnpm dev
+3. Build all packages:
+```bash
+npm run build
 ```
 
-### Remote Caching
+### Development
 
-Turborepo can use a technique known as [Remote Caching](https://turbo.build/repo/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
-
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup), then enter the following commands:
-
-```
-cd my-turborepo
-npx turbo login
+To start development servers for all apps:
+```bash
+npm run dev
 ```
 
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
+#### Browser Extension Development
 
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
+The extension is located in `apps/extension`. To load it in your browser:
 
+1. Build the extension:
+```bash
+cd apps/extension
+npm run build
 ```
-npx turbo link
+
+2. Load the extension:
+- Chrome: Go to `chrome://extensions/`, enable Developer mode, click "Load unpacked", select the `dist` folder
+- Firefox: Go to `about:debugging#/runtime/this-firefox`, click "Load Temporary Add-on", select any file in the `dist` folder
+
+#### Web App Development
+
+The web app is located in `apps/web`. To run it locally:
+```bash
+cd apps/web
+npm run dev
 ```
 
-## Useful Links
+## Project Structure
 
-Learn more about the power of Turborepo:
+- `apps/`
+  - `extension/` - Browser extension
+  - `web/` - Next.js web app
+- `packages/`
+  - `ui/` - Shared React components
+  - `eslint-config/` - ESLint configurations
+  - `typescript-config/` - TypeScript configurations
 
-- [Tasks](https://turbo.build/repo/docs/core-concepts/monorepos/running-tasks)
-- [Caching](https://turbo.build/repo/docs/core-concepts/caching)
-- [Remote Caching](https://turbo.build/repo/docs/core-concepts/remote-caching)
-- [Filtering](https://turbo.build/repo/docs/core-concepts/monorepos/filtering)
-- [Configuration Options](https://turbo.build/repo/docs/reference/configuration)
-- [CLI Usage](https://turbo.build/repo/docs/reference/command-line-reference)
+## Contributing
+
+We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Acknowledgments
+
+- Built with [Turborepo](https://turbo.build/repo)
+- UI components powered by [shadcn/ui](https://ui.shadcn.com/)
+- Icons from [Lucide](https://lucide.dev/)
+
+## Support
+
+- 🌟 Star this repo
+- 🐛 [Report bugs](https://github.com/ibsukru/focusbutton/issues)
+- 💡 [Request features](https://github.com/ibsukru/focusbutton/issues)
+- 📖 [Read our docs](https://github.com/ibsukru/focusbutton/wiki)
