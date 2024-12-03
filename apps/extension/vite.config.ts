@@ -30,7 +30,7 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
   const manifestBase = {
     manifest_version: 3,
     name: "FocusButton",
-    version: "1.0.0",
+    version: "1.0.1",
     description: "Track your focus time with a simple press and hold button",
     permissions: isFirefox
       ? ["storage", "notifications", "alarms", "tabs"]
@@ -112,7 +112,7 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
             entryPoints: {
               "background-worker": resolve(
                 __dirname,
-                "src/background-worker.js",
+                "src/background-worker.js"
               ),
               "content-script": resolve(__dirname, "src/content-script.js"),
             },
@@ -136,11 +136,11 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
           // Copy offscreen files to dist root
           copyFileSync(
             resolve(__dirname, "src/offscreen.html"),
-            resolve(__dirname, "dist/offscreen.html"),
+            resolve(__dirname, "dist/offscreen.html")
           );
           copyFileSync(
             resolve(__dirname, "src/offscreen.js"),
-            resolve(__dirname, "dist/offscreen.js"),
+            resolve(__dirname, "dist/offscreen.js")
           );
         },
       },
@@ -157,7 +157,7 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
           writeFileSync(
             resolve(__dirname, "dist/manifest.json"),
             JSON.stringify(manifest, null, 2),
-            "utf-8",
+            "utf-8"
           );
         },
       },
