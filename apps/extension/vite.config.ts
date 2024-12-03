@@ -32,7 +32,9 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
     name: "FocusButton",
     version: "1.0.0",
     description: "Track your focus time with a simple press and hold button",
-    permissions: ["storage", "notifications", "alarms", "offscreen", "tabs"],
+    permissions: isFirefox
+      ? ["storage", "notifications", "alarms", "tabs"]
+      : ["storage", "notifications", "alarms", "offscreen", "tabs"],
     host_permissions: [],
     content_scripts: [],
     action: {
@@ -50,16 +52,37 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
       "48": "icons/icon-48.png",
       "128": "icons/icon-128.png",
     },
-    background: {
-      service_worker: "background-worker.js",
-      type: "module",
-    },
-    web_accessible_resources: [
-      {
-        resources: ["icons/*", "offscreen.html", "offscreen.js", "index.html"],
-        matches: ["chrome-extension://${chrome.runtime.id}/*"],
-      },
-    ],
+    background: isFirefox
+      ? {
+          scripts: ["background-worker.js"],
+        }
+      : {
+          service_worker: "background-worker.js",
+          type: "module",
+        },
+    web_accessible_resources: isFirefox
+      ? [
+          {
+            resources: [
+              "icons/*",
+              "offscreen.html",
+              "offscreen.js",
+              "index.html",
+            ],
+            matches: ["*://*/*"],
+          },
+        ]
+      : [
+          {
+            resources: [
+              "icons/*",
+              "offscreen.html",
+              "offscreen.js",
+              "index.html",
+            ],
+            matches: ["chrome-extension://${chrome.runtime.id}/*"],
+          },
+        ],
   };
 
   const manifest = isFirefox
@@ -87,7 +110,7 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
             entryPoints: {
               "background-worker": resolve(
                 __dirname,
-                "src/background-worker.js",
+                "src/background-worker.js"
               ),
               "content-script": resolve(__dirname, "src/content-script.js"),
             },
@@ -111,11 +134,11 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
           // Copy offscreen files to dist root
           copyFileSync(
             resolve(__dirname, "src/offscreen.html"),
-            resolve(__dirname, "dist/offscreen.html"),
+            resolve(__dirname, "dist/offscreen.html")
           );
           copyFileSync(
             resolve(__dirname, "src/offscreen.js"),
-            resolve(__dirname, "dist/offscreen.js"),
+            resolve(__dirname, "dist/offscreen.js")
           );
         },
       },
@@ -132,7 +155,7 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
           writeFileSync(
             resolve(__dirname, "dist/manifest.json"),
             JSON.stringify(manifest, null, 2),
-            "utf-8",
+            "utf-8"
           );
         },
       },
