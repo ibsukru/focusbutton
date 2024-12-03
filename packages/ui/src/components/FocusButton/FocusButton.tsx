@@ -31,10 +31,10 @@ declare global {
           sendMessage: (message: any) => Promise<any>;
           onMessage: {
             addListener: (
-              callback: (message: any, sender: any, sendResponse: any) => void,
+              callback: (message: any, sender: any, sendResponse: any) => void
             ) => void;
             removeListener: (
-              callback: (message: any, sender: any, sendResponse: any) => void,
+              callback: (message: any, sender: any, sendResponse: any) => void
             ) => void;
           };
         };
@@ -42,7 +42,7 @@ declare global {
           onClicked: {
             addListener: (callback: (notificationId: string) => void) => void;
             removeListener: (
-              callback: (notificationId: string) => void,
+              callback: (notificationId: string) => void
             ) => void;
           };
           clear: (notificationId: string) => Promise<void>;
@@ -225,7 +225,7 @@ export default function FocusButton() {
         return null;
       }
     },
-    [isExtension],
+    [isExtension]
   );
 
   const handleTimerEnd = useCallback(() => {
@@ -348,7 +348,7 @@ export default function FocusButton() {
 
       trackEvent("timer_start", { duration: duration || time });
     },
-    [time, isExtension, sendMessage, handleTimerEnd],
+    [time, isExtension, sendMessage, handleTimerEnd]
   );
 
   const handleCancel = useCallback(() => {
@@ -554,40 +554,24 @@ export default function FocusButton() {
       const timerState = changes[STORAGE_KEY]?.newValue;
       if (!timerState || timerState.source === "ui") return;
 
-      // Throttle updates
-      const now = Date.now();
-      if (now - lastUpdateTimestamp < UPDATE_THROTTLE) return;
-      setLastUpdateTimestamp(now);
+      console.log("Storage state changed:", timerState);
 
       // Update UI state from background worker
-      console.log("Received timer update:", timerState);
+      setTime(timerState.time);
+      setDisplayTime(timerState.time);
+      setIsCountingDown(timerState.isCountingDown);
+      setIsPaused(timerState.isPaused);
 
-      // Batch state updates to prevent multiple re-renders
-      const newState = {
-        time: timerState.time,
-        displayTime: timerState.time,
-        isCountingDown: timerState.isCountingDown,
-        isPaused: timerState.isPaused,
-        isFinished: timerState.isFinished || false,
-      };
-
-      // Update all states at once
-      setTime(newState.time);
-      setDisplayTime(newState.displayTime);
-      setIsCountingDown(newState.isCountingDown);
-      setIsPaused(newState.isPaused);
-      setIsFinished(newState.isFinished);
-
-      // Handle timer completion
-      if (timerState.isFinalState && timerState.time === 0) {
-        console.log("Timer completed");
-        handleTimerEnd();
+      // Handle finished state
+      if (timerState.isFinished) {
+        console.log("Timer finished, setting finished state");
+        setIsFinished(true);
       }
     };
 
     chrome.storage.onChanged.addListener(handleStorageChange);
     return () => chrome.storage.onChanged.removeListener(handleStorageChange);
-  }, [isExtension, handleTimerEnd, lastUpdateTimestamp]);
+  }, [isExtension]);
 
   // Track last state update
   const STATE_UPDATE_THROTTLE = 100;
@@ -878,7 +862,7 @@ export default function FocusButton() {
         localStorage.removeItem("focusTimer");
       }
     },
-    [time, isCountingDown, startCountdown, handleTimerEnd],
+    [time, isCountingDown, startCountdown, handleTimerEnd]
   );
 
   useEffect(() => {
@@ -895,12 +879,12 @@ export default function FocusButton() {
 
     document.addEventListener(
       "visibilitychange",
-      handleVisibilityChangeWrapper,
+      handleVisibilityChangeWrapper
     );
     return () => {
       document.removeEventListener(
         "visibilitychange",
-        handleVisibilityChangeWrapper,
+        handleVisibilityChangeWrapper
       );
     };
   }, [handleVisibilityChange]);
@@ -1088,7 +1072,7 @@ export default function FocusButton() {
     // Function to get or create the meta tag
     const getOrCreateThemeMetaTag = () => {
       let meta = document.querySelector(
-        "meta[name='theme-color']",
+        "meta[name='theme-color']"
       ) as HTMLMetaElement;
       if (!meta) {
         meta = document.createElement("meta");
@@ -1100,7 +1084,7 @@ export default function FocusButton() {
 
     const getOrCreateBackgroundMetaTag = () => {
       let meta = document.querySelector(
-        "meta[name='background-color']",
+        "meta[name='background-color']"
       ) as HTMLMetaElement;
       if (!meta) {
         meta = document.createElement("meta");
