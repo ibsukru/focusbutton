@@ -554,45 +554,60 @@ async function playNotificationSound() {
   try {
     console.log("Attempting to play sound...");
 
-    // First try to close any existing offscreen document
-    try {
-      await chrome.offscreen.closeDocument();
-    } catch (e) {
-      console.log("No existing offscreen document to close");
-    }
+    // Detect if we're running in Firefox
+    const isFirefox = navigator.userAgent.includes("Firefox");
 
-    // Create a new offscreen document with absolute URL
-    try {
-      const offscreenUrl = chrome.runtime.getURL("offscreen.html");
-      console.log("Creating offscreen document with URL:", offscreenUrl);
-
-      await chrome.offscreen.createDocument({
-        url: offscreenUrl,
-        reasons: ["AUDIO_PLAYBACK"],
-        justification: "Playing timer completion sound",
-      });
-
-      // Wait a bit for the document to fully initialize
-      await new Promise((resolve) => setTimeout(resolve, 500));
-    } catch (error) {
-      console.error("Error creating offscreen document:", error);
-      throw error;
-    }
-
-    // Send message to play sound and wait for response
-    try {
-      const response = await chrome.runtime.sendMessage({
-        type: "PLAY_SOUND",
-        target: "offscreen",
-      });
-      console.log("Sound play message response:", response);
-
-      if (!response?.success) {
-        throw new Error(response?.error || "Failed to play sound");
+    if (isFirefox) {
+      // Firefox implementation using Audio API
+      try {
+        const audio = new Audio(chrome.runtime.getURL("timer-end.mp3"));
+        await audio.play();
+        console.log("Sound played successfully in Firefox");
+      } catch (error) {
+        console.error("Error playing sound in Firefox:", error);
       }
-    } catch (error) {
-      console.error("Error sending play sound message:", error);
-      throw error;
+    } else {
+      // Chrome implementation using offscreen API
+      // First try to close any existing offscreen document
+      try {
+        await chrome.offscreen.closeDocument();
+      } catch (e) {
+        console.log("No existing offscreen document to close");
+      }
+
+      // Create a new offscreen document with absolute URL
+      try {
+        const offscreenUrl = chrome.runtime.getURL("offscreen.html");
+        console.log("Creating offscreen document with URL:", offscreenUrl);
+
+        await chrome.offscreen.createDocument({
+          url: offscreenUrl,
+          reasons: ["AUDIO_PLAYBACK"],
+          justification: "Playing timer completion sound",
+        });
+
+        // Wait a bit for the document to fully initialize
+        await new Promise((resolve) => setTimeout(resolve, 500));
+      } catch (error) {
+        console.error("Error creating offscreen document:", error);
+        throw error;
+      }
+
+      // Send message to play sound and wait for response
+      try {
+        const response = await chrome.runtime.sendMessage({
+          type: "PLAY_SOUND",
+          target: "offscreen",
+        });
+        console.log("Sound play message response:", response);
+
+        if (!response?.success) {
+          throw new Error(response?.error || "Failed to play sound");
+        }
+      } catch (error) {
+        console.error("Error sending play sound message:", error);
+        throw error;
+      }
     }
 
     // Show notification
