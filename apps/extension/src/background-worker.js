@@ -571,7 +571,7 @@ async function playNotificationSound() {
       // Firefox notification
       try {
         console.log("Creating Firefox notification...");
-        
+
         // Create notification without clearing first
         const notificationOptions = {
           type: "basic",
@@ -579,19 +579,19 @@ async function playNotificationSound() {
           title: "Time's up!",
           message: "Your focus session has ended. Click to open FocusButton.",
         };
-        
+
         console.log("Notification options:", notificationOptions);
-        
+
         const notificationId = await browser.notifications.create({
           type: "basic",
           title: "Time's up!",
-          message: "Your focus session has ended. Click to open FocusButton."
+          message: "Your focus session has ended. Click to open FocusButton.",
         });
-        
+
         console.log("Firefox notification created with ID:", notificationId);
       } catch (notifError) {
         console.error("Error creating Firefox notification:", notifError);
-        
+
         // Fallback to chrome API if browser API fails
         try {
           console.log("Attempting chrome API fallback for Firefox...");
@@ -600,7 +600,7 @@ async function playNotificationSound() {
             iconUrl: chrome.runtime.getURL("icons/icon-128.png"),
             title: "Time's up!",
             message: "Your focus session has ended. Click to open FocusButton.",
-            priority: 2
+            priority: 2,
           });
           console.log("Fallback notification created successfully");
         } catch (fallbackError) {
@@ -645,7 +645,7 @@ async function playNotificationSound() {
           title: "Time's up!",
           message: "Your focus session has ended. Click to open FocusButton.",
           priority: 2,
-          requireInteraction: true
+          requireInteraction: true,
         });
       } catch (notifError) {
         console.error("Error creating Chrome notification:", notifError);
