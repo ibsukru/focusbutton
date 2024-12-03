@@ -18,7 +18,7 @@
   align-items: center;
   gap: 5px;
   position: absolute;
-  bottom: 0;
+  bottom: 10px;
   color: var(--foreground);
   padding: 5px;
 }
@@ -26,5 +26,5 @@
 .chromeWebStore:active {
   position: absolute;
   top: inherit;
-  bottom: -1.2px;
+  bottom: 8.8px;
 }
