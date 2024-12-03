@@ -146,6 +146,13 @@ button {
   line-height: 1.15;
 }
 
+button:focus-visible,
+.button:focus-visible {
+  outline: none !important;
+  border: 1px solid var(--link-color) !important;
+  border-radius: 20px !important;
+}
+
 .button:hover,
 button:hover {
   background-color: var(--accent-5);
