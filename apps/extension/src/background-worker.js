@@ -67,6 +67,24 @@ chrome.runtime.onUpdateAvailable.addListener(async (details) => {
 async function initializeTimerState() {
   console.log("Initializing timer state");
   try {
+    const result = await chrome.storage.local.get(["focusbutton_timer_state"]);
+    const state = result.focusbutton_timer_state;
+
+    if (state && state.persistOnReload) {
+      timer.timeLeft = state.time;
+      timer.isPaused = state.isPaused;
+      timer.isRunning = state.isCountingDown;
+      timer.startTime = state.startTime;
+
+      // Update storage to maintain state
+      await chrome.storage.local.set({
+        focusbutton_timer_state: {
+          ...state,
+          timestamp: Date.now(),
+        },
+      });
+    }
+
     // Always start with a clean state
     timer = {
       timeLeft: 0,
@@ -129,10 +147,10 @@ const startTimer = async (duration) => {
     });
 
     let expectedTime = Date.now();
-    
+
     timerIntervalId = setInterval(async () => {
       const drift = Date.now() - expectedTime;
-      
+
       // Update timer state
       timer.timeLeft = Math.max(0, timer.timeLeft - 1);
       timer.lastTick = Date.now();
@@ -153,7 +171,9 @@ const startTimer = async (duration) => {
       });
 
       // Log every second
-      console.log(`[${new Date().toLocaleTimeString()}] time: ${timer.timeLeft}`);
+      console.log(
+        `[${new Date().toLocaleTimeString()}] time: ${timer.timeLeft}`
+      );
 
       if (timer.timeLeft === 0) {
         console.log("Timer completed, playing notification");
@@ -172,11 +192,11 @@ const startTimer = async (duration) => {
           source: "background",
           timestamp: Date.now(),
           isFinalState: true,
-          startTime: timer.startTime
+          startTime: timer.startTime,
         };
 
         await chrome.storage.local.set({
-          focusbutton_timer_state: finalState
+          focusbutton_timer_state: finalState,
         });
 
         // Play sound and show notification
@@ -197,7 +217,6 @@ const startTimer = async (duration) => {
         expectedTime = Date.now() + 1000; // Reset if drift is too large
       }
     }, 1000);
-
   } catch (error) {
     console.error("Error starting timer:", error);
     throw error;
@@ -329,30 +348,29 @@ async function tick() {
 async function pauseTimer() {
   console.log("Pausing timer");
 
-  // Clear the alarm first to prevent any more ticks
-  await chrome.alarms.clear("timerTick");
+  // Clear the interval first
+  if (timerIntervalId) {
+    clearInterval(timerIntervalId);
+    timerIntervalId = null;
+  }
 
   // Update timer state
   timer.isPaused = true;
   timer.isRunning = false;
-  timer.lastTick = performance.now();
+  timer.lastTick = Date.now();
 
-  // Update state to reflect pause
-  const state = {
-    type: "TIMER_UPDATE",
-    isCountingDown: false,
-    time: timer.timeLeft,
-    isPaused: true,
-    isFinished: false,
-    source: "background",
-    timestamp: Date.now(),
-    persistOnReload: true,
-    isFinalState: false,
-  };
-
-  // Update storage state
+  // Save state with persistOnReload flag
   await chrome.storage.local.set({
-    focusbutton_timer_state: state,
+    focusbutton_timer_state: {
+      type: "TIMER_UPDATE",
+      isCountingDown: false,
+      time: timer.timeLeft,
+      isPaused: true,
+      source: "background",
+      timestamp: Date.now(),
+      startTime: timer.startTime,
+      persistOnReload: true,
+    },
   });
 
   return { success: true };
@@ -361,33 +379,14 @@ async function pauseTimer() {
 async function resumeTimer() {
   console.log("Resuming timer with time:", timer.timeLeft);
 
-  // Update timer state first
+  // Start a new timer with remaining time
   timer.isPaused = false;
   timer.isRunning = true;
-  timer.lastTick = performance.now();
+  timer.lastTick = Date.now();
+  timer.startTime = Date.now(); // Reset start time on resume
 
-  // Create new alarm
-  await chrome.alarms.create("timerTick", {
-    periodInMinutes: 1 / 60, // Every second
-  });
-
-  // Update state
-  const state = {
-    type: "TIMER_UPDATE",
-    isCountingDown: true,
-    time: timer.timeLeft,
-    isPaused: false,
-    isFinished: false,
-    source: "background",
-    timestamp: Date.now(),
-    persistOnReload: true,
-    isFinalState: false,
-  };
-
-  // Update storage state
-  await chrome.storage.local.set({
-    focusbutton_timer_state: state,
-  });
+  // Start new timer
+  await startTimer(timer.timeLeft);
 
   return { success: true };
 }
