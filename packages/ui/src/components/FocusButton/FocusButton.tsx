@@ -145,6 +145,10 @@ export default function FocusButton() {
   // Add startTimeRef declaration
   const startTimeRef = useRef<number>(0);
 
+  // Track last state update
+  const [lastUpdateTimestamp, setLastUpdateTimestamp] = useState(0);
+  const UPDATE_THROTTLE = 100; // Throttle updates to 100ms
+
   // Check for extension context after mount
   useEffect(() => {
     const checkExtension = () => {
@@ -529,36 +533,40 @@ export default function FocusButton() {
     restoreTimerState();
   }, [isExtension, isCountingDown, time, handleTimerEnd]);
 
-  // Handle storage changes
+  // Listen for timer state changes
   useEffect(() => {
     if (!isExtension) return;
 
-    let lastUpdateTimestamp = 0;
-    const UPDATE_THROTTLE = 200; // ms
-
-    const handleStorageChange = async (changes: any) => {
-      const timerState = changes.focusbutton_timer_state?.newValue;
+    const handleStorageChange = (changes: any) => {
+      const timerState = changes[STORAGE_KEY]?.newValue;
       if (!timerState || timerState.source === "ui") return;
 
       // Throttle updates
       const now = Date.now();
       if (now - lastUpdateTimestamp < UPDATE_THROTTLE) return;
-      lastUpdateTimestamp = now;
+      setLastUpdateTimestamp(now);
 
       // Update UI state from background worker
       console.log("Received timer update:", timerState);
-      setTime(timerState.time);
-      setDisplayTime(timerState.time);
-      setIsCountingDown(timerState.isCountingDown);
-      setIsPaused(timerState.isPaused);
+      
+      // Batch state updates to prevent multiple re-renders
+      const newState = {
+        time: timerState.time,
+        displayTime: timerState.time,
+        isCountingDown: timerState.isCountingDown,
+        isPaused: timerState.isPaused,
+        isFinished: timerState.isFinished || false
+      };
 
-      // Log every second
-      console.log(
-        `[${new Date().toLocaleTimeString()}] time: ${timerState.time}`,
-      );
+      // Update all states at once
+      setTime(newState.time);
+      setDisplayTime(newState.displayTime);
+      setIsCountingDown(newState.isCountingDown);
+      setIsPaused(newState.isPaused);
+      setIsFinished(newState.isFinished);
 
       // Handle timer completion
-      if (timerState.time === 0 && !timerState.isCountingDown) {
+      if (timerState.isFinalState && timerState.time === 0) {
         console.log("Timer completed");
         handleTimerEnd();
       }
@@ -566,7 +574,7 @@ export default function FocusButton() {
 
     chrome.storage.onChanged.addListener(handleStorageChange);
     return () => chrome.storage.onChanged.removeListener(handleStorageChange);
-  }, [isExtension, handleTimerEnd]);
+  }, [isExtension, handleTimerEnd, lastUpdateTimestamp]);
 
   // Track last state update
   const STATE_UPDATE_THROTTLE = 100;
