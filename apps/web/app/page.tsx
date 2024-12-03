@@ -14,12 +14,13 @@ export default async function Home() {
         <FocusButton />
         {(() => {
           if (!isExtensionEnabled) return null;
+
           if (!isDesktop) return null;
 
           if (isChrome)
             return (
               <a
-                className={styles.chromeWebStore}
+                className={styles.webStore}
                 href="https://chrome.google.com/webstore/detail/focusbutton/njgjgjgjgjgjgjgjgjgj"
               >
                 <FaChrome /> Download from Chrome Web Store
@@ -29,7 +30,7 @@ export default async function Home() {
           if (isFirefox)
             return (
               <a
-                className={styles.chromeWebStore}
+                className={styles.webStore}
                 href="https://addons.mozilla.org/en-US/firefox/addon/focusbutton/"
               >
                 <FaFirefoxBrowser />
@@ -37,12 +38,6 @@ export default async function Home() {
               </a>
             );
         })()}
-        {/* <a
-            className={styles.chromeWebStore}
-            href="https://chrome.google.com/webstore/detail/focusbutton/njgjgjgjgjgjgjgjgjgj"
-          >
-            <ChromeIcon /> Download from Chrome Web Store
-          </a> */}
       </div>
     </div>
   );

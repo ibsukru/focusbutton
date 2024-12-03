@@ -13,7 +13,7 @@
   gap: 20px;
 }
 
-.chromeWebStore {
+.webStore {
   display: flex;
   align-items: center;
   gap: 5px;
@@ -23,7 +23,7 @@
   padding: 5px;
 }
 
-.chromeWebStore:active {
+.webStore:active {
   position: absolute;
   top: inherit;
   bottom: 8.8px;
