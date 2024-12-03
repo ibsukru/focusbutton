@@ -31,10 +31,10 @@ declare global {
           sendMessage: (message: any) => Promise<any>;
           onMessage: {
             addListener: (
-              callback: (message: any, sender: any, sendResponse: any) => void
+              callback: (message: any, sender: any, sendResponse: any) => void,
             ) => void;
             removeListener: (
-              callback: (message: any, sender: any, sendResponse: any) => void
+              callback: (message: any, sender: any, sendResponse: any) => void,
             ) => void;
           };
         };
@@ -42,7 +42,7 @@ declare global {
           onClicked: {
             addListener: (callback: (notificationId: string) => void) => void;
             removeListener: (
-              callback: (notificationId: string) => void
+              callback: (notificationId: string) => void,
             ) => void;
           };
           clear: (notificationId: string) => Promise<void>;
@@ -225,7 +225,7 @@ export default function FocusButton() {
         return null;
       }
     },
-    [isExtension]
+    [isExtension],
   );
 
   const handleTimerEnd = useCallback(() => {
@@ -348,7 +348,7 @@ export default function FocusButton() {
 
       trackEvent("timer_start", { duration: duration || time });
     },
-    [time, isExtension, sendMessage, handleTimerEnd]
+    [time, isExtension, sendMessage, handleTimerEnd],
   );
 
   const handleCancel = useCallback(() => {
@@ -440,11 +440,11 @@ export default function FocusButton() {
         source: "ui",
         timestamp: Date.now(),
         startTime: startTimeRef.current,
-        persistOnReload: true
+        persistOnReload: true,
       };
 
       getBrowserAPI()?.storage.local.set({
-        focusbutton_timer_state: state
+        focusbutton_timer_state: state,
       });
     } else {
       // Update local storage for web version
@@ -456,7 +456,7 @@ export default function FocusButton() {
         source: "ui",
         timestamp: Date.now(),
         startTime: startTimeRef.current,
-        persistOnReload: true
+        persistOnReload: true,
       };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     }
@@ -516,9 +516,11 @@ export default function FocusButton() {
     const restoreTimerState = async () => {
       try {
         let state;
-        
+
         if (isExtension) {
-          const result = await chrome.storage.local.get(["focusbutton_timer_state"]);
+          const result = await chrome.storage.local.get([
+            "focusbutton_timer_state",
+          ]);
           state = result.focusbutton_timer_state;
         } else {
           const savedState = localStorage.getItem(STORAGE_KEY);
@@ -876,7 +878,7 @@ export default function FocusButton() {
         localStorage.removeItem("focusTimer");
       }
     },
-    [time, isCountingDown, startCountdown, handleTimerEnd]
+    [time, isCountingDown, startCountdown, handleTimerEnd],
   );
 
   useEffect(() => {
@@ -893,12 +895,12 @@ export default function FocusButton() {
 
     document.addEventListener(
       "visibilitychange",
-      handleVisibilityChangeWrapper
+      handleVisibilityChangeWrapper,
     );
     return () => {
       document.removeEventListener(
         "visibilitychange",
-        handleVisibilityChangeWrapper
+        handleVisibilityChangeWrapper,
       );
     };
   }, [handleVisibilityChange]);
@@ -1086,7 +1088,7 @@ export default function FocusButton() {
     // Function to get or create the meta tag
     const getOrCreateThemeMetaTag = () => {
       let meta = document.querySelector(
-        "meta[name='theme-color']"
+        "meta[name='theme-color']",
       ) as HTMLMetaElement;
       if (!meta) {
         meta = document.createElement("meta");
@@ -1098,7 +1100,7 @@ export default function FocusButton() {
 
     const getOrCreateBackgroundMetaTag = () => {
       let meta = document.querySelector(
-        "meta[name='background-color']"
+        "meta[name='background-color']",
       ) as HTMLMetaElement;
       if (!meta) {
         meta = document.createElement("meta");
