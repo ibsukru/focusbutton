@@ -548,14 +548,14 @@ export default function FocusButton() {
 
       // Update UI state from background worker
       console.log("Received timer update:", timerState);
-      
+
       // Batch state updates to prevent multiple re-renders
       const newState = {
         time: timerState.time,
         displayTime: timerState.time,
         isCountingDown: timerState.isCountingDown,
         isPaused: timerState.isPaused,
-        isFinished: timerState.isFinished || false
+        isFinished: timerState.isFinished || false,
       };
 
       // Update all states at once
