@@ -46,27 +46,32 @@ We use GitHub issues to track public bugs. Report a bug by [opening a new issue]
 ## Development Process
 
 1. Clone the repo:
+
 ```bash
 git clone https://github.com/ibsukru/focusbutton.git
 ```
 
 2. Install dependencies:
+
 ```bash
 cd focusbutton
 npm install
 ```
 
 3. Create a branch:
+
 ```bash
 git checkout -b feature/amazing-feature
 ```
 
 4. Make your changes and commit:
+
 ```bash
 git commit -m 'Add some amazing feature'
 ```
 
 5. Push to your fork:
+
 ```bash
 git push origin feature/amazing-feature
 ```

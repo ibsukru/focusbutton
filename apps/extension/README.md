@@ -20,6 +20,7 @@ A minimalist Pomodoro timer extension for Chrome and Firefox that helps users ma
 Used exclusively for audio playback to notify users when focus sessions end.
 
 **Justification:**
+
 - Essential for user awareness when working in other tabs/applications
 - Crucial for accessibility (users with visual impairments)
 - Prevents users from unknowingly exceeding focus duration
@@ -29,6 +30,7 @@ Used exclusively for audio playback to notify users when focus sessions end.
 - Audio files bundled with extension
 
 **Implementation:**
+
 ```javascript
 chrome.offscreen.createDocument({
   url: "offscreen.html",
@@ -42,6 +44,7 @@ chrome.offscreen.createDocument({
 Used for storing timer state and user preferences.
 
 **Justification:**
+
 - Essential for maintaining timer state across sessions
 - Required for syncing preferences across devices
 - Stores only necessary data locally
@@ -53,6 +56,7 @@ Used for storing timer state and user preferences.
 Used for accurate timer functionality.
 
 **Justification:**
+
 - Required for reliable timer operation
 - More efficient than setInterval/setTimeout
 - Handles background operation correctly
@@ -64,6 +68,7 @@ Used for accurate timer functionality.
 Used for timer completion alerts.
 
 **Justification:**
+
 - Essential for user awareness
 - Respects system notification settings
 - Used only for important timer events
@@ -75,6 +80,7 @@ Used for timer completion alerts.
 Used for managing timer state across browser tabs and windows.
 
 **Justification:**
+
 - Essential for synchronizing timer state across multiple tabs
 - Required for consistent timer display in all extension instances
 - Needed for proper background worker communication
@@ -88,17 +94,20 @@ Used for managing timer state across browser tabs and windows.
 ### From Source
 
 1. Clone the repository:
+
 ```bash
 git clone https://github.com/ibsukru/focusbutton.git
 cd focusbutton
 ```
 
 2. Install dependencies:
+
 ```bash
 npm install
 ```
 
 3. Build the extension:
+
 ```bash
 cd apps/extension
 npm run build
@@ -107,12 +116,14 @@ npm run build
 4. Load in your browser:
 
 #### Chrome
+
 1. Open Chrome and go to `chrome://extensions/`
 2. Enable "Developer mode"
 3. Click "Load unpacked"
 4. Select the `dist` folder in `apps/extension`
 
 #### Firefox
+
 1. Open Firefox and go to `about:debugging#/runtime/this-firefox`
 2. Click "Load Temporary Add-on"
 3. Select any file in the `dist` folder in `apps/extension`
@@ -120,16 +131,19 @@ npm run build
 ## Development
 
 ### Prerequisites
+
 - Node.js 16.x or later
 
 ### Getting Started
 
 1. Install dependencies:
+
 ```bash
 npm install
 ```
 
 2. Start development server:
+
 ```bash
 npm run dev
 ```
@@ -147,6 +161,7 @@ The built extension will be in the `dist` folder.
 ## Privacy Policy
 
 FocusButton respects your privacy:
+
 - No data collection or tracking
 - All data stored locally
 - No external services used

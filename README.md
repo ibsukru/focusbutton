@@ -26,17 +26,20 @@ FocusButton is an open-source browser extension and web app that helps you stay 
 ### Installation
 
 1. Clone the repository:
+
 ```bash
 git clone https://github.com/ibsukru/focusbutton.git
 cd focusbutton
 ```
 
 2. Install dependencies:
+
 ```bash
 npm install
 ```
 
 3. Build all packages:
+
 ```bash
 npm run build
 ```
@@ -44,6 +47,7 @@ npm run build
 ### Development
 
 To start development servers for all apps:
+
 ```bash
 npm run dev
 ```
@@ -53,18 +57,21 @@ npm run dev
 The extension is located in `apps/extension`. To load it in your browser:
 
 1. Build the extension:
+
 ```bash
 cd apps/extension
 npm run build
 ```
 
 2. Load the extension:
+
 - Chrome: Go to `chrome://extensions/`, enable Developer mode, click "Load unpacked", select the `dist` folder
 - Firefox: Go to `about:debugging#/runtime/this-firefox`, click "Load Temporary Add-on", select any file in the `dist` folder
 
 #### Web App Development
 
 The web app is located in `apps/web`. To run it locally:
+
 ```bash
 cd apps/web
 npm run dev
