@@ -552,20 +552,63 @@ async function playNotificationSound() {
 
     // Detect if we're running in Firefox
     const isFirefox = navigator.userAgent.includes("Firefox");
-    const api = isFirefox ? browser : chrome;
+    console.log("Browser detection:", { isFirefox });
 
     if (isFirefox) {
       // Firefox implementation using Audio API
       try {
-        const audio = new Audio(api.runtime.getURL("timer-end.mp3"));
-        audio.volume = 1.0; // Ensure full volume
-        await audio.play();
+        const audio = new Audio(browser.runtime.getURL("timer-end.mp3"));
+        audio.volume = 1.0;
+        const playPromise = audio.play();
+        if (playPromise) {
+          await playPromise;
+        }
         console.log("Sound played successfully in Firefox");
       } catch (error) {
         console.error("Error playing sound in Firefox:", error);
       }
+
+      // Firefox notification
+      try {
+        console.log("Creating Firefox notification...");
+        
+        // Create notification without clearing first
+        const notificationOptions = {
+          type: "basic",
+          iconUrl: browser.runtime.getURL("icons/icon-128.png"),
+          title: "Time's up!",
+          message: "Your focus session has ended. Click to open FocusButton.",
+        };
+        
+        console.log("Notification options:", notificationOptions);
+        
+        const notificationId = await browser.notifications.create({
+          type: "basic",
+          title: "Time's up!",
+          message: "Your focus session has ended. Click to open FocusButton."
+        });
+        
+        console.log("Firefox notification created with ID:", notificationId);
+      } catch (notifError) {
+        console.error("Error creating Firefox notification:", notifError);
+        
+        // Fallback to chrome API if browser API fails
+        try {
+          console.log("Attempting chrome API fallback for Firefox...");
+          await chrome.notifications.create("timer-complete", {
+            type: "basic",
+            iconUrl: chrome.runtime.getURL("icons/icon-128.png"),
+            title: "Time's up!",
+            message: "Your focus session has ended. Click to open FocusButton.",
+            priority: 2
+          });
+          console.log("Fallback notification created successfully");
+        } catch (fallbackError) {
+          console.error("Fallback notification failed:", fallbackError);
+        }
+      }
     } else {
-      // Chrome implementation using offscreen API
+      // Chrome implementation
       try {
         await chrome.offscreen.closeDocument();
       } catch (e) {
@@ -574,8 +617,6 @@ async function playNotificationSound() {
 
       try {
         const offscreenUrl = chrome.runtime.getURL("offscreen.html");
-        console.log("Creating offscreen document with URL:", offscreenUrl);
-
         await chrome.offscreen.createDocument({
           url: offscreenUrl,
           reasons: ["AUDIO_PLAYBACK"],
@@ -588,7 +629,6 @@ async function playNotificationSound() {
           type: "PLAY_SOUND",
           target: "offscreen",
         });
-        console.log("Sound play message response:", response);
 
         if (!response?.success) {
           throw new Error(response?.error || "Failed to play sound");
@@ -596,27 +636,20 @@ async function playNotificationSound() {
       } catch (error) {
         console.error("Error with offscreen document:", error);
       }
-    }
 
-    // Show notification
-    try {
-      const notificationOptions = {
-        type: "basic",
-        iconUrl: api.runtime.getURL("icons/icon-128.png"),
-        title: "Time's up!",
-        message: "Your focus session has ended. Click to open FocusButton.",
-        priority: 2,
-        requireInteraction: true
-      };
-
-      if (isFirefox) {
-        await browser.notifications.create("timer-complete", notificationOptions);
-      } else {
-        await chrome.notifications.create("timer-complete", notificationOptions);
+      // Chrome notification
+      try {
+        await chrome.notifications.create("timer-complete", {
+          type: "basic",
+          iconUrl: chrome.runtime.getURL("icons/icon-128.png"),
+          title: "Time's up!",
+          message: "Your focus session has ended. Click to open FocusButton.",
+          priority: 2,
+          requireInteraction: true
+        });
+      } catch (notifError) {
+        console.error("Error creating Chrome notification:", notifError);
       }
-      console.log("Notification created successfully");
-    } catch (notifError) {
-      console.error("Error showing notification:", notifError);
     }
   } catch (error) {
     console.error("Error in playNotificationSound:", error);
