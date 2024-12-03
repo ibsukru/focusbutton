@@ -2,7 +2,13 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import styles from "./FocusButton.module.scss";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronUp,
+  CirclePause,
+  CirclePlay,
+  CircleX,
+} from "lucide-react";
 import type { BrowserAPIType } from "@focusbutton/extension/src/browser-api";
 import { useTheme } from "next-themes";
 import clsx from "clsx";
@@ -25,10 +31,10 @@ declare global {
           sendMessage: (message: any) => Promise<any>;
           onMessage: {
             addListener: (
-              callback: (message: any, sender: any, sendResponse: any) => void,
+              callback: (message: any, sender: any, sendResponse: any) => void
             ) => void;
             removeListener: (
-              callback: (message: any, sender: any, sendResponse: any) => void,
+              callback: (message: any, sender: any, sendResponse: any) => void
             ) => void;
           };
         };
@@ -36,7 +42,7 @@ declare global {
           onClicked: {
             addListener: (callback: (notificationId: string) => void) => void;
             removeListener: (
-              callback: (notificationId: string) => void,
+              callback: (notificationId: string) => void
             ) => void;
           };
           clear: (notificationId: string) => Promise<void>;
@@ -214,7 +220,7 @@ export default function FocusButton() {
         return null;
       }
     },
-    [isExtension],
+    [isExtension]
   );
 
   const handleTimerEnd = useCallback(() => {
@@ -231,7 +237,17 @@ export default function FocusButton() {
     } else {
       const browserAPI = getBrowserAPI();
       if (browserAPI?.storage?.local) {
-        browserAPI.storage.local.remove(STORAGE_KEY);
+        browserAPI.storage.local.set({
+          [STORAGE_KEY]: {
+            type: "TIMER_UPDATE",
+            isCountingDown: false,
+            time: 0,
+            isPaused: false,
+            isFinished: true,
+            source: "ui",
+            timestamp: Date.now(),
+          },
+        });
       }
     }
 
@@ -284,6 +300,7 @@ export default function FocusButton() {
               isCountingDown: true,
               time: duration ?? time,
               isPaused: false,
+              isFinished: false,
               source: "ui",
               timestamp: now,
               startTime: now,
@@ -326,7 +343,7 @@ export default function FocusButton() {
 
       trackEvent("timer_start", { duration: duration || time });
     },
-    [time, isExtension, sendMessage, handleTimerEnd],
+    [time, isExtension, sendMessage, handleTimerEnd]
   );
 
   const handleCancel = useCallback(() => {
@@ -537,7 +554,7 @@ export default function FocusButton() {
 
       // Log every second
       console.log(
-        `[${new Date().toLocaleTimeString()}] time: ${timerState.time}`,
+        `[${new Date().toLocaleTimeString()}] time: ${timerState.time}`
       );
 
       // Handle timer completion
@@ -840,7 +857,7 @@ export default function FocusButton() {
         localStorage.removeItem("focusTimer");
       }
     },
-    [time, isCountingDown, startCountdown, handleTimerEnd],
+    [time, isCountingDown, startCountdown, handleTimerEnd]
   );
 
   useEffect(() => {
@@ -857,67 +874,176 @@ export default function FocusButton() {
 
     document.addEventListener(
       "visibilitychange",
-      handleVisibilityChangeWrapper,
+      handleVisibilityChangeWrapper
     );
     return () => {
       document.removeEventListener(
         "visibilitychange",
-        handleVisibilityChangeWrapper,
+        handleVisibilityChangeWrapper
       );
     };
   }, [handleVisibilityChange]);
 
-  // Handle keyboard events with proper types
+  // Handle keyboard events
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (!isCountingDown || time === 0) return;
+      // Don't handle keys if input is focused
+      if (
+        document.activeElement?.tagName === "INPUT" ||
+        document.activeElement?.tagName === "TEXTAREA"
+      ) {
+        return;
+      }
 
       switch (event.key) {
-        case "Escape":
-          handleCancel();
-          break;
-        case " ":
+        case "ArrowUp":
           event.preventDefault();
-          if (isPaused) {
-            startCountdown(time);
-          } else {
-            const browserAPI = getBrowserAPI();
-            if (isExtension && browserAPI) {
-              browserAPI.storage.local.set({
-                [STORAGE_KEY]: {
-                  type: "TIMER_UPDATE",
-                  isCountingDown: true,
-                  time: time,
-                  isPaused: true,
-                  source: "web",
-                  timestamp: Date.now(),
-                },
-              });
+          {
+            const newTime = Math.min(time + 1, MAX_TIME);
+            setTime(newTime);
+            setDisplayTime(newTime);
+            startCountdown(newTime);
+            if (isExtension) {
+              const browserAPI = getBrowserAPI();
+              if (browserAPI) {
+                browserAPI.storage.local.set({
+                  [STORAGE_KEY]: {
+                    type: "TIMER_UPDATE",
+                    isCountingDown: false,
+                    time: newTime,
+                    isPaused: false,
+                    source: "web",
+                    timestamp: Date.now(),
+                  },
+                });
+              }
             }
-            setIsPaused(true);
+          }
+          break;
+
+        case "ArrowDown":
+          event.preventDefault();
+          {
+            const newTime = Math.max(time - 1, 0);
+            setTime(newTime);
+            startCountdown(newTime);
+            setDisplayTime(newTime);
+            if (isExtension) {
+              const browserAPI = getBrowserAPI();
+              if (browserAPI) {
+                browserAPI.storage.local.set({
+                  [STORAGE_KEY]: {
+                    type: "TIMER_UPDATE",
+                    isCountingDown: false,
+                    time: newTime,
+                    isPaused: false,
+                    source: "web",
+                    timestamp: Date.now(),
+                  },
+                });
+              }
+            }
+          }
+          break;
+
+        case " ":
+        case "Enter":
+          event.preventDefault();
+          if (time > 0) {
+            if (!isCountingDown || isPaused) {
+              const currentTime = time;
+              startCountdown(currentTime);
+            } else {
+              handlePause();
+            }
+          }
+          break;
+
+        case "Escape":
+          if (isCountingDown) {
+            handleCancel();
           }
           break;
       }
     };
 
-    const handleKeyUp = (event: KeyboardEvent) => {
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [
+    time,
+    isCountingDown,
+    isPaused,
+    isExtension,
+    startCountdown,
+    handlePause,
+    handleCancel,
+  ]);
+
+  // Handle key repeat for arrows
+  useEffect(() => {
+    let repeatTimer: NodeJS.Timeout | null = null;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (
+        isCountingDown ||
+        document.activeElement?.tagName === "INPUT" ||
+        document.activeElement?.tagName === "TEXTAREA"
+      ) {
+        return;
+      }
+
       if (event.key === "ArrowUp" || event.key === "ArrowDown") {
         event.preventDefault();
-        if (adjustIntervalRef.current) {
-          stopAdjustment();
+
+        if (!repeatTimer) {
+          repeatTimer = setInterval(() => {
+            const delta = event.key === "ArrowUp" ? 1 : -1;
+            const newTime = Math.max(0, Math.min(time + delta, MAX_TIME));
+
+            setTime(newTime);
+            setDisplayTime(newTime);
+
+            if (isExtension) {
+              const browserAPI = getBrowserAPI();
+              if (browserAPI) {
+                browserAPI.storage.local.set({
+                  [STORAGE_KEY]: {
+                    type: "TIMER_UPDATE",
+                    isCountingDown: false,
+                    time: newTime,
+                    isPaused: false,
+                    source: "web",
+                    timestamp: Date.now(),
+                  },
+                });
+              }
+            }
+            startCountdown(newTime);
+          }, 100);
         }
       }
     };
 
-    // Add event listeners
+    const handleKeyUp = (event: KeyboardEvent) => {
+      if (event.key === "ArrowUp" || event.key === "ArrowDown") {
+        if (repeatTimer) {
+          clearInterval(repeatTimer);
+          repeatTimer = null;
+        }
+      }
+    };
+
     window.addEventListener("keydown", handleKeyDown);
     window.addEventListener("keyup", handleKeyUp);
 
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
+      if (repeatTimer) {
+        clearInterval(repeatTimer);
+      }
     };
-  }, [isCountingDown, time, startCountdown, handleCancel, isExtension]);
+  }, [time, isCountingDown, isExtension]);
 
   // Remove finished state after animation or when timer is adjusted
   useEffect(() => {
@@ -941,7 +1067,7 @@ export default function FocusButton() {
     // Function to get or create the meta tag
     const getOrCreateThemeMetaTag = () => {
       let meta = document.querySelector(
-        "meta[name='theme-color']",
+        "meta[name='theme-color']"
       ) as HTMLMetaElement;
       if (!meta) {
         meta = document.createElement("meta");
@@ -953,7 +1079,7 @@ export default function FocusButton() {
 
     const getOrCreateBackgroundMetaTag = () => {
       let meta = document.querySelector(
-        "meta[name='background-color']",
+        "meta[name='background-color']"
       ) as HTMLMetaElement;
       if (!meta) {
         meta = document.createElement("meta");
@@ -1183,8 +1309,23 @@ export default function FocusButton() {
             isCountingDown || time > 0 ? styles.visible : ""
           }`}
         >
-          <button onClick={handleClick}>{isPaused ? "Resume" : "Pause"}</button>
-          <button onClick={handleCancel}>Cancel</button>
+          <button onClick={handleClick}>
+            {isPaused ? (
+              <>
+                <CirclePlay width={14} height={14} />
+                Resume
+              </>
+            ) : (
+              <>
+                <CirclePause width={14} height={14} />
+                Pause
+              </>
+            )}
+          </button>
+          <button onClick={handleCancel}>
+            <CircleX width={14} height={14} />
+            Cancel
+          </button>
         </div>
       </main>
     </div>
