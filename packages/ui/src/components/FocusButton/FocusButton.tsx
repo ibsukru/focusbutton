@@ -25,10 +25,10 @@ declare global {
           sendMessage: (message: any) => Promise<any>;
           onMessage: {
             addListener: (
-              callback: (message: any, sender: any, sendResponse: any) => void,
+              callback: (message: any, sender: any, sendResponse: any) => void
             ) => void;
             removeListener: (
-              callback: (message: any, sender: any, sendResponse: any) => void,
+              callback: (message: any, sender: any, sendResponse: any) => void
             ) => void;
           };
         };
@@ -36,7 +36,7 @@ declare global {
           onClicked: {
             addListener: (callback: (notificationId: string) => void) => void;
             removeListener: (
-              callback: (notificationId: string) => void,
+              callback: (notificationId: string) => void
             ) => void;
           };
           clear: (notificationId: string) => Promise<void>;
@@ -214,7 +214,7 @@ export default function FocusButton() {
         return null;
       }
     },
-    [isExtension],
+    [isExtension]
   );
 
   const handleTimerEnd = useCallback(() => {
@@ -273,21 +273,6 @@ export default function FocusButton() {
       const now = Date.now();
       startTimeRef.current = now;
 
-      // Start local timer for smooth UI updates
-      timerRef.current = setInterval(() => {
-        setDisplayTime((prevTime) => {
-          const newTime = Math.max(0, prevTime - 1);
-          console.log("Timer update:", newTime);
-          if (newTime === 0) {
-            console.log("Timer reached zero");
-            clearInterval(timerRef.current);
-            timerRef.current = null;
-            handleTimerEnd();
-          }
-          return newTime;
-        });
-      }, 1000);
-
       if (isExtension) {
         console.log("Starting extension timer");
         const browserAPI = getBrowserAPI();
@@ -313,6 +298,21 @@ export default function FocusButton() {
         }
       } else {
         console.log("Starting web timer");
+        // Start local timer for web mode
+        timerRef.current = setInterval(() => {
+          setDisplayTime((prevTime) => {
+            const newTime = Math.max(0, prevTime - 1);
+            console.log("Timer update:", newTime);
+            if (newTime === 0) {
+              console.log("Timer reached zero");
+              clearInterval(timerRef.current);
+              timerRef.current = null;
+              handleTimerEnd();
+            }
+            return newTime;
+          });
+        }, 1000);
+
         // Save state to localStorage
         const state: TimerState = {
           time: duration ?? time,
@@ -326,7 +326,7 @@ export default function FocusButton() {
 
       trackEvent("timer_start", { duration: duration || time });
     },
-    [time, isExtension, sendMessage, handleTimerEnd],
+    [time, isExtension, sendMessage, handleTimerEnd]
   );
 
   const handleCancel = useCallback(() => {
@@ -529,14 +529,14 @@ export default function FocusButton() {
       lastUpdateTimestamp = now;
 
       // Update UI state from background worker
+      console.log("Received timer update:", timerState);
       setTime(timerState.time);
+      setDisplayTime(timerState.time);
       setIsCountingDown(timerState.isCountingDown);
       setIsPaused(timerState.isPaused);
 
-      // Only log significant state changes
-      if (timerState.time % 5 === 0 || timerState.time <= 3) {
-        console.log(`Timer: ${timerState.time}s remaining`);
-      }
+      // Log every second
+      console.log(`[${new Date().toLocaleTimeString()}] time: ${timerState.time}`);
 
       // Handle timer completion
       if (timerState.time === 0 && !timerState.isCountingDown) {
@@ -838,7 +838,7 @@ export default function FocusButton() {
         localStorage.removeItem("focusTimer");
       }
     },
-    [time, isCountingDown, startCountdown, handleTimerEnd],
+    [time, isCountingDown, startCountdown, handleTimerEnd]
   );
 
   useEffect(() => {
@@ -855,12 +855,12 @@ export default function FocusButton() {
 
     document.addEventListener(
       "visibilitychange",
-      handleVisibilityChangeWrapper,
+      handleVisibilityChangeWrapper
     );
     return () => {
       document.removeEventListener(
         "visibilitychange",
-        handleVisibilityChangeWrapper,
+        handleVisibilityChangeWrapper
       );
     };
   }, [handleVisibilityChange]);
@@ -939,7 +939,7 @@ export default function FocusButton() {
     // Function to get or create the meta tag
     const getOrCreateThemeMetaTag = () => {
       let meta = document.querySelector(
-        "meta[name='theme-color']",
+        "meta[name='theme-color']"
       ) as HTMLMetaElement;
       if (!meta) {
         meta = document.createElement("meta");
@@ -951,7 +951,7 @@ export default function FocusButton() {
 
     const getOrCreateBackgroundMetaTag = () => {
       let meta = document.querySelector(
-        "meta[name='background-color']",
+        "meta[name='background-color']"
       ) as HTMLMetaElement;
       if (!meta) {
         meta = document.createElement("meta");
