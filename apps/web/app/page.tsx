@@ -1,8 +1,9 @@
 import { FocusButton } from "@focusbutton/ui";
-import styles from "./page.module.scss";
 import { FaFirefoxBrowser } from "react-icons/fa";
 import { FaChrome } from "react-icons/fa";
 import { getUserAgentInfo } from "../utils/userAgent";
+
+import styles from "./page.module.scss";
 
 export default async function Home() {
   const isExtensionEnabled = false;
