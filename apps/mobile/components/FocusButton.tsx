@@ -11,9 +11,8 @@ export function FocusButton() {
   const [seconds, setSeconds] = useState(0);
   const [upPressed, setUpPressed] = useState(false);
   const [downPressed, setDownPressed] = useState(false);
-  const [adjustInterval, setAdjustInterval] = useState<NodeJS.Timeout | null>(
-    null,
-  );
+  const [adjustInterval, setAdjustInterval] = useState<NodeJS.Timeout | null>(null);
+  const [pressInterval, setPressInterval] = useState<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -36,21 +35,28 @@ export function FocusButton() {
     return () => clearInterval(interval);
   }, [isActive, minutes, seconds]);
 
+  const clearActiveInterval = () => {
+    if (adjustInterval) {
+      clearInterval(adjustInterval);
+      setAdjustInterval(null);
+    }
+  };
+
   useEffect(() => {
     if (upPressed) {
+      clearActiveInterval();
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       const interval = setInterval(() => {
         if (minutes >= 60) {
-          clearInterval(interval);
-          setAdjustInterval(null);
+          clearActiveInterval();
           setMinutes(60);
           setSeconds(0);
           return;
         }
-        setSeconds(prev => {
+        setSeconds((prev) => {
           const newSeconds = prev + 1;
           if (newSeconds >= 60) {
-            setMinutes(m => Math.min(m + 1, 60));
+            setMinutes((m) => Math.min(m + 1, 60));
             return 0;
           }
           return newSeconds;
@@ -58,17 +64,17 @@ export function FocusButton() {
       }, 16);
       setAdjustInterval(interval);
     } else if (downPressed) {
+      clearActiveInterval();
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       const interval = setInterval(() => {
         if (minutes === 0 && seconds === 0) {
-          clearInterval(interval);
-          setAdjustInterval(null);
+          clearActiveInterval();
           return;
         }
-        setSeconds(prev => {
+        setSeconds((prev) => {
           if (prev === 0) {
             if (minutes > 0) {
-              setMinutes(m => Math.max(m - 1, 0));
+              setMinutes((m) => Math.max(m - 1, 0));
               return 59;
             }
             return 0;
@@ -77,39 +83,43 @@ export function FocusButton() {
         });
       }, 16);
       setAdjustInterval(interval);
-    } else if (adjustInterval) {
-      clearInterval(adjustInterval);
-      setAdjustInterval(null);
+    } else {
+      clearActiveInterval();
     }
 
+    return () => clearActiveInterval();
+  }, [upPressed, downPressed]);
+
+  useEffect(() => {
     return () => {
-      if (adjustInterval) {
-        clearInterval(adjustInterval);
-        setAdjustInterval(null);
+      if (pressInterval) {
+        clearInterval(pressInterval);
+        setPressInterval(null);
       }
     };
-  }, [upPressed, downPressed, minutes, seconds]);
+  }, []);
 
   const incrementMinutes = () => {
     if (minutes >= 60) return;
-    
+
+    clearActiveInterval();
     let targetMinutes = Math.min(minutes + 5, 60);
-    let count = 0;
     const interval = setInterval(() => {
       if (minutes >= targetMinutes) {
         clearInterval(interval);
+        setAdjustInterval(null);
         return;
       }
-      count++;
-      setSeconds(prev => {
+      setSeconds((prev) => {
         const newSeconds = prev + 1;
         if (newSeconds >= 60) {
-          setMinutes(m => Math.min(m + 1, targetMinutes));
+          setMinutes((m) => Math.min(m + 1, targetMinutes));
           return 0;
         }
         return newSeconds;
       });
     }, 16);
+    setAdjustInterval(interval);
 
     if (!isActive) {
       setIsActive(true);
@@ -118,19 +128,19 @@ export function FocusButton() {
 
   const decrementMinutes = () => {
     if (minutes === 0 && seconds === 0) return;
-    
+
+    clearActiveInterval();
     let targetMinutes = Math.max(minutes - 5, 0);
-    let count = 0;
     const interval = setInterval(() => {
       if (minutes <= targetMinutes && seconds === 0) {
         clearInterval(interval);
+        setAdjustInterval(null);
         return;
       }
-      count++;
-      setSeconds(prev => {
+      setSeconds((prev) => {
         if (prev === 0) {
           if (minutes > targetMinutes) {
-            setMinutes(m => Math.max(m - 1, targetMinutes));
+            setMinutes((m) => Math.max(m - 1, targetMinutes));
             return 59;
           }
           return 0;
@@ -138,6 +148,7 @@ export function FocusButton() {
         return prev - 1;
       });
     }, 16);
+    setAdjustInterval(interval);
 
     if (!isActive) {
       setIsActive(true);
