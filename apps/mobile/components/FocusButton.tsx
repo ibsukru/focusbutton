@@ -149,17 +149,16 @@ export function FocusButton() {
               </ThemedText>
             </TouchableOpacity>
 
-            {isActive && (
-              <TouchableOpacity
-                style={[styles.controlButton, styles.cancelButton]}
-                onPress={() => {
-                  setIsActive(false);
-                  setSeconds(0);
-                }}
-              >
-                <ThemedText style={styles.controlText}>Cancel</ThemedText>
-              </TouchableOpacity>
-            )}
+            <TouchableOpacity
+              style={[styles.controlButton, styles.cancelButton]}
+              onPress={() => {
+                setIsActive(false);
+                setMinutes(0);
+                setSeconds(0);
+              }}
+            >
+              <ThemedText style={styles.controlText}>Cancel</ThemedText>
+            </TouchableOpacity>
           </View>
         </View>
       </View>
