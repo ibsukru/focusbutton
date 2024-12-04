@@ -1,8 +1,8 @@
-import { useEffect } from 'react';
-import { StyleSheet, View } from 'react-native';
-import { FocusButton } from './components/FocusButton';
-import * as Notifications from 'expo-notifications';
-import { registerForPushNotificationsAsync } from './utils/notifications';
+import { useEffect } from "react";
+import { StyleSheet, View } from "react-native";
+import { FocusButton } from "./components/FocusButton";
+import * as Notifications from "expo-notifications";
+import { registerForPushNotificationsAsync } from "./utils/notifications";
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -27,8 +27,8 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: "#000",
+    alignItems: "center",
+    justifyContent: "center",
   },
 });
