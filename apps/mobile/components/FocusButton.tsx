@@ -28,31 +28,39 @@ export function FocusButton() {
   const [upPressed, setUpPressed] = useState(false);
   const [downPressed, setDownPressed] = useState(false);
   const [isDarkTheme, setIsDarkTheme] = useState(false);
-  const [hasNotificationPermission, setHasNotificationPermission] = useState(false);
-  const [adjustInterval, setAdjustInterval] = useState<NodeJS.Timeout | null>(null);
+  const [hasNotificationPermission, setHasNotificationPermission] =
+    useState(false);
+  const [adjustInterval, setAdjustInterval] = useState<NodeJS.Timeout | null>(
+    null,
+  );
   const notificationListener = useRef<any>();
   const responseListener = useRef<any>();
 
   useEffect(() => {
     registerForPushNotificationsAsync();
 
-    notificationListener.current = Notifications.addNotificationReceivedListener((notification) => {
-      console.log("Notification received:", notification);
-    });
+    notificationListener.current =
+      Notifications.addNotificationReceivedListener((notification) => {
+        console.log("Notification received:", notification);
+      });
 
-    responseListener.current = Notifications.addNotificationResponseReceivedListener((response) => {
-      console.log("Notification response:", response);
-    });
+    responseListener.current =
+      Notifications.addNotificationResponseReceivedListener((response) => {
+        console.log("Notification response:", response);
+      });
 
     return () => {
-      Notifications.removeNotificationSubscription(notificationListener.current);
+      Notifications.removeNotificationSubscription(
+        notificationListener.current,
+      );
       Notifications.removeNotificationSubscription(responseListener.current);
     };
   }, []);
 
   async function registerForPushNotificationsAsync() {
     if (Platform.OS === "ios") {
-      const { status: existingStatus } = await Notifications.getPermissionsAsync();
+      const { status: existingStatus } =
+        await Notifications.getPermissionsAsync();
       let finalStatus = existingStatus;
       if (existingStatus !== "granted") {
         const { status } = await Notifications.requestPermissionsAsync();
@@ -121,7 +129,13 @@ export function FocusButton() {
   }, [seconds]);
 
   useEffect(() => {
-    if (seconds === 0 && minutes === 0 && !isCountingDown && !upPressed && !downPressed) {
+    if (
+      seconds === 0 &&
+      minutes === 0 &&
+      !isCountingDown &&
+      !upPressed &&
+      !downPressed
+    ) {
       Tilt();
       scheduleNotification();
     }
@@ -154,7 +168,10 @@ export function FocusButton() {
       clearActiveInterval();
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       const interval = setInterval(() => {
-        console.log("Interval tick", { minutes: minutesRef.current, seconds: secondsRef.current });
+        console.log("Interval tick", {
+          minutes: minutesRef.current,
+          seconds: secondsRef.current,
+        });
 
         if (minutesRef.current === 0 && secondsRef.current === 0) {
           console.log("Timer at zero, clearing interval");
@@ -163,12 +180,17 @@ export function FocusButton() {
         }
 
         setSeconds((prev) => {
-          console.log("Updating seconds", { prev, minutes: minutesRef.current });
+          console.log("Updating seconds", {
+            prev,
+            minutes: minutesRef.current,
+          });
           const newSeconds = prev - 1;
 
           if (prev === 0) {
             if (minutesRef.current > 0) {
-              console.log("Decrementing minutes", { minutes: minutesRef.current });
+              console.log("Decrementing minutes", {
+                minutes: minutesRef.current,
+              });
               setMinutes((m) => {
                 const newMinutes = Math.max(m - 1, 0);
                 console.log("New minutes value", { newMinutes });
@@ -219,7 +241,10 @@ export function FocusButton() {
 
   const clearActiveInterval = () => {
     if (adjustInterval) {
-      console.log("Clearing interval", { minutes: minutesRef.current, seconds: secondsRef.current });
+      console.log("Clearing interval", {
+        minutes: minutesRef.current,
+        seconds: secondsRef.current,
+      });
       clearInterval(adjustInterval);
       setAdjustInterval(null);
     }
