@@ -1,5 +1,11 @@
 import React, { useState, useEffect, useRef } from "react";
-import { TouchableOpacity, StyleSheet, View, Pressable } from "react-native";
+import {
+  TouchableOpacity,
+  StyleSheet,
+  View,
+  Pressable,
+  Animated,
+} from "react-native";
 import * as Haptics from "expo-haptics";
 import { ThemedView } from "./ThemedView";
 import { ThemedText } from "./ThemedText";
@@ -23,6 +29,32 @@ export function FocusButton() {
 
   const minutesRef = useRef(minutes);
   const secondsRef = useRef(seconds);
+  const tiltAnimation = useRef(new Animated.Value(0)).current;
+
+  const Tilt = () => {
+    Animated.sequence([
+      Animated.timing(tiltAnimation, {
+        toValue: -10,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+      Animated.timing(tiltAnimation, {
+        toValue: 0,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+      Animated.timing(tiltAnimation, {
+        toValue: 10,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+      Animated.timing(tiltAnimation, {
+        toValue: 0,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
 
   useEffect(() => {
     minutesRef.current = minutes;
@@ -31,6 +63,12 @@ export function FocusButton() {
   useEffect(() => {
     secondsRef.current = seconds;
   }, [seconds]);
+
+  useEffect(() => {
+    if (seconds === 0 && minutes === 0 && isActive) {
+      Tilt();
+    }
+  }, [seconds, minutes]);
 
   const styles = getStyles(isDarkTheme);
 
@@ -65,6 +103,14 @@ export function FocusButton() {
       setAdjustInterval(null);
     }
   };
+
+  useEffect(() => {
+    return () => {
+      if (seconds === 0 && minutes === 0) {
+        Tilt();
+      }
+    };
+  }, [seconds, minutes]);
 
   useEffect(() => {
     if (upPressed) {
@@ -216,64 +262,78 @@ export function FocusButton() {
       <View style={[styles.mainContainer]}>
         <View style={styles.timerWrapper}>
           <View style={styles.timerContainer}>
-            <TouchableOpacity
+            <Animated.View
               style={[
                 styles.timerCircle,
                 isActive && styles.active,
                 isPaused && styles.paused,
+                {
+                  transform: [
+                    {
+                      rotate: tiltAnimation.interpolate({
+                        inputRange: [-10, 0, 10],
+                        outputRange: ["-10deg", "0deg", "10deg"],
+                      }),
+                    },
+                  ],
+                },
               ]}
-              onPress={() => setIsDarkTheme((prev) => !prev)}
             >
-              <View style={styles.timerInner}>
-                <TouchableOpacity
-                  activeOpacity={1}
-                  onPress={decrementMinutes}
-                  onPressIn={() => setDownPressed(true)}
-                  onPressOut={() => setDownPressed(false)}
-                  style={styles.arrowButton}
-                >
-                  <Ionicons
-                    name="chevron-down"
-                    size={20}
-                    color={
-                      downPressed
-                        ? isDarkTheme
-                          ? "#fff"
-                          : "#000"
-                        : isDarkTheme
-                          ? "#ccc"
-                          : "#333"
-                    }
-                  />
-                </TouchableOpacity>
-                <View style={styles.timeContainer}>
-                  <ThemedText style={[styles.timerText]}>
-                    {formatTime(minutes, seconds)}
-                  </ThemedText>
+              <TouchableOpacity
+                style={StyleSheet.absoluteFill}
+                onPress={() => setIsDarkTheme((prev) => !prev)}
+              >
+                <View style={styles.timerInner}>
+                  <TouchableOpacity
+                    activeOpacity={1}
+                    onPress={decrementMinutes}
+                    onPressIn={() => setDownPressed(true)}
+                    onPressOut={() => setDownPressed(false)}
+                    style={[styles.arrowButton, styles.leftArrow]}
+                  >
+                    <Ionicons
+                      name="chevron-down"
+                      size={20}
+                      color={
+                        downPressed
+                          ? isDarkTheme
+                            ? "#fff"
+                            : "#000"
+                          : isDarkTheme
+                            ? "#ccc"
+                            : "#333"
+                      }
+                    />
+                  </TouchableOpacity>
+                  <View style={styles.timeContainer}>
+                    <ThemedText style={[styles.timerText]}>
+                      {formatTime(minutes, seconds)}
+                    </ThemedText>
+                  </View>
+                  <TouchableOpacity
+                    activeOpacity={1}
+                    onPress={incrementMinutes}
+                    onPressIn={() => setUpPressed(true)}
+                    onPressOut={() => setUpPressed(false)}
+                    style={[styles.arrowButton, styles.rightArrow]}
+                  >
+                    <Ionicons
+                      name="chevron-up"
+                      size={20}
+                      color={
+                        upPressed
+                          ? isDarkTheme
+                            ? "#fff"
+                            : "#000"
+                          : isDarkTheme
+                            ? "#ccc"
+                            : "#333"
+                      }
+                    />
+                  </TouchableOpacity>
                 </View>
-                <TouchableOpacity
-                  activeOpacity={1}
-                  onPress={incrementMinutes}
-                  onPressIn={() => setUpPressed(true)}
-                  onPressOut={() => setUpPressed(false)}
-                  style={styles.arrowButton}
-                >
-                  <Ionicons
-                    name="chevron-up"
-                    size={20}
-                    color={
-                      upPressed
-                        ? isDarkTheme
-                          ? "#fff"
-                          : "#000"
-                        : isDarkTheme
-                          ? "#ccc"
-                          : "#333"
-                    }
-                  />
-                </TouchableOpacity>
-              </View>
-            </TouchableOpacity>
+              </TouchableOpacity>
+            </Animated.View>
           </View>
           <View
             style={[
@@ -320,27 +380,28 @@ export function FocusButton() {
 const getStyles = (isDarkTheme: boolean) =>
   StyleSheet.create({
     container: {
+      backgroundColor: isDarkTheme ? "#000" : "#fff",
       flex: 1,
-      backgroundColor: "#000",
+      alignItems: "center",
+      justifyContent: "center",
     },
     visible: {
       opacity: 1,
     },
     mainContainer: {
       flex: 1,
+      width: "100%",
       alignItems: "center",
       justifyContent: "center",
-      backgroundColor: isDarkTheme ? "#000" : "#fff",
     },
     timerWrapper: {
+      flex: 1,
       alignItems: "center",
       justifyContent: "center",
-      width: "100%",
     },
     timerContainer: {
       alignItems: "center",
       justifyContent: "center",
-      width: "100%",
     },
     timerCircle: {
       width: 250,
@@ -353,23 +414,35 @@ const getStyles = (isDarkTheme: boolean) =>
       backgroundColor: isDarkTheme ? "#000" : "#fff",
     },
     timerInner: {
+      flex: 1,
+      flexDirection: "row",
       alignItems: "center",
       justifyContent: "center",
-      display: "flex",
-      flexDirection: "row",
+      width: "100%",
+      position: "relative",
     },
-    arrowButton: {
-      padding: 10,
+    timeContainer: {
+      width: 200,
+      alignItems: "center",
+      justifyContent: "center",
     },
     timerText: {
       fontSize: 48,
-      fontWeight: "400",
+      fontWeight: "bold",
+      textAlign: "center",
       color: isDarkTheme ? "#fff" : "#000",
       lineHeight: 48,
     },
-    timeContainer: {
-      minWidth: 130,
-      alignItems: "center",
+    arrowButton: {
+      padding: 10,
+      position: "absolute",
+      zIndex: 1,
+    },
+    leftArrow: {
+      left: 10,
+    },
+    rightArrow: {
+      right: 10,
     },
     controlsContainer: {
       flexDirection: "row",
