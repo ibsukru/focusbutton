@@ -26,6 +26,7 @@ export function FocusButton() {
   );
 
   const isPaused = (minutes > 0 || seconds > 0) && !isActive;
+  const isCountingDown = minutes > 0 || (seconds > 0 && isActive);
 
   const minutesRef = useRef(minutes);
   const secondsRef = useRef(seconds);
@@ -65,10 +66,16 @@ export function FocusButton() {
   }, [seconds]);
 
   useEffect(() => {
-    if (seconds === 0 && minutes === 0 && isActive) {
+    if (
+      seconds === 0 &&
+      minutes === 0 &&
+      !isCountingDown &&
+      !upPressed &&
+      !downPressed
+    ) {
       Tilt();
     }
-  }, [seconds, minutes]);
+  }, [seconds, minutes, isCountingDown]);
 
   const styles = getStyles(isDarkTheme);
 
@@ -103,14 +110,6 @@ export function FocusButton() {
       setAdjustInterval(null);
     }
   };
-
-  useEffect(() => {
-    return () => {
-      if (seconds === 0 && minutes === 0) {
-        Tilt();
-      }
-    };
-  }, [seconds, minutes]);
 
   useEffect(() => {
     if (upPressed) {
@@ -265,7 +264,7 @@ export function FocusButton() {
             <Animated.View
               style={[
                 styles.timerCircle,
-                isActive && styles.active,
+                isCountingDown && styles.countingDown,
                 isPaused && styles.paused,
                 {
                   transform: [
@@ -477,7 +476,7 @@ const getStyles = (isDarkTheme: boolean) =>
       width: 16,
       height: 16,
     },
-    active: {
+    countingDown: {
       borderColor: "#58aa11",
     },
     paused: {
