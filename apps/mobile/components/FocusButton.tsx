@@ -13,10 +13,10 @@ export function FocusButton() {
   const [downPressed, setDownPressed] = useState(false);
   const [isDarkTheme, setIsDarkTheme] = useState(false);
   const [adjustInterval, setAdjustInterval] = useState<NodeJS.Timeout | null>(
-    null,
+    null
   );
   const [pressInterval, setPressInterval] = useState<NodeJS.Timeout | null>(
-    null,
+    null
   );
 
   const minutesRef = useRef(minutes);
@@ -69,7 +69,7 @@ export function FocusButton() {
       clearActiveInterval();
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       const interval = setInterval(() => {
-        if (minutes >= 60) {
+        if (minutesRef.current >= 60) {
           clearActiveInterval();
           setMinutes(60);
           setSeconds(0);
