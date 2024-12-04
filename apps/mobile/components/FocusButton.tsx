@@ -4,18 +4,19 @@ import * as Haptics from "expo-haptics";
 import { ThemedView } from "./ThemedView";
 import { ThemedText } from "./ThemedText";
 import { Ionicons } from "@expo/vector-icons";
+import { CirclePause, CirclePlay } from "lucide-react";
 
 export function FocusButton() {
   const [isActive, setIsActive] = useState(false);
-  const [minutes, setMinutes] = useState(25);
+  const [minutes, setMinutes] = useState(0);
   const [seconds, setSeconds] = useState(0);
   const [upPressed, setUpPressed] = useState(false);
   const [downPressed, setDownPressed] = useState(false);
   const [adjustInterval, setAdjustInterval] = useState<NodeJS.Timeout | null>(
-    null,
+    null
   );
   const [pressInterval, setPressInterval] = useState<NodeJS.Timeout | null>(
-    null,
+    null
   );
 
   useEffect(() => {
@@ -215,20 +216,30 @@ export function FocusButton() {
             <TouchableOpacity
               style={styles.controlButton}
               onPress={() => setIsActive(!isActive)}
+              activeOpacity={1}
             >
-              <ThemedText style={styles.controlText}>
-                {isActive ? "Pause" : "Resume"}
-              </ThemedText>
+              {isActive ? (
+                <>
+                  <Ionicons name="pause" size={16} color={"#fff"} />
+                  <ThemedText style={styles.controlText}>Pause</ThemedText>
+                </>
+              ) : (
+                <>
+                  <Ionicons name="play" size={16} color={"#fff"} />
+                  <ThemedText style={styles.controlText}>Resume</ThemedText>
+                </>
+              )}
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.controlButton, styles.cancelButton]}
+              style={[styles.controlButton]}
               onPress={() => {
                 setIsActive(false);
                 setMinutes(0);
                 setSeconds(0);
               }}
             >
+              <Ionicons name="close" size={16} color={"#fff"} />
               <ThemedText style={styles.controlText}>Cancel</ThemedText>
             </TouchableOpacity>
           </View>
@@ -305,10 +316,16 @@ const styles = StyleSheet.create({
     borderColor: "#333",
     borderStyle: "solid",
     borderWidth: 1,
+    display: "flex",
+    alignItems: "center",
+    flexDirection: "row",
+    gap: 3,
   },
-  cancelButton: {},
   controlText: {
     fontSize: 16,
     color: "#fff",
+    display: "flex",
+    alignItems: "center",
+    gap: 3,
   },
 });
