@@ -1,49 +1,48 @@
 {
   "expo": {
-    "name": "mobile",
-    "slug": "mobile",
+    "name": "Focus Button",
+    "slug": "focusbutton",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "myapp",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/images/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#000000"
+    },
+    "assetBundlePatterns": ["**/*"],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.focusbutton.app",
+      "infoPlist": {
+        "UIBackgroundModes": ["audio"]
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
-      }
+        "backgroundColor": "#000000"
+      },
+      "package": "com.focusbutton.app"
     },
     "web": {
-      "bundler": "metro",
-      "output": "static",
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
-      "expo-router",
-      [
-        "expo-splash-screen",
-        {
-          "image": "./assets/images/splash-icon.png",
-          "imageWidth": 200,
-          "resizeMode": "contain",
-          "backgroundColor": "#ffffff"
-        }
-      ],
       [
         "expo-notifications",
         {
-          "icon": "./assets/notification-icon.png",
-          "color": "#ffffff",
-          "sounds": ["./assets/timer-end.mp3"]
+          "icon": "./assets/images/icon.png",
+          "color": "#000000",
+          "sounds": ["./assets/sounds/timer-end.mp3"]
         }
       ]
     ],
-    "experiments": {
-      "typedRoutes": true
+    "notification": {
+      "icon": "./assets/images/icon.png",
+      "color": "#000000",
+      "iosDisplayInForeground": true
     }
   }
 }

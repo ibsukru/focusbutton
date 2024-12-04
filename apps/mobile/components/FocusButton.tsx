@@ -91,7 +91,7 @@ export function FocusButton() {
     try {
       await Notifications.scheduleNotificationAsync({
         content: {
-          title: "Focus Timer Finished",
+          title: "Time's up!",
           body: "Your focus session has ended!",
           sound: "timer-end.mp3",
           data: { data: "goes here" },
