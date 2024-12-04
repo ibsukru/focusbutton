@@ -12,10 +12,10 @@ export function FocusButton() {
   const [upPressed, setUpPressed] = useState(false);
   const [downPressed, setDownPressed] = useState(false);
   const [adjustInterval, setAdjustInterval] = useState<NodeJS.Timeout | null>(
-    null,
+    null
   );
   const [pressInterval, setPressInterval] = useState<NodeJS.Timeout | null>(
-    null,
+    null
   );
 
   useEffect(() => {
@@ -59,7 +59,7 @@ export function FocusButton() {
         }
         setSeconds((prev) => {
           const newSeconds = prev + 1;
-          if (newSeconds >= 60) {
+          if (newSeconds >= 20) {
             setMinutes((m) => Math.min(m + 1, 60));
             return 0;
           }
@@ -76,14 +76,15 @@ export function FocusButton() {
           return;
         }
         setSeconds((prev) => {
+          const newSeconds = prev - 1;
           if (prev === 0) {
             if (minutes > 0) {
               setMinutes((m) => Math.max(m - 1, 0));
-              return 59;
+              return 19;
             }
             return 0;
           }
-          return prev - 1;
+          return newSeconds;
         });
       }, 16);
       setAdjustInterval(interval);
@@ -116,7 +117,7 @@ export function FocusButton() {
       }
       setSeconds((prev) => {
         const newSeconds = prev + 1;
-        if (newSeconds >= 60) {
+        if (newSeconds >= 20) {
           setMinutes((m) => Math.min(m + 1, targetMinutes));
           return 0;
         }
@@ -142,14 +143,15 @@ export function FocusButton() {
         return;
       }
       setSeconds((prev) => {
+        const newSeconds = prev - 1;
         if (prev === 0) {
           if (minutes > targetMinutes) {
             setMinutes((m) => Math.max(m - 1, targetMinutes));
-            return 59;
+            return 19;
           }
           return 0;
         }
-        return prev - 1;
+        return newSeconds;
       });
     }, 16);
     setAdjustInterval(interval);
