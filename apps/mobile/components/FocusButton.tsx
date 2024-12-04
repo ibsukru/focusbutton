@@ -19,6 +19,8 @@ export function FocusButton() {
     null,
   );
 
+  const isPaused = (minutes > 0 || seconds > 0) && !isActive;
+
   const minutesRef = useRef(minutes);
   const secondsRef = useRef(seconds);
 
@@ -215,7 +217,11 @@ export function FocusButton() {
         <View style={styles.timerWrapper}>
           <View style={styles.timerContainer}>
             <TouchableOpacity
-              style={[styles.timerCircle]}
+              style={[
+                styles.timerCircle,
+                isActive && styles.active,
+                isPaused && styles.paused,
+              ]}
               onPress={() => setIsDarkTheme((prev) => !prev)}
             >
               <View style={styles.timerInner}>
@@ -341,9 +347,9 @@ const getStyles = (isDarkTheme: boolean) =>
       height: 250,
       borderRadius: 125,
       borderWidth: 1,
-      borderColor: "#4CAF50",
       alignItems: "center",
       justifyContent: "center",
+      borderColor: isDarkTheme ? "#333" : "#eaeaea",
       backgroundColor: isDarkTheme ? "#000" : "#fff",
     },
     timerInner: {
@@ -397,5 +403,11 @@ const getStyles = (isDarkTheme: boolean) =>
       color: isDarkTheme ? "#fff" : "#000",
       width: 16,
       height: 16,
+    },
+    active: {
+      borderColor: "#58aa11",
+    },
+    paused: {
+      borderColor: "#f5a623",
     },
   });
