@@ -39,36 +39,43 @@ export function FocusButton() {
   useEffect(() => {
     if (upPressed) {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      let count = 0;
       const interval = setInterval(() => {
-        count++;
-        if (count === 20) {
-          setMinutes((m) => Math.min(m + 1, 60));
-          count = 0;
+        if (minutes >= 60) {
+          clearInterval(interval);
+          setAdjustInterval(null);
+          setMinutes(60);
+          setSeconds(0);
+          return;
         }
-        setSeconds((prev) => (prev + 1) % 60);
-      }, 16); // Approximately 60 updates per second
+        setSeconds(prev => {
+          const newSeconds = prev + 1;
+          if (newSeconds >= 60) {
+            setMinutes(m => Math.min(m + 1, 60));
+            return 0;
+          }
+          return newSeconds;
+        });
+      }, 16);
       setAdjustInterval(interval);
     } else if (downPressed) {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      let count = 0;
       const interval = setInterval(() => {
-        count++;
-        if (count === 20) {
-          setMinutes((m) => {
-            if (m === 0 && seconds === 0) return 0;
-            return Math.max(m - 1, 0);
-          });
-          count = 0;
+        if (minutes === 0 && seconds === 0) {
+          clearInterval(interval);
+          setAdjustInterval(null);
+          return;
         }
-        setSeconds((prev) => {
+        setSeconds(prev => {
           if (prev === 0) {
-            if (minutes === 0) return 0;
-            return 59;
+            if (minutes > 0) {
+              setMinutes(m => Math.max(m - 1, 0));
+              return 59;
+            }
+            return 0;
           }
           return prev - 1;
         });
-      }, 16); // Approximately 60 updates per second
+      }, 16);
       setAdjustInterval(interval);
     } else if (adjustInterval) {
       clearInterval(adjustInterval);
@@ -81,17 +88,57 @@ export function FocusButton() {
         setAdjustInterval(null);
       }
     };
-  }, [upPressed, downPressed]);
+  }, [upPressed, downPressed, minutes, seconds]);
 
   const incrementMinutes = () => {
-    setMinutes((prev) => Math.min(prev + 1, 60));
+    if (minutes >= 60) return;
+    
+    let targetMinutes = Math.min(minutes + 5, 60);
+    let count = 0;
+    const interval = setInterval(() => {
+      if (minutes >= targetMinutes) {
+        clearInterval(interval);
+        return;
+      }
+      count++;
+      setSeconds(prev => {
+        const newSeconds = prev + 1;
+        if (newSeconds >= 60) {
+          setMinutes(m => Math.min(m + 1, targetMinutes));
+          return 0;
+        }
+        return newSeconds;
+      });
+    }, 16);
+
     if (!isActive) {
       setIsActive(true);
     }
   };
 
   const decrementMinutes = () => {
-    setMinutes((prev) => Math.max(prev - 1, 1));
+    if (minutes === 0 && seconds === 0) return;
+    
+    let targetMinutes = Math.max(minutes - 5, 0);
+    let count = 0;
+    const interval = setInterval(() => {
+      if (minutes <= targetMinutes && seconds === 0) {
+        clearInterval(interval);
+        return;
+      }
+      count++;
+      setSeconds(prev => {
+        if (prev === 0) {
+          if (minutes > targetMinutes) {
+            setMinutes(m => Math.max(m - 1, targetMinutes));
+            return 59;
+          }
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 16);
+
     if (!isActive) {
       setIsActive(true);
     }
