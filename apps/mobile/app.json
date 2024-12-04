@@ -11,12 +11,16 @@
       "resizeMode": "contain",
       "backgroundColor": "#000000"
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.focusbutton.app",
       "infoPlist": {
-        "UIBackgroundModes": ["audio"]
+        "UIBackgroundModes": [
+          "audio"
+        ]
       }
     },
     "android": {
@@ -35,7 +39,9 @@
         {
           "icon": "./assets/images/icon.png",
           "color": "#000000",
-          "sounds": ["./assets/sounds/timer-end.mp3"]
+          "sounds": [
+            "./assets/sounds/timer-end.mp3"
+          ]
         }
       ]
     ],
@@ -43,6 +49,11 @@
       "icon": "./assets/images/icon.png",
       "color": "#000000",
       "iosDisplayInForeground": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "be0cf6d8-dfe3-411d-b54d-ad6b922bb366"
+      }
     }
   }
 }
