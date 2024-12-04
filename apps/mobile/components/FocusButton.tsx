@@ -13,10 +13,10 @@ export function FocusButton() {
   const [downPressed, setDownPressed] = useState(false);
   const [isDarkTheme, setIsDarkTheme] = useState(false);
   const [adjustInterval, setAdjustInterval] = useState<NodeJS.Timeout | null>(
-    null
+    null,
   );
   const [pressInterval, setPressInterval] = useState<NodeJS.Timeout | null>(
-    null
+    null,
   );
 
   const styles = getStyles(isDarkTheme);
