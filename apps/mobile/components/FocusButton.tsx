@@ -31,22 +31,25 @@ export function FocusButton() {
     return () => clearInterval(interval);
   }, [isActive, minutes, seconds]);
 
-  const toggleTimer = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    setIsActive(!isActive);
-  };
-
   const incrementMinutes = () => {
     if (!isActive) {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      setMinutes((prev) => Math.min(prev + 1, 60));
+      setMinutes((prev) => {
+        const newMinutes = Math.min(prev + 1, 60);
+        setIsActive(true);
+        return newMinutes;
+      });
     }
   };
 
   const decrementMinutes = () => {
     if (!isActive) {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      setMinutes((prev) => Math.max(prev - 1, 1));
+      setMinutes((prev) => {
+        const newMinutes = Math.max(prev - 1, 1);
+        setIsActive(true);
+        return newMinutes;
+      });
     }
   };
 
@@ -56,46 +59,52 @@ export function FocusButton() {
 
   return (
     <ThemedView style={styles.container}>
-      <View style={styles.timerContainer}>
-        <TouchableOpacity onPress={toggleTimer} style={styles.timerCircle}>
-          <View style={styles.timerInner}>
-            <ThemedText style={styles.timerText}>
-              <TouchableOpacity
-                onPress={incrementMinutes}
-                style={styles.arrowButton}
-              >
-                <Ionicons name="chevron-up" size={20} color="#666" />
-              </TouchableOpacity>
-              {formatTime(minutes, seconds)}
-              <TouchableOpacity
-                onPress={decrementMinutes}
-                style={styles.arrowButton}
-              >
-                <Ionicons name="chevron-down" size={20} color="#666" />
-              </TouchableOpacity>
-            </ThemedText>
+      <View style={styles.mainContainer}>
+        <View style={styles.timerWrapper}>
+          <View style={styles.timerContainer}>
+            <View style={styles.timerCircle}>
+              <View style={styles.timerInner}>
+                <ThemedText style={styles.timerText}>
+                  <TouchableOpacity
+                    onPress={incrementMinutes}
+                    style={styles.arrowButton}
+                  >
+                    <Ionicons name="chevron-up" size={20} color="#666" />
+                  </TouchableOpacity>
+                  {formatTime(minutes, seconds)}
+                  <TouchableOpacity
+                    onPress={decrementMinutes}
+                    style={styles.arrowButton}
+                  >
+                    <Ionicons name="chevron-down" size={20} color="#666" />
+                  </TouchableOpacity>
+                </ThemedText>
+              </View>
+            </View>
           </View>
-        </TouchableOpacity>
-      </View>
+          <View style={styles.controlsContainer}>
+            <TouchableOpacity
+              style={styles.controlButton}
+              onPress={() => setIsActive(!isActive)}
+            >
+              <ThemedText style={styles.controlText}>
+                {isActive ? "Pause" : "Resume"}
+              </ThemedText>
+            </TouchableOpacity>
 
-      <View style={styles.controlsContainer}>
-        <TouchableOpacity style={styles.controlButton} onPress={toggleTimer}>
-          <ThemedText style={styles.controlText}>
-            {isActive ? "Pause" : "Start"}
-          </ThemedText>
-        </TouchableOpacity>
-
-        {isActive && (
-          <TouchableOpacity
-            style={[styles.controlButton, styles.cancelButton]}
-            onPress={() => {
-              setIsActive(false);
-              setSeconds(0);
-            }}
-          >
-            <ThemedText style={styles.controlText}>Cancel</ThemedText>
-          </TouchableOpacity>
-        )}
+            {isActive && (
+              <TouchableOpacity
+                style={[styles.controlButton, styles.cancelButton]}
+                onPress={() => {
+                  setIsActive(false);
+                  setSeconds(0);
+                }}
+              >
+                <ThemedText style={styles.controlText}>Cancel</ThemedText>
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
       </View>
     </ThemedView>
   );
@@ -105,11 +114,18 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#000",
+  },
+  mainContainer: {
+    flex: 1,
     alignItems: "center",
     justifyContent: "center",
   },
+  timerWrapper: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingTop: 30,
+  },
   timerContainer: {
-    flex: 1,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -138,7 +154,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "center",
     gap: 20,
-    paddingBottom: 40,
+    marginTop: 30,
+    zIndex: 1,
   },
   controlButton: {
     paddingHorizontal: 24,
@@ -150,7 +167,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#444",
   },
   controlText: {
-    color: "#fff",
     fontSize: 16,
+    color: "#fff",
   },
 });
