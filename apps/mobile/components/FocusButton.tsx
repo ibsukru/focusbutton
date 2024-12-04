@@ -134,12 +134,14 @@ export function FocusButton() {
       minutes === 0 &&
       !isCountingDown &&
       !upPressed &&
-      !downPressed
+      !downPressed &&
+      isActive
     ) {
       Tilt();
       scheduleNotification();
+      setIsActive(false);
     }
-  }, [seconds, minutes, isCountingDown]);
+  }, [seconds, minutes, isCountingDown, upPressed, downPressed, isActive]);
 
   useEffect(() => {
     if (upPressed) {
@@ -421,6 +423,7 @@ export function FocusButton() {
                 setIsActive(false);
                 setMinutes(0);
                 setSeconds(0);
+                clearActiveInterval();
               }}
             >
               <Ionicons style={styles.controlIcon} name="close" size={16} />
