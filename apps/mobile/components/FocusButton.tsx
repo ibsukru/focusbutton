@@ -12,7 +12,7 @@ export function FocusButton() {
   const [upPressed, setUpPressed] = useState(false);
   const [downPressed, setDownPressed] = useState(false);
   const [adjustInterval, setAdjustInterval] = useState<NodeJS.Timeout | null>(
-    null,
+    null
   );
 
   useEffect(() => {
@@ -139,7 +139,12 @@ export function FocusButton() {
               </View>
             </View>
           </View>
-          <View style={styles.controlsContainer}>
+          <View
+            style={[
+              styles.controlsContainer,
+              (minutes > 0 || seconds > 0) && styles.visible,
+            ]}
+          >
             <TouchableOpacity
               style={styles.controlButton}
               onPress={() => setIsActive(!isActive)}
@@ -170,6 +175,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#000",
+  },
+  visible: {
+    opacity: 1,
   },
   mainContainer: {
     flex: 1,
@@ -220,6 +228,7 @@ const styles = StyleSheet.create({
     gap: 20,
     marginTop: 30,
     zIndex: 1,
+    opacity: 0,
   },
   controlButton: {
     paddingHorizontal: 16,
