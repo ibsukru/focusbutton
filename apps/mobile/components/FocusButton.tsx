@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { TouchableOpacity, StyleSheet, View, Pressable } from "react-native";
 import * as Haptics from "expo-haptics";
 import { ThemedView } from "./ThemedView";
@@ -13,11 +13,22 @@ export function FocusButton() {
   const [downPressed, setDownPressed] = useState(false);
   const [isDarkTheme, setIsDarkTheme] = useState(false);
   const [adjustInterval, setAdjustInterval] = useState<NodeJS.Timeout | null>(
-    null,
+    null
   );
   const [pressInterval, setPressInterval] = useState<NodeJS.Timeout | null>(
-    null,
+    null
   );
+
+  const minutesRef = useRef(minutes);
+  const secondsRef = useRef(seconds);
+
+  useEffect(() => {
+    minutesRef.current = minutes;
+  }, [minutes]);
+
+  useEffect(() => {
+    secondsRef.current = seconds;
+  }, [seconds]);
 
   const styles = getStyles(isDarkTheme);
 
@@ -44,6 +55,7 @@ export function FocusButton() {
 
   const clearActiveInterval = () => {
     if (adjustInterval) {
+      console.log("Clearing interval", { minutes: minutesRef.current, seconds: secondsRef.current });
       clearInterval(adjustInterval);
       setAdjustInterval(null);
     }
@@ -60,6 +72,7 @@ export function FocusButton() {
           setSeconds(0);
           return;
         }
+
         setSeconds((prev) => {
           const newSeconds = prev + 1;
           if (newSeconds >= 20) {
@@ -74,22 +87,39 @@ export function FocusButton() {
       clearActiveInterval();
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       const interval = setInterval(() => {
-        if (minutes === 0 && seconds === 0) {
+        console.log("Interval tick", { minutes: minutesRef.current, seconds: secondsRef.current });
+
+        if (minutesRef.current === 0 && secondsRef.current === 0) {
+          console.log("Timer at zero, clearing interval");
           clearActiveInterval();
           return;
         }
+
         setSeconds((prev) => {
+          console.log("Updating seconds", { prev, minutes: minutesRef.current });
           const newSeconds = prev - 1;
+
           if (prev === 0) {
-            if (minutes > 0) {
-              setMinutes((m) => Math.max(m - 1, 0));
+            if (minutesRef.current > 0) {
+              console.log("Decrementing minutes", { minutes: minutesRef.current });
+              setMinutes((m) => {
+                const newMinutes = Math.max(m - 1, 0);
+                console.log("New minutes value", { newMinutes });
+                if (newMinutes === 0) {
+                  clearActiveInterval();
+                }
+                return newMinutes;
+              });
               return 19;
             }
+            console.log("At zero, should stop");
+            clearActiveInterval();
             return 0;
           }
           return newSeconds;
         });
       }, 16);
+      console.log("Setting new interval");
       setAdjustInterval(interval);
     } else {
       clearActiveInterval();
@@ -170,19 +200,11 @@ export function FocusButton() {
 
   return (
     <ThemedView style={styles.container}>
-      <View
-        style={[
-          styles.mainContainer,
-          { backgroundColor: isDarkTheme ? "#000" : "#fff" },
-        ]}
-      >
+      <View style={[styles.mainContainer]}>
         <View style={styles.timerWrapper}>
           <View style={styles.timerContainer}>
             <TouchableOpacity
-              style={[
-                styles.timerCircle,
-                { backgroundColor: isDarkTheme ? "#000" : "#fff" },
-              ]}
+              style={[styles.timerCircle]}
               onPress={() => setIsDarkTheme((prev) => !prev)}
             >
               <View style={styles.timerInner}>
@@ -291,6 +313,7 @@ const getStyles = (isDarkTheme: boolean) =>
       flex: 1,
       alignItems: "center",
       justifyContent: "center",
+      backgroundColor: isDarkTheme ? "#000" : "#fff",
     },
     timerWrapper: {
       alignItems: "center",
@@ -310,6 +333,7 @@ const getStyles = (isDarkTheme: boolean) =>
       borderColor: "#4CAF50",
       alignItems: "center",
       justifyContent: "center",
+      backgroundColor: isDarkTheme ? "#000" : "#fff",
     },
     timerInner: {
       alignItems: "center",
@@ -342,7 +366,7 @@ const getStyles = (isDarkTheme: boolean) =>
       paddingHorizontal: 16,
       paddingVertical: 8,
       borderRadius: 20,
-      borderColor: "#333",
+      borderColor: isDarkTheme ? "#333" : "#eaeaea",
       borderStyle: "solid",
       borderWidth: 1,
       display: "flex",
