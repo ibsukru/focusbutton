@@ -12,7 +12,7 @@ export function FocusButton() {
   const [upPressed, setUpPressed] = useState(false);
   const [downPressed, setDownPressed] = useState(false);
   const [adjustInterval, setAdjustInterval] = useState<NodeJS.Timeout | null>(
-    null
+    null,
   );
 
   useEffect(() => {
@@ -56,13 +56,16 @@ export function FocusButton() {
         count++;
         if (count === 20) {
           setMinutes((m) => {
-            const newMinutes = Math.max(m - 1, 1);
-            return newMinutes;
+            if (m === 0 && seconds === 0) return 0;
+            return Math.max(m - 1, 0);
           });
           count = 0;
         }
         setSeconds((prev) => {
-          if (prev === 0) return 59;
+          if (prev === 0) {
+            if (minutes === 0) return 0;
+            return 59;
+          }
           return prev - 1;
         });
       }, 16); // Approximately 60 updates per second
