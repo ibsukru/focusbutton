@@ -11,6 +11,9 @@ export function FocusButton() {
   const [seconds, setSeconds] = useState(0);
   const [upPressed, setUpPressed] = useState(false);
   const [downPressed, setDownPressed] = useState(false);
+  const [adjustInterval, setAdjustInterval] = useState<NodeJS.Timeout | null>(
+    null
+  );
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -33,25 +36,61 @@ export function FocusButton() {
     return () => clearInterval(interval);
   }, [isActive, minutes, seconds]);
 
-  const incrementMinutes = () => {
-    if (!isActive) {
+  useEffect(() => {
+    if (upPressed) {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      setMinutes((prev) => {
-        const newMinutes = Math.min(prev + 1, 60);
-        setIsActive(true);
-        return newMinutes;
-      });
+      let count = 0;
+      const interval = setInterval(() => {
+        count++;
+        if (count === 60) {
+          setMinutes(m => Math.min(m + 1, 60));
+          count = 0;
+        }
+        setSeconds(prev => (prev + 1) % 60);
+      }, 16); // Approximately 60 updates per second
+      setAdjustInterval(interval);
+    } else if (downPressed) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      let count = 0;
+      const interval = setInterval(() => {
+        count++;
+        if (count === 60) {
+          setMinutes(m => {
+            const newMinutes = Math.max(m - 1, 1);
+            return newMinutes;
+          });
+          count = 0;
+        }
+        setSeconds(prev => {
+          if (prev === 0) return 59;
+          return prev - 1;
+        });
+      }, 16); // Approximately 60 updates per second
+      setAdjustInterval(interval);
+    } else if (adjustInterval) {
+      clearInterval(adjustInterval);
+      setAdjustInterval(null);
+    }
+
+    return () => {
+      if (adjustInterval) {
+        clearInterval(adjustInterval);
+        setAdjustInterval(null);
+      }
+    };
+  }, [upPressed, downPressed]);
+
+  const incrementMinutes = () => {
+    setMinutes((prev) => Math.min(prev + 1, 60));
+    if (!isActive) {
+      setIsActive(true);
     }
   };
 
   const decrementMinutes = () => {
+    setMinutes((prev) => Math.max(prev - 1, 1));
     if (!isActive) {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      setMinutes((prev) => {
-        const newMinutes = Math.max(prev - 1, 1);
-        setIsActive(true);
-        return newMinutes;
-      });
+      setIsActive(true);
     }
   };
 
@@ -68,24 +107,6 @@ export function FocusButton() {
               <View style={styles.timerInner}>
                 <TouchableOpacity
                   activeOpacity={1}
-                  onPress={incrementMinutes}
-                  onPressIn={() => setUpPressed(true)}
-                  onPressOut={() => setUpPressed(false)}
-                  style={styles.arrowButton}
-                >
-                  <Ionicons
-                    name="chevron-up"
-                    size={20}
-                    color={upPressed ? "#fff" : "#666"}
-                  />
-                </TouchableOpacity>
-                <View style={styles.timeContainer}>
-                  <ThemedText style={styles.timerText}>
-                    {formatTime(minutes, seconds)}
-                  </ThemedText>
-                </View>
-                <TouchableOpacity
-                  activeOpacity={1}
                   onPress={decrementMinutes}
                   onPressIn={() => setDownPressed(true)}
                   onPressOut={() => setDownPressed(false)}
@@ -95,6 +116,24 @@ export function FocusButton() {
                     name="chevron-down"
                     size={20}
                     color={downPressed ? "#fff" : "#666"}
+                  />
+                </TouchableOpacity>
+                <View style={styles.timeContainer}>
+                  <ThemedText style={styles.timerText}>
+                    {formatTime(minutes, seconds)}
+                  </ThemedText>
+                </View>
+                <TouchableOpacity
+                  activeOpacity={1}
+                  onPress={incrementMinutes}
+                  onPressIn={() => setUpPressed(true)}
+                  onPressOut={() => setUpPressed(false)}
+                  style={styles.arrowButton}
+                >
+                  <Ionicons
+                    name="chevron-up"
+                    size={20}
+                    color={upPressed ? "#fff" : "#666"}
                   />
                 </TouchableOpacity>
               </View>
