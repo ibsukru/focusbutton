@@ -4,7 +4,6 @@ import * as Haptics from "expo-haptics";
 import { ThemedView } from "./ThemedView";
 import { ThemedText } from "./ThemedText";
 import { Ionicons } from "@expo/vector-icons";
-import { CirclePause, CirclePlay } from "lucide-react";
 
 export function FocusButton() {
   const [isActive, setIsActive] = useState(false);
@@ -12,12 +11,15 @@ export function FocusButton() {
   const [seconds, setSeconds] = useState(0);
   const [upPressed, setUpPressed] = useState(false);
   const [downPressed, setDownPressed] = useState(false);
+  const [isDarkTheme, setIsDarkTheme] = useState(false);
   const [adjustInterval, setAdjustInterval] = useState<NodeJS.Timeout | null>(
-    null,
+    null
   );
   const [pressInterval, setPressInterval] = useState<NodeJS.Timeout | null>(
-    null,
+    null
   );
+
+  const styles = getStyles(isDarkTheme);
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -168,10 +170,21 @@ export function FocusButton() {
 
   return (
     <ThemedView style={styles.container}>
-      <View style={styles.mainContainer}>
+      <View
+        style={[
+          styles.mainContainer,
+          { backgroundColor: isDarkTheme ? "#000" : "#fff" },
+        ]}
+      >
         <View style={styles.timerWrapper}>
           <View style={styles.timerContainer}>
-            <View style={styles.timerCircle}>
+            <TouchableOpacity
+              style={[
+                styles.timerCircle,
+                { backgroundColor: isDarkTheme ? "#000" : "#fff" },
+              ]}
+              onPress={() => setIsDarkTheme((prev) => !prev)}
+            >
               <View style={styles.timerInner}>
                 <TouchableOpacity
                   activeOpacity={1}
@@ -183,11 +196,19 @@ export function FocusButton() {
                   <Ionicons
                     name="chevron-down"
                     size={20}
-                    color={downPressed ? "#fff" : "#666"}
+                    color={
+                      downPressed
+                        ? isDarkTheme
+                          ? "#fff"
+                          : "#000"
+                        : isDarkTheme
+                          ? "#ccc"
+                          : "#333"
+                    }
                   />
                 </TouchableOpacity>
                 <View style={styles.timeContainer}>
-                  <ThemedText style={styles.timerText}>
+                  <ThemedText style={[styles.timerText]}>
                     {formatTime(minutes, seconds)}
                   </ThemedText>
                 </View>
@@ -201,11 +222,19 @@ export function FocusButton() {
                   <Ionicons
                     name="chevron-up"
                     size={20}
-                    color={upPressed ? "#fff" : "#666"}
+                    color={
+                      upPressed
+                        ? isDarkTheme
+                          ? "#fff"
+                          : "#000"
+                        : isDarkTheme
+                          ? "#ccc"
+                          : "#333"
+                    }
                   />
                 </TouchableOpacity>
               </View>
-            </View>
+            </TouchableOpacity>
           </View>
           <View
             style={[
@@ -214,18 +243,18 @@ export function FocusButton() {
             ]}
           >
             <TouchableOpacity
-              style={styles.controlButton}
+              style={[styles.controlButton]}
               onPress={() => setIsActive(!isActive)}
               activeOpacity={1}
             >
               {isActive ? (
                 <>
-                  <Ionicons name="pause" size={16} color={"#fff"} />
+                  <Ionicons style={styles.controlIcon} size={16} name="pause" />
                   <ThemedText style={styles.controlText}>Pause</ThemedText>
                 </>
               ) : (
                 <>
-                  <Ionicons name="play" size={16} color={"#fff"} />
+                  <Ionicons style={styles.controlIcon} size={16} name="play" />
                   <ThemedText style={styles.controlText}>Resume</ThemedText>
                 </>
               )}
@@ -239,7 +268,7 @@ export function FocusButton() {
                 setSeconds(0);
               }}
             >
-              <Ionicons name="close" size={16} color={"#fff"} />
+              <Ionicons style={styles.controlIcon} name="close" size={16} />
               <ThemedText style={styles.controlText}>Cancel</ThemedText>
             </TouchableOpacity>
           </View>
@@ -249,83 +278,89 @@ export function FocusButton() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#000",
-  },
-  visible: {
-    opacity: 1,
-  },
-  mainContainer: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  timerWrapper: {
-    alignItems: "center",
-    justifyContent: "center",
-    width: "100%",
-  },
-  timerContainer: {
-    alignItems: "center",
-    justifyContent: "center",
-    width: "100%",
-  },
-  timerCircle: {
-    width: 250,
-    height: 250,
-    borderRadius: 125,
-    borderWidth: 1,
-    borderColor: "#4CAF50",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  timerInner: {
-    alignItems: "center",
-    justifyContent: "center",
-    display: "flex",
-    flexDirection: "row",
-  },
-  arrowButton: {
-    padding: 10,
-  },
-  timerText: {
-    fontSize: 48,
-    fontWeight: "400",
-    color: "#fff",
-    lineHeight: 48,
-  },
-  timeContainer: {
-    minWidth: 130,
-    alignItems: "center",
-  },
-  controlsContainer: {
-    flexDirection: "row",
-    justifyContent: "center",
-    gap: 20,
-    marginTop: 30,
-    zIndex: 1,
-    opacity: 0,
-  },
-  controlButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: "#000",
-    borderColor: "#333",
-    borderStyle: "solid",
-    borderWidth: 1,
-    display: "flex",
-    alignItems: "center",
-    flexDirection: "row",
-    gap: 3,
-  },
-  controlText: {
-    fontSize: 16,
-    color: "#fff",
-    display: "flex",
-    alignItems: "center",
-    gap: 3,
-  },
-});
+const getStyles = (isDarkTheme: boolean) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: "#000",
+    },
+    visible: {
+      opacity: 1,
+    },
+    mainContainer: {
+      flex: 1,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    timerWrapper: {
+      alignItems: "center",
+      justifyContent: "center",
+      width: "100%",
+    },
+    timerContainer: {
+      alignItems: "center",
+      justifyContent: "center",
+      width: "100%",
+    },
+    timerCircle: {
+      width: 250,
+      height: 250,
+      borderRadius: 125,
+      borderWidth: 1,
+      borderColor: "#4CAF50",
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    timerInner: {
+      alignItems: "center",
+      justifyContent: "center",
+      display: "flex",
+      flexDirection: "row",
+    },
+    arrowButton: {
+      padding: 10,
+    },
+    timerText: {
+      fontSize: 48,
+      fontWeight: "400",
+      color: isDarkTheme ? "#fff" : "#000",
+      lineHeight: 48,
+    },
+    timeContainer: {
+      minWidth: 130,
+      alignItems: "center",
+    },
+    controlsContainer: {
+      flexDirection: "row",
+      justifyContent: "center",
+      gap: 20,
+      marginTop: 30,
+      zIndex: 1,
+      opacity: 0,
+    },
+    controlButton: {
+      paddingHorizontal: 16,
+      paddingVertical: 8,
+      borderRadius: 20,
+      borderColor: "#333",
+      borderStyle: "solid",
+      borderWidth: 1,
+      display: "flex",
+      alignItems: "center",
+      flexDirection: "row",
+      gap: 3,
+      backgroundColor: isDarkTheme ? "#000" : "#fff",
+    },
+    controlText: {
+      fontSize: 16,
+      color: isDarkTheme ? "#fff" : "#000",
+      display: "flex",
+      alignItems: "center",
+      gap: 3,
+    },
+    controlIcon: {
+      color: isDarkTheme ? "#fff" : "#000",
+      width: 16,
+      height: 16,
+    },
+  });
