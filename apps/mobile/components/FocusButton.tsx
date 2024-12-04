@@ -5,11 +5,22 @@ import {
   View,
   Pressable,
   Animated,
+  Platform,
 } from "react-native";
 import * as Haptics from "expo-haptics";
+import * as Notifications from "expo-notifications";
+import { Audio } from "expo-av";
 import { ThemedView } from "./ThemedView";
 import { ThemedText } from "./ThemedText";
 import { Ionicons } from "@expo/vector-icons";
+
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+  }),
+});
 
 export function FocusButton() {
   const [isActive, setIsActive] = useState(false);
@@ -18,12 +29,79 @@ export function FocusButton() {
   const [upPressed, setUpPressed] = useState(false);
   const [downPressed, setDownPressed] = useState(false);
   const [isDarkTheme, setIsDarkTheme] = useState(false);
+  const [hasNotificationPermission, setHasNotificationPermission] =
+    useState(false);
   const [adjustInterval, setAdjustInterval] = useState<NodeJS.Timeout | null>(
     null,
   );
-  const [pressInterval, setPressInterval] = useState<NodeJS.Timeout | null>(
-    null,
-  );
+  const sound = useRef<Audio.Sound>();
+  const notificationListener = useRef<any>();
+  const responseListener = useRef<any>();
+
+  useEffect(() => {
+    registerForPushNotificationsAsync();
+
+    notificationListener.current =
+      Notifications.addNotificationReceivedListener((notification) => {
+        console.log("Notification received:", notification);
+      });
+
+    responseListener.current =
+      Notifications.addNotificationResponseReceivedListener((response) => {
+        console.log("Notification response:", response);
+      });
+
+    return () => {
+      Notifications.removeNotificationSubscription(
+        notificationListener.current,
+      );
+      Notifications.removeNotificationSubscription(responseListener.current);
+      sound.current?.unloadAsync();
+    };
+  }, []);
+
+  async function registerForPushNotificationsAsync() {
+    if (Platform.OS === "ios") {
+      const { status: existingStatus } =
+        await Notifications.getPermissionsAsync();
+      let finalStatus = existingStatus;
+      if (existingStatus !== "granted") {
+        const { status } = await Notifications.requestPermissionsAsync();
+        finalStatus = status;
+      }
+      setHasNotificationPermission(finalStatus === "granted");
+    }
+  }
+
+  async function playSound() {
+    try {
+      const { sound: audioSound } = await Audio.Sound.createAsync(
+        require("../assets/timer-end.mp3"),
+      );
+      sound.current = audioSound;
+      await sound.current.playAsync();
+    } catch (error) {
+      console.log("Error playing sound:", error);
+    }
+  }
+
+  async function scheduleNotification() {
+    if (!hasNotificationPermission) return;
+
+    try {
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: "Focus Timer Finished",
+          body: "Your focus session has ended!",
+          sound: "timer-end.mp3",
+          data: { data: "goes here" },
+        },
+        trigger: null, // null means show immediately
+      });
+    } catch (error) {
+      console.log("Error scheduling notification:", error);
+    }
+  }
 
   const isPaused = (minutes > 0 || seconds > 0) && !isActive;
   const isCountingDown = minutes > 0 || (seconds > 0 && isActive);
@@ -74,45 +152,14 @@ export function FocusButton() {
       !downPressed
     ) {
       Tilt();
+      playSound();
+      scheduleNotification();
     }
   }, [seconds, minutes, isCountingDown]);
 
-  const styles = getStyles(isDarkTheme);
-
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (isActive && (minutes > 0 || seconds > 0)) {
-      interval = setInterval(() => {
-        if (seconds === 0) {
-          if (minutes === 0) {
-            clearInterval(interval);
-            setIsActive(false);
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-          } else {
-            setMinutes(minutes - 1);
-            setSeconds(59);
-          }
-        } else {
-          setSeconds(seconds - 1);
-        }
-      }, 1000);
-    }
-    return () => clearInterval(interval);
-  }, [isActive, minutes, seconds]);
-
-  const clearActiveInterval = () => {
-    if (adjustInterval) {
-      console.log("Clearing interval", {
-        minutes: minutesRef.current,
-        seconds: secondsRef.current,
-      });
-      clearInterval(adjustInterval);
-      setAdjustInterval(null);
-    }
-  };
-
   useEffect(() => {
     if (upPressed) {
+      registerForPushNotificationsAsync();
       clearActiveInterval();
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       const interval = setInterval(() => {
@@ -187,13 +234,38 @@ export function FocusButton() {
   }, [upPressed, downPressed]);
 
   useEffect(() => {
-    return () => {
-      if (pressInterval) {
-        clearInterval(pressInterval);
-        setPressInterval(null);
-      }
-    };
-  }, []);
+    let interval: NodeJS.Timeout;
+    if (isActive && (minutes > 0 || seconds > 0)) {
+      interval = setInterval(() => {
+        if (seconds === 0) {
+          if (minutes === 0) {
+            clearInterval(interval);
+            setIsActive(false);
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            playSound();
+            scheduleNotification();
+          } else {
+            setMinutes(minutes - 1);
+            setSeconds(59);
+          }
+        } else {
+          setSeconds(seconds - 1);
+        }
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [isActive, minutes, seconds]);
+
+  const clearActiveInterval = () => {
+    if (adjustInterval) {
+      console.log("Clearing interval", {
+        minutes: minutesRef.current,
+        seconds: secondsRef.current,
+      });
+      clearInterval(adjustInterval);
+      setAdjustInterval(null);
+    }
+  };
 
   const incrementMinutes = () => {
     if (minutes >= 60) return;
@@ -255,6 +327,8 @@ export function FocusButton() {
   const formatTime = (mins: number, secs: number) => {
     return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
+
+  const styles = getStyles(isDarkTheme);
 
   return (
     <ThemedView style={styles.container}>
