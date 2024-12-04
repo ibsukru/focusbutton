@@ -11,8 +11,12 @@ export function FocusButton() {
   const [seconds, setSeconds] = useState(0);
   const [upPressed, setUpPressed] = useState(false);
   const [downPressed, setDownPressed] = useState(false);
-  const [adjustInterval, setAdjustInterval] = useState<NodeJS.Timeout | null>(null);
-  const [pressInterval, setPressInterval] = useState<NodeJS.Timeout | null>(null);
+  const [adjustInterval, setAdjustInterval] = useState<NodeJS.Timeout | null>(
+    null,
+  );
+  const [pressInterval, setPressInterval] = useState<NodeJS.Timeout | null>(
+    null,
+  );
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
