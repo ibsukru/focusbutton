@@ -13,10 +13,10 @@ export function FocusButton() {
   const [downPressed, setDownPressed] = useState(false);
   const [isDarkTheme, setIsDarkTheme] = useState(false);
   const [adjustInterval, setAdjustInterval] = useState<NodeJS.Timeout | null>(
-    null
+    null,
   );
   const [pressInterval, setPressInterval] = useState<NodeJS.Timeout | null>(
-    null
+    null,
   );
 
   const minutesRef = useRef(minutes);
@@ -55,7 +55,10 @@ export function FocusButton() {
 
   const clearActiveInterval = () => {
     if (adjustInterval) {
-      console.log("Clearing interval", { minutes: minutesRef.current, seconds: secondsRef.current });
+      console.log("Clearing interval", {
+        minutes: minutesRef.current,
+        seconds: secondsRef.current,
+      });
       clearInterval(adjustInterval);
       setAdjustInterval(null);
     }
@@ -87,7 +90,10 @@ export function FocusButton() {
       clearActiveInterval();
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       const interval = setInterval(() => {
-        console.log("Interval tick", { minutes: minutesRef.current, seconds: secondsRef.current });
+        console.log("Interval tick", {
+          minutes: minutesRef.current,
+          seconds: secondsRef.current,
+        });
 
         if (minutesRef.current === 0 && secondsRef.current === 0) {
           console.log("Timer at zero, clearing interval");
@@ -96,12 +102,17 @@ export function FocusButton() {
         }
 
         setSeconds((prev) => {
-          console.log("Updating seconds", { prev, minutes: minutesRef.current });
+          console.log("Updating seconds", {
+            prev,
+            minutes: minutesRef.current,
+          });
           const newSeconds = prev - 1;
 
           if (prev === 0) {
             if (minutesRef.current > 0) {
-              console.log("Decrementing minutes", { minutes: minutesRef.current });
+              console.log("Decrementing minutes", {
+                minutes: minutesRef.current,
+              });
               setMinutes((m) => {
                 const newMinutes = Math.max(m - 1, 0);
                 console.log("New minutes value", { newMinutes });
