@@ -9,6 +9,8 @@ export function FocusButton() {
   const [isActive, setIsActive] = useState(false);
   const [minutes, setMinutes] = useState(25);
   const [seconds, setSeconds] = useState(0);
+  const [upPressed, setUpPressed] = useState(false);
+  const [downPressed, setDownPressed] = useState(false);
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -64,21 +66,37 @@ export function FocusButton() {
           <View style={styles.timerContainer}>
             <View style={styles.timerCircle}>
               <View style={styles.timerInner}>
-                <ThemedText style={styles.timerText}>
-                  <TouchableOpacity
-                    onPress={incrementMinutes}
-                    style={styles.arrowButton}
-                  >
-                    <Ionicons name="chevron-up" size={20} color="#666" />
-                  </TouchableOpacity>
-                  {formatTime(minutes, seconds)}
-                  <TouchableOpacity
-                    onPress={decrementMinutes}
-                    style={styles.arrowButton}
-                  >
-                    <Ionicons name="chevron-down" size={20} color="#666" />
-                  </TouchableOpacity>
-                </ThemedText>
+                <TouchableOpacity
+                  activeOpacity={1}
+                  onPress={incrementMinutes}
+                  onPressIn={() => setUpPressed(true)}
+                  onPressOut={() => setUpPressed(false)}
+                  style={styles.arrowButton}
+                >
+                  <Ionicons
+                    name="chevron-up"
+                    size={20}
+                    color={upPressed ? "#fff" : "#666"}
+                  />
+                </TouchableOpacity>
+                <View style={styles.timeContainer}>
+                  <ThemedText style={styles.timerText}>
+                    {formatTime(minutes, seconds)}
+                  </ThemedText>
+                </View>
+                <TouchableOpacity
+                  activeOpacity={1}
+                  onPress={decrementMinutes}
+                  onPressIn={() => setDownPressed(true)}
+                  onPressOut={() => setDownPressed(false)}
+                  style={styles.arrowButton}
+                >
+                  <Ionicons
+                    name="chevron-down"
+                    size={20}
+                    color={downPressed ? "#fff" : "#666"}
+                  />
+                </TouchableOpacity>
               </View>
             </View>
           </View>
@@ -123,16 +141,17 @@ const styles = StyleSheet.create({
   timerWrapper: {
     alignItems: "center",
     justifyContent: "center",
-    paddingTop: 30,
+    width: "100%",
   },
   timerContainer: {
     alignItems: "center",
     justifyContent: "center",
+    width: "100%",
   },
   timerCircle: {
-    width: 300,
-    height: 300,
-    borderRadius: 150,
+    width: 250,
+    height: 250,
+    borderRadius: 125,
     borderWidth: 1,
     borderColor: "#4CAF50",
     alignItems: "center",
@@ -141,6 +160,8 @@ const styles = StyleSheet.create({
   timerInner: {
     alignItems: "center",
     justifyContent: "center",
+    display: "flex",
+    flexDirection: "row",
   },
   arrowButton: {
     padding: 10,
@@ -149,6 +170,11 @@ const styles = StyleSheet.create({
     fontSize: 48,
     fontWeight: "400",
     color: "#fff",
+    lineHeight: 48,
+  },
+  timeContainer: {
+    minWidth: 130,
+    alignItems: "center",
   },
   controlsContainer: {
     flexDirection: "row",
@@ -158,14 +184,15 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   controlButton: {
-    paddingHorizontal: 24,
-    paddingVertical: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: "#333",
+    backgroundColor: "#000",
+    borderColor: "#333",
+    borderStyle: "solid",
+    borderWidth: 1,
   },
-  cancelButton: {
-    backgroundColor: "#444",
-  },
+  cancelButton: {},
   controlText: {
     fontSize: 16,
     color: "#fff",
