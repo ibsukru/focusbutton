@@ -6,7 +6,8 @@ import { getUserAgentInfo } from "../utils/userAgent";
 import styles from "./page.module.scss";
 
 export default async function Home() {
-  const isExtensionEnabled = false;
+  const isExtensionEnabled = true;
+
   const { isDesktop, isChrome, isFirefox } = await getUserAgentInfo();
 
   return (
@@ -22,7 +23,7 @@ export default async function Home() {
             return (
               <a
                 className={styles.webStore}
-                href="https://chrome.google.com/webstore/detail/focusbutton/njgjgjgjgjgjgjgjgjgj"
+                href="https://chromewebstore.google.com/detail/focusbutton/nkomoiomfaeodakglkihapminhpgnibl?authuser=0&hl=en&pli=1"
               >
                 <FaChrome /> Download from Chrome Web Store
               </a>
@@ -32,7 +33,7 @@ export default async function Home() {
             return (
               <a
                 className={styles.webStore}
-                href="https://addons.mozilla.org/en-US/firefox/addon/focusbutton/"
+                href="https://addons.mozilla.org/en-US/firefox/addon/focusbutton"
               >
                 <FaFirefoxBrowser />
                 Download from Firefox Add-on Store
