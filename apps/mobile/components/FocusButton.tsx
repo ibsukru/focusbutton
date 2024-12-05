@@ -19,18 +19,33 @@ Notifications.setNotificationHandler({
     shouldShowAlert: true,
     shouldPlaySound: true,
     shouldSetBadge: false,
+    shouldLockScreen: true,
+    shouldPresentAlert: true,
+    priority: Notifications.AndroidNotificationPriority.MAX
   }),
 });
 
 // Create notification channel for Android
-if (Platform.OS === 'android') {
-  Notifications.setNotificationChannelAsync('default', {
-    name: 'default',
-    importance: Notifications.AndroidImportance.MAX,
-    vibrationPattern: [0, 250, 250, 250],
-    lightColor: '#FF231F7C',
-    sound: 'timer_end.mp3'
-  });
+async function setupNotifications() {
+  if (Platform.OS === "android") {
+    await Notifications.setNotificationChannelAsync("default", {
+      name: "default",
+      importance: Notifications.AndroidImportance.MAX,
+      vibrationPattern: [0, 250, 250, 250],
+      lightColor: "#FF231F7C",
+      sound: "timer_end.mp3",
+      enableVibrate: true,
+      enableLights: true,
+    });
+  }
+
+  const { status: existingStatus } = await Notifications.getPermissionsAsync();
+  let finalStatus = existingStatus;
+  if (existingStatus !== "granted") {
+    const { status } = await Notifications.requestPermissionsAsync();
+    finalStatus = status;
+  }
+  return finalStatus === "granted";
 }
 
 export function FocusButton() {
@@ -40,8 +55,7 @@ export function FocusButton() {
   const [upPressed, setUpPressed] = useState(false);
   const [downPressed, setDownPressed] = useState(false);
   const [isDarkTheme, setIsDarkTheme] = useState(false);
-  const [hasNotificationPermission, setHasNotificationPermission] =
-    useState(false);
+  const [hasNotificationPermission, setHasNotificationPermission] = useState(false);
   const [adjustInterval, setAdjustInterval] = useState<NodeJS.Timeout | null>(
     null,
   );
@@ -49,7 +63,7 @@ export function FocusButton() {
   const responseListener = useRef<any>();
 
   useEffect(() => {
-    registerForPushNotificationsAsync();
+    setupNotifications().then(setHasNotificationPermission);
 
     notificationListener.current =
       Notifications.addNotificationReceivedListener((notification) => {
@@ -69,33 +83,25 @@ export function FocusButton() {
     };
   }, []);
 
-  async function registerForPushNotificationsAsync() {
-    if (Platform.OS === "ios") {
-      const { status: existingStatus } =
-        await Notifications.getPermissionsAsync();
-      let finalStatus = existingStatus;
-      if (existingStatus !== "granted") {
-        const { status } = await Notifications.requestPermissionsAsync();
-        finalStatus = status;
-      }
-      setHasNotificationPermission(finalStatus === "granted");
-    }
-  }
-
   async function scheduleNotification() {
     if (!hasNotificationPermission) return;
 
     try {
+      const soundName = Platform.OS === "android" ? "timer_end.mp3" : true;
       await Notifications.scheduleNotificationAsync({
         content: {
           title: "Time's up!",
           body: "Your focus session has ended!",
-          sound: Platform.OS === 'android' ? 'timer_end.mp3' : true,
-          data: { data: "goes here" },
+          sound: soundName,
+          priority: "max",
           android: {
-            channelId: 'default',
-            priority: 'max',
-          }
+            channelId: "default",
+            sound: soundName,
+            priority: "max",
+            vibrate: [0, 250, 250, 250],
+            enableVibrate: true,
+            enableLights: true,
+          },
         },
         trigger: null, // null means show immediately
       });
@@ -179,7 +185,6 @@ export function FocusButton() {
 
   useEffect(() => {
     if (upPressed) {
-      registerForPushNotificationsAsync();
       clearActiveInterval();
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       const interval = setInterval(() => {

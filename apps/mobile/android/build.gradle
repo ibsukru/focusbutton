@@ -39,3 +39,18 @@ allprojects {
         maven { url 'https://www.jitpack.io' }
     }
 }
+
+android {
+    defaultConfig {
+        resValue "string", "app_name", "Focus Button"
+        resValue "string", "notification_channel_name", "Focus Button Notifications"
+        resValue "string", "notification_channel_description", "Notifications for Focus Button app"
+    }
+    
+    sourceSets {
+        main {
+            res.srcDirs = ['src/main/res']
+            assets.srcDirs = ['src/main/assets']
+        }
+    }
+}

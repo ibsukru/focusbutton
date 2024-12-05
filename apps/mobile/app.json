@@ -28,7 +28,9 @@
       "permissions": [
         "NOTIFICATIONS",
         "VIBRATE",
-        "RECEIVE_BOOT_COMPLETED"
+        "RECEIVE_BOOT_COMPLETED",
+        "SCHEDULE_EXACT_ALARM",
+        "USE_FULL_SCREEN_INTENT"
       ]
     },
     "web": {
@@ -41,10 +43,15 @@
           "icon": "./assets/images/icon.png",
           "color": "#000000",
           "sounds": ["./assets/sounds/timer_end.mp3"],
+          "mode": "production",
           "androidMode": "default",
           "androidCollapsedTitle": "Focus Button",
           "androidImportance": "max",
-          "androidShowBadge": true
+          "androidShowBadge": true,
+          "androidNotificationIcon": "./assets/images/icon.png",
+          "androidShouldShowAlert": true,
+          "androidShouldPlaySound": true,
+          "androidShouldVibrate": true
         }
       ]
     ],
