@@ -16,7 +16,7 @@
 		96905EF65AED1B983A6B3ABC /* libPods-FocusButton.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 58EEBF8E8E6FB1BC6CAF49B5 /* libPods-FocusButton.a */; };
 		B18059E884C0ABDD17F3DC3D /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAC715A2D49A985799AEE119 /* ExpoModulesProvider.swift */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
-		E0EC04A72D9941ADB8AE70B2 /* timer-end.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 7D69BE1622AA41F5BF1CF604 /* timer-end.mp3 */; };
+		E0EC04A72D9941ADB8AE70B2 /* timer_end.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 7D69BE1622AA41F5BF1CF604 /* timer_end.mp3 */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -31,7 +31,7 @@
 		58EEBF8E8E6FB1BC6CAF49B5 /* libPods-FocusButton.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-FocusButton.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		6C2E3173556A471DD304B334 /* Pods-FocusButton.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-FocusButton.debug.xcconfig"; path = "Target Support Files/Pods-FocusButton/Pods-FocusButton.debug.xcconfig"; sourceTree = "<group>"; };
 		7A4D352CD337FB3A3BF06240 /* Pods-FocusButton.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-FocusButton.release.xcconfig"; path = "Target Support Files/Pods-FocusButton/Pods-FocusButton.release.xcconfig"; sourceTree = "<group>"; };
-		7D69BE1622AA41F5BF1CF604 /* timer-end.mp3 */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "timer-end.mp3"; path = "FocusButton/timer-end.mp3"; sourceTree = "<group>"; };
+		7D69BE1622AA41F5BF1CF604 /* timer_end.mp3 */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = timer_end.mp3; path = FocusButton/timer_end.mp3; sourceTree = "<group>"; };
 		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = FocusButton/SplashScreen.storyboard; sourceTree = "<group>"; };
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
 		D90FC9DE55C84B8787EE79EC /* FocusButton-Bridging-Header.h */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.c.h; name = "FocusButton-Bridging-Header.h"; path = "FocusButton/FocusButton-Bridging-Header.h"; sourceTree = "<group>"; };
@@ -63,7 +63,7 @@
 				AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */,
 				13A07F7A94034BBBB30F3AA2 /* noop-file.swift */,
 				D90FC9DE55C84B8787EE79EC /* FocusButton-Bridging-Header.h */,
-				7D69BE1622AA41F5BF1CF604 /* timer-end.mp3 */,
+				7D69BE1622AA41F5BF1CF604 /* timer_end.mp3 */,
 				4570FCA11F50900CD7DE709B /* PrivacyInfo.xcprivacy */,
 			);
 			name = FocusButton;
@@ -206,7 +206,7 @@
 				BB2F792D24A3F905000567C9 /* Expo.plist in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */,
-				E0EC04A72D9941ADB8AE70B2 /* timer-end.mp3 in Resources */,
+				E0EC04A72D9941ADB8AE70B2 /* timer_end.mp3 in Resources */,
 				3A88F49D46741E5681B125AF /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

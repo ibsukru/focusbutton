@@ -6,7 +6,7 @@ mkdir -p assets
 # Copy web assets
 cp ../web/public/icon.png assets/
 cp ../web/public/logo.png assets/
-cp ../web/public/timer-end.mp3 assets/
+cp ../web/public/timer_end.mp3 assets/
 
 # Create different sized icons
 convert assets/icon.png -resize 1024x1024 assets/icon.png

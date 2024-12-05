@@ -1,5 +1,5 @@
 import React from "react";
-import { Theme, ThemeContext } from "../theme"; // Assuming you have a theme context
+import { ThemeContext } from "../theme"; // Assuming you have a theme context
 
 interface ThemeProviderProps {
   children: React.ReactNode;

@@ -78,7 +78,7 @@ export function FocusButton() {
         content: {
           title: "Time's up!",
           body: "Your focus session has ended!",
-          sound: "timer-end.mp3",
+          sound: "timer_end.mp3",
           data: { data: "goes here" },
         },
         trigger: null, // null means show immediately

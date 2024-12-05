@@ -28,7 +28,7 @@ export async function scheduleLocalNotification(title: string, body: string) {
     content: {
       title,
       body,
-      sound: "timer-end.mp3",
+      sound: "timer_end.mp3",
     },
     trigger: null, // null means show immediately
   });
