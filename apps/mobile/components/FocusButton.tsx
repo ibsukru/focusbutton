@@ -144,6 +144,24 @@ export function FocusButton() {
   }, [seconds, minutes, isCountingDown, upPressed, downPressed, isActive]);
 
   useEffect(() => {
+    if (upPressed && Platform.OS === "android") {
+      const interval = setInterval(() => {
+        setMinutes((prev) => Math.min(prev + 1, 60));
+      }, 100);
+      return () => clearInterval(interval);
+    }
+  }, [upPressed]);
+
+  useEffect(() => {
+    if (downPressed && Platform.OS === "android") {
+      const interval = setInterval(() => {
+        setMinutes((prev) => Math.max(prev - 1, 0));
+      }, 100);
+      return () => clearInterval(interval);
+    }
+  }, [downPressed]);
+
+  useEffect(() => {
     if (upPressed) {
       registerForPushNotificationsAsync();
       clearActiveInterval();
@@ -243,43 +261,15 @@ export function FocusButton() {
       }, 1000);
     }
     return () => clearInterval(interval);
-  }, [isActive, minutes]);
-
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (isActive && (minutes > 0 || seconds > 0)) {
-      interval = setInterval(() => {
-        if (seconds === 0) {
-          if (minutes === 0) {
-            clearInterval(interval);
-            setIsActive(false);
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-            scheduleNotification();
-          } else {
-            setMinutes(minutes - 1);
-            setSeconds(59);
-          }
-        } else {
-          setSeconds(seconds - 1);
-        }
-      }, 1000);
-    }
-    return () => clearInterval(interval);
   }, [isActive, minutes, seconds]);
-
-  const clearActiveInterval = () => {
-    if (adjustInterval) {
-      console.log("Clearing interval", {
-        minutes: minutesRef.current,
-        seconds: secondsRef.current,
-      });
-      clearInterval(adjustInterval);
-      setAdjustInterval(null);
-    }
-  };
 
   const incrementMinutes = () => {
     if (minutes >= 60) return;
+
+    if (Platform.OS === "android") {
+      setMinutes((prev) => Math.min(prev + 5, 60));
+      return;
+    }
 
     clearActiveInterval();
     let targetMinutes = Math.min(minutes + 5, 60);
@@ -308,6 +298,11 @@ export function FocusButton() {
   const decrementMinutes = () => {
     if (minutes === 0 && seconds === 0) return;
 
+    if (Platform.OS === "android") {
+      setMinutes((prev) => Math.max(prev - 5, 0));
+      return;
+    }
+
     clearActiveInterval();
     let targetMinutes = Math.max(minutes - 5, 0);
     const interval = setInterval(() => {
@@ -332,6 +327,17 @@ export function FocusButton() {
 
     if (!isActive) {
       setIsActive(true);
+    }
+  };
+
+  const clearActiveInterval = () => {
+    if (adjustInterval) {
+      console.log("Clearing interval", {
+        minutes: minutesRef.current,
+        seconds: secondsRef.current,
+      });
+      clearInterval(adjustInterval);
+      setAdjustInterval(null);
     }
   };
 
