@@ -90,11 +90,11 @@ export function FocusButton() {
   useEffect(() => {
     const checkBackgroundTimer = async () => {
       const storedEndTime = await SecureStore.getItemAsync(TIMER_END_KEY);
-      
+
       if (storedEndTime) {
         const endTime = parseInt(storedEndTime);
         const now = Date.now();
-        
+
         if (now < endTime) {
           const remainingSeconds = Math.floor((endTime - now) / 1000);
           setMinutes(Math.floor(remainingSeconds / 60));
@@ -301,16 +301,23 @@ export function FocusButton() {
       timerInterval = setInterval(() => {
         // Calculate total seconds elapsed
         const currentTime = Date.now();
-        const elapsedSeconds = Math.floor((currentTime - (startTime || currentTime)) / 1000);
+        const elapsedSeconds = Math.floor(
+          (currentTime - (startTime || currentTime)) / 1000,
+        );
 
         // Calculate remaining time
-        const remainingSeconds = Math.max(0, totalTimerSeconds - elapsedSeconds);
+        const remainingSeconds = Math.max(
+          0,
+          totalTimerSeconds - elapsedSeconds,
+        );
         const remainingMinutes = Math.floor(remainingSeconds / 60);
         const remainingSecondsDisplay = remainingSeconds % 60;
 
         const formattedCurrentTime = new Date().toLocaleTimeString();
 
-        console.log(`Timer Tick [${formattedCurrentTime}] - Elapsed: ${elapsedSeconds}, Remaining: ${remainingMinutes}m ${remainingSecondsDisplay}s`);
+        console.log(
+          `Timer Tick [${formattedCurrentTime}] - Elapsed: ${elapsedSeconds}, Remaining: ${remainingMinutes}m ${remainingSecondsDisplay}s`,
+        );
 
         // Update state with remaining time
         setMinutes(remainingMinutes);
@@ -336,7 +343,9 @@ export function FocusButton() {
     return () => {
       if (timerInterval) {
         clearInterval(timerInterval);
-        console.log(`Timer Interval Cleared at ${new Date().toLocaleTimeString()}`);
+        console.log(
+          `Timer Interval Cleared at ${new Date().toLocaleTimeString()}`,
+        );
       }
     };
   }, [isActive, minutes, seconds]);
