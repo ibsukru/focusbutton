@@ -13,6 +13,7 @@ import { ThemedView } from "./ThemedView";
 import { ThemedText } from "./ThemedText";
 import { Ionicons } from "@expo/vector-icons";
 
+// Set up notification handler
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,
@@ -20,6 +21,17 @@ Notifications.setNotificationHandler({
     shouldSetBadge: false,
   }),
 });
+
+// Create notification channel for Android
+if (Platform.OS === 'android') {
+  Notifications.setNotificationChannelAsync('default', {
+    name: 'default',
+    importance: Notifications.AndroidImportance.MAX,
+    vibrationPattern: [0, 250, 250, 250],
+    lightColor: '#FF231F7C',
+    sound: 'timer_end.mp3'
+  });
+}
 
 export function FocusButton() {
   const [isActive, setIsActive] = useState(false);
@@ -78,8 +90,12 @@ export function FocusButton() {
         content: {
           title: "Time's up!",
           body: "Your focus session has ended!",
-          sound: "timer_end.mp3",
+          sound: Platform.OS === 'android' ? 'timer_end.mp3' : true,
           data: { data: "goes here" },
+          android: {
+            channelId: 'default',
+            priority: 'max',
+          }
         },
         trigger: null, // null means show immediately
       });
@@ -268,6 +284,7 @@ export function FocusButton() {
 
     if (Platform.OS === "android") {
       setMinutes((prev) => Math.min(prev + 5, 60));
+      setIsActive(true);
       return;
     }
 
@@ -300,6 +317,7 @@ export function FocusButton() {
 
     if (Platform.OS === "android") {
       setMinutes((prev) => Math.max(prev - 5, 0));
+      setIsActive(true);
       return;
     }
 
