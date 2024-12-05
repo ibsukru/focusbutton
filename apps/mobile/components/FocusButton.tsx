@@ -228,7 +228,9 @@ export function FocusButton() {
             if (minutes === 0) {
               clearInterval(interval);
               setIsActive(false);
-              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+              Haptics.notificationAsync(
+                Haptics.NotificationFeedbackType.Success,
+              );
               scheduleNotification();
               return 0;
             } else {
