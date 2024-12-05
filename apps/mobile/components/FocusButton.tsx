@@ -223,6 +223,30 @@ export function FocusButton() {
     let interval: NodeJS.Timeout;
     if (isActive && (minutes > 0 || seconds > 0)) {
       interval = setInterval(() => {
+        setSeconds((prevSeconds) => {
+          if (prevSeconds === 0) {
+            if (minutes === 0) {
+              clearInterval(interval);
+              setIsActive(false);
+              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+              scheduleNotification();
+              return 0;
+            } else {
+              setMinutes((prevMinutes) => prevMinutes - 1);
+              return 59;
+            }
+          }
+          return prevSeconds - 1;
+        });
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [isActive, minutes]);
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isActive && (minutes > 0 || seconds > 0)) {
+      interval = setInterval(() => {
         if (seconds === 0) {
           if (minutes === 0) {
             clearInterval(interval);
