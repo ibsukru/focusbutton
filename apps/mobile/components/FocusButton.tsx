@@ -21,7 +21,7 @@ Notifications.setNotificationHandler({
     shouldSetBadge: false,
     shouldLockScreen: true,
     shouldPresentAlert: true,
-    priority: Notifications.AndroidNotificationPriority.MAX
+    priority: Notifications.AndroidNotificationPriority.MAX,
   }),
 });
 
@@ -55,7 +55,8 @@ export function FocusButton() {
   const [upPressed, setUpPressed] = useState(false);
   const [downPressed, setDownPressed] = useState(false);
   const [isDarkTheme, setIsDarkTheme] = useState(false);
-  const [hasNotificationPermission, setHasNotificationPermission] = useState(false);
+  const [hasNotificationPermission, setHasNotificationPermission] =
+    useState(false);
   const [adjustInterval, setAdjustInterval] = useState<NodeJS.Timeout | null>(
     null,
   );
