@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import * as Haptics from "expo-haptics";
 import * as Notifications from "expo-notifications";
+import * as SecureStore from "expo-secure-store";
 import { ThemedView } from "./ThemedView";
 import { ThemedText } from "./ThemedText";
 import { Ionicons } from "@expo/vector-icons";
@@ -48,6 +49,8 @@ async function setupNotifications() {
   return finalStatus === "granted";
 }
 
+const TIMER_END_KEY = "timerEndTime";
+
 export function FocusButton() {
   const [isActive, setIsActive] = useState(false);
   const [minutes, setMinutes] = useState(0);
@@ -82,6 +85,29 @@ export function FocusButton() {
       );
       Notifications.removeNotificationSubscription(responseListener.current);
     };
+  }, []);
+
+  useEffect(() => {
+    const checkBackgroundTimer = async () => {
+      const storedEndTime = await SecureStore.getItemAsync(TIMER_END_KEY);
+      
+      if (storedEndTime) {
+        const endTime = parseInt(storedEndTime);
+        const now = Date.now();
+        
+        if (now < endTime) {
+          const remainingSeconds = Math.floor((endTime - now) / 1000);
+          setMinutes(Math.floor(remainingSeconds / 60));
+          setSeconds(remainingSeconds % 60);
+          setIsActive(true);
+        } else {
+          await SecureStore.deleteItemAsync(TIMER_END_KEY);
+          setIsActive(false);
+        }
+      }
+    };
+
+    checkBackgroundTimer();
   }, []);
 
   async function scheduleNotification() {
@@ -260,29 +286,68 @@ export function FocusButton() {
   }, [upPressed, downPressed]);
 
   useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (isActive && (minutes > 0 || seconds > 0)) {
-      interval = setInterval(() => {
-        setSeconds((prevSeconds) => {
-          if (prevSeconds === 0) {
-            if (minutes === 0) {
-              clearInterval(interval);
-              setIsActive(false);
-              Haptics.notificationAsync(
-                Haptics.NotificationFeedbackType.Success,
-              );
-              scheduleNotification();
-              return 0;
-            } else {
-              setMinutes((prevMinutes) => prevMinutes - 1);
-              return 59;
-            }
+    let timerInterval: NodeJS.Timeout | null = null;
+    let startTime: number | null = null;
+    const totalTimerSeconds = minutes * 60 + seconds; // Total seconds at timer start
+
+    const startTimer = () => {
+      if (timerInterval) return;
+
+      // Record the start time if not already set
+      if (!startTime) {
+        startTime = Date.now();
+      }
+
+      timerInterval = setInterval(() => {
+        // Calculate total seconds elapsed
+        const currentTime = Date.now();
+        const elapsedSeconds = Math.floor((currentTime - (startTime || currentTime)) / 1000);
+
+        // Calculate remaining time
+        const remainingSeconds = Math.max(0, totalTimerSeconds - elapsedSeconds);
+        const remainingMinutes = Math.floor(remainingSeconds / 60);
+        const remainingSecondsDisplay = remainingSeconds % 60;
+
+        const formattedCurrentTime = new Date().toLocaleTimeString();
+
+        console.log(`Timer Tick [${formattedCurrentTime}] - Elapsed: ${elapsedSeconds}, Remaining: ${remainingMinutes}m ${remainingSecondsDisplay}s`);
+
+        // Update state with remaining time
+        setMinutes(remainingMinutes);
+        setSeconds(remainingSecondsDisplay);
+
+        // Check if timer should end
+        if (remainingSeconds === 0) {
+          if (timerInterval) {
+            clearInterval(timerInterval);
+            timerInterval = null;
           }
-          return prevSeconds - 1;
-        });
+          console.log(`Timer Ended at ${formattedCurrentTime}`);
+          setIsActive(false);
+          scheduleNotification();
+        }
       }, 1000);
+    };
+
+    if (isActive) {
+      startTimer();
     }
-    return () => clearInterval(interval);
+
+    return () => {
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        console.log(`Timer Interval Cleared at ${new Date().toLocaleTimeString()}`);
+      }
+    };
+  }, [isActive, minutes, seconds]);
+
+  useEffect(() => {
+    if (isActive) {
+      const endTime = Date.now() + (minutes * 60 + seconds) * 1000;
+      SecureStore.setItemAsync(TIMER_END_KEY, endTime.toString());
+    } else {
+      SecureStore.deleteItemAsync(TIMER_END_KEY);
+    }
   }, [isActive, minutes, seconds]);
 
   const incrementMinutes = () => {
