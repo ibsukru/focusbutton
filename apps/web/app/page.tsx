@@ -16,22 +16,44 @@ export default async function Home() {
           <div className={styles.content}>
             <FocusButton />
             {isDesktop &&
-              !isExtensionEnabled &&
+              isExtensionEnabled &&
               (isChrome ? (
-                <a
-                  className={styles.webStore}
-                  href="https://chromewebstore.google.com/detail/focusbutton/nkomoiomfaeodakglkihapminhpgnibl?authuser=0&hl=en&pli=1"
-                >
-                  <FaChrome /> Download from Chrome Web Store
-                </a>
+                <div className={styles.footer}>
+                  <a
+                    className={styles.webStore}
+                    href="https://chromewebstore.google.com/detail/focusbutton/nkomoiomfaeodakglkihapminhpgnibl?authuser=0&hl=en&pli=1"
+                  >
+                    <FaChrome /> Download from Chrome Web Store
+                  </a>
+                  |{" "}
+                  <a
+                    target="_blank"
+                    rel="noreferrer"
+                    href="https://buymeacoffee.com/ibsukru"
+                    className={styles.donate}
+                  >
+                    Donate
+                  </a>
+                </div>
               ) : isFirefox ? (
-                <a
-                  className={styles.webStore}
-                  href="https://addons.mozilla.org/en-US/firefox/addon/focusbutton"
-                >
-                  <FaFirefoxBrowser />
-                  Download from Firefox Add-on Store
-                </a>
+                <div className={styles.footer}>
+                  <a
+                    className={styles.webStore}
+                    href="https://addons.mozilla.org/en-US/firefox/addon/focusbutton"
+                  >
+                    <FaFirefoxBrowser />
+                    Download from Firefox Add-on Store
+                  </a>
+                  |{" "}
+                  <a
+                    target="_blank"
+                    rel="noreferrer"
+                    href="https://buymeacoffee.com/ibsukru"
+                    className={styles.donate}
+                  >
+                    Donate
+                  </a>
+                </div>
               ) : null)}
           </div>
         </div>

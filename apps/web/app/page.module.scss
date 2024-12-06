@@ -13,18 +13,21 @@
   gap: 20px;
 }
 
-.webStore {
+.footer {
+  position: absolute;
+  padding: 5px;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
   align-items: center;
   gap: 5px;
-  position: absolute;
-  bottom: 10px;
-  color: var(--foreground);
-  padding: 5px;
 }
 
-.webStore:active {
-  position: absolute;
-  top: inherit;
-  bottom: 8.8px;
+.webStore,
+.donate {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--foreground);
 }
