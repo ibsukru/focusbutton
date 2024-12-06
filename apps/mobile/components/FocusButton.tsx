@@ -9,7 +9,6 @@ import {
 } from "react-native";
 import * as Haptics from "expo-haptics";
 import * as Notifications from "expo-notifications";
-import * as SecureStore from "expo-secure-store";
 import { ThemedView } from "./ThemedView";
 import { ThemedText } from "./ThemedText";
 import { Ionicons } from "@expo/vector-icons";
@@ -87,35 +86,12 @@ export function FocusButton() {
     };
   }, []);
 
-  useEffect(() => {
-    const checkBackgroundTimer = async () => {
-      const storedEndTime = await SecureStore.getItemAsync(TIMER_END_KEY);
-
-      if (storedEndTime) {
-        const endTime = parseInt(storedEndTime);
-        const now = Date.now();
-
-        if (now < endTime) {
-          const remainingSeconds = Math.floor((endTime - now) / 1000);
-          setMinutes(Math.floor(remainingSeconds / 60));
-          setSeconds(remainingSeconds % 60);
-          setIsActive(true);
-        } else {
-          await SecureStore.deleteItemAsync(TIMER_END_KEY);
-          setIsActive(false);
-        }
-      }
-    };
-
-    checkBackgroundTimer();
-  }, []);
-
   async function scheduleNotification() {
     if (!hasNotificationPermission) return;
 
     try {
       const soundName = Platform.OS === "android" ? "timer_end.mp3" : true;
-      await Notifications.scheduleNotificationAsync({
+      const notification = {
         content: {
           title: "Time's up!",
           body: "Your focus session has ended!",
@@ -131,7 +107,8 @@ export function FocusButton() {
           },
         },
         trigger: null, // null means show immediately
-      });
+      };
+      await Notifications.scheduleNotificationAsync(notification);
     } catch (error) {
       console.log("Error scheduling notification:", error);
     }
@@ -348,15 +325,6 @@ export function FocusButton() {
         );
       }
     };
-  }, [isActive, minutes, seconds]);
-
-  useEffect(() => {
-    if (isActive) {
-      const endTime = Date.now() + (minutes * 60 + seconds) * 1000;
-      SecureStore.setItemAsync(TIMER_END_KEY, endTime.toString());
-    } else {
-      SecureStore.deleteItemAsync(TIMER_END_KEY);
-    }
   }, [isActive, minutes, seconds]);
 
   const incrementMinutes = () => {

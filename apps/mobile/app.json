@@ -11,12 +11,16 @@
       "resizeMode": "contain",
       "backgroundColor": "#000000"
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.focusbutton.app",
       "infoPlist": {
-        "UIBackgroundModes": ["audio"]
+        "UIBackgroundModes": [
+          "audio"
+        ]
       }
     },
     "android": {
@@ -42,7 +46,9 @@
         {
           "icon": "./assets/images/icon.png",
           "color": "#000000",
-          "sounds": ["./assets/sounds/timer_end.mp3"],
+          "sounds": [
+            "./assets/sounds/timer_end.mp3"
+          ],
           "mode": "production",
           "androidMode": "default",
           "androidCollapsedTitle": "Focus Button",
@@ -53,7 +59,8 @@
           "androidShouldPlaySound": true,
           "androidShouldVibrate": true
         }
-      ]
+      ],
+      "expo-secure-store"
     ],
     "notification": {
       "icon": "./assets/images/icon.png",
