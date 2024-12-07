@@ -8,10 +8,14 @@ import {
   CirclePause,
   CirclePlay,
   CircleX,
+  Moon,
+  Sun,
 } from "lucide-react";
 import type { BrowserAPIType } from "@focusbutton/extension/src/browser-api";
 import { useTheme } from "next-themes";
 import clsx from "clsx";
+import MotionNumber from "motion-number";
+import NumberFlow from "@number-flow/react";
 
 // Add global type declaration for browser
 declare global {
@@ -89,7 +93,7 @@ const getBrowserAPI = (): BrowserAPIType | null => {
   }
 
   // Fallback to Firefox API
-  if (typeof browser !== "undefined" && (browser as any).runtime) {
+  if (typeof browser !== "undefined" && (browser as any).runtime?.id) {
     return browser as unknown as BrowserAPIType;
   }
 
@@ -109,14 +113,18 @@ const getStorageData = async () => {
   }
 };
 
-const formatTimeValues = (timeInSeconds: number): string => {
-  if (!timeInSeconds && timeInSeconds !== 0) return "00:00";
+const formatMinutes = (timeInSeconds: number): string => {
+  if (!timeInSeconds && timeInSeconds !== 0) return "00";
 
   const minutes = Math.floor(timeInSeconds / 60);
-  const seconds = timeInSeconds % 60;
+  return minutes.toString().padStart(2, "0");
+};
 
-  const formatNumber = (num: number) => num.toString().padStart(2, "0");
-  return `${formatNumber(minutes)}:${formatNumber(seconds)}`;
+const formatSeconds = (timeInSeconds: number): string => {
+  if (!timeInSeconds && timeInSeconds !== 0) return "00";
+
+  const seconds = timeInSeconds % 60;
+  return seconds.toString().padStart(2, "0");
 };
 
 export default function FocusButton() {
@@ -128,14 +136,11 @@ export default function FocusButton() {
   const [isFinished, setIsFinished] = useState(false);
   const timerRef = useRef<any | null>(null);
   const isTimerEndingRef = useRef<Boolean>(false);
-  const stateRestoredRef = useRef<Boolean>(false);
   const audioContextRef = useRef<AudioContext | null>(null);
-  const lastStateUpdateRef = useRef<number>(0);
   const lastBackgroundStateRef = useRef<any>(null);
   const adjustIntervalRef = useRef<number | null>(null);
   const adjustStartTimeRef = useRef<number | null>(null);
   const lastVisibilityUpdateRef = useRef<number>(0);
-  const lastBackgroundUpdateRef = useRef<any>(null);
   const updateThrottleMs = 100;
   const { resolvedTheme, setTheme } = useTheme();
 
@@ -145,10 +150,6 @@ export default function FocusButton() {
 
   // Add startTimeRef declaration
   const startTimeRef = useRef<number>(0);
-
-  // Track last state update
-  const [lastUpdateTimestamp, setLastUpdateTimestamp] = useState(0);
-  const UPDATE_THROTTLE = 100; // Throttle updates to 100ms
 
   // Check for extension context after mount
   useEffect(() => {
@@ -626,8 +627,9 @@ export default function FocusButton() {
       };
 
       getBrowserAPI()?.runtime.onMessage.addListener(handleMessage);
-      return () =>
+      return () => {
         getBrowserAPI()?.runtime.onMessage.removeListener(handleMessage);
+      };
     }
   }, []);
 
@@ -703,66 +705,39 @@ export default function FocusButton() {
 
   const MAX_TIME = 3600; // 60 minutes in seconds
 
-  const startAdjustment = (adjustment: number) => {
-    // Stop any existing countdown and clear state
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-      timerRef.current = null;
-    }
+  const startAdjustment = (direction: number, isMinutes: boolean = false) => {
+    // Stop countdown if running
+    if (isCountingDown) {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+      setIsCountingDown(false);
+      setIsPaused(false);
+      setIsFinished(false);
 
-    // Clear extension timer state immediately
-    if (isExtension) {
-      const browserAPI = getBrowserAPI();
-      if (browserAPI) {
-        browserAPI.storage.local.remove(STORAGE_KEY);
-        sendMessage({ type: "STOP_TIMER", isCanceled: true });
+      // Clear extension timer state if in extension
+      if (isExtension) {
+        const browserAPI = getBrowserAPI();
+        if (browserAPI) {
+          browserAPI.storage.local.remove(STORAGE_KEY);
+          sendMessage({ type: "STOP_TIMER", isCanceled: true });
+        }
       }
     }
 
-    setIsCountingDown(false);
-    setIsPaused(false);
-    setIsFinished(false);
+    // Set to paused state when adjusting time
+    setIsPaused(true);
 
-    // Clear any existing adjustment intervals
-    if (adjustIntervalRef.current) {
-      clearInterval(adjustIntervalRef.current);
-      adjustIntervalRef.current = null;
-    }
+    const increment = isMinutes ? 60 : 1; // 60 seconds for minutes, 1 for seconds
+    const adjustTime = () => {
+      setDisplayTime((prevTime) => {
+        const newTime = prevTime + direction * increment;
+        // Ensure time stays within bounds (0 to 60 minutes)
+        const boundedTime = Math.max(0, Math.min(3600, newTime));
+        setTime(boundedTime); // Update the actual time state
 
-    adjustStartTimeRef.current = Date.now();
-    const initialTime = time;
-    let lastUpdateTime = Date.now();
-    let lastTime = time;
-
-    const updateDisplay = () => {
-      const now = Date.now();
-      if (now - lastUpdateTime < 50) return;
-      lastUpdateTime = now;
-
-      const startTime = adjustStartTimeRef.current ?? now;
-      const elapsedSeconds = Math.floor((now - startTime) / 1000);
-      const progressInSecond = ((now - startTime) % 1000) / 1000;
-      const totalAdjustment =
-        elapsedSeconds * 300 + Math.floor(progressInSecond * 300);
-
-      let newTime =
-        adjustment > 0
-          ? Math.min(initialTime + totalAdjustment, MAX_TIME)
-          : Math.max(initialTime - totalAdjustment, 0);
-
-      // Stop if we hit limits
-      if (
-        (newTime === 0 && lastTime > 0) ||
-        (newTime === MAX_TIME && lastTime < MAX_TIME)
-      ) {
-        if (adjustIntervalRef.current) {
-          clearInterval(adjustIntervalRef.current);
-          adjustIntervalRef.current = null;
-        }
-        setTime(newTime);
-        setDisplayTime(newTime);
-
-        // Update storage with final time
+        // Update extension storage if in extension context
         if (isExtension) {
           const browserAPI = getBrowserAPI();
           if (browserAPI) {
@@ -770,8 +745,8 @@ export default function FocusButton() {
               [STORAGE_KEY]: {
                 type: "TIMER_UPDATE",
                 isCountingDown: false,
-                time: newTime,
-                isPaused: false,
+                time: boundedTime,
+                isPaused: true,
                 isFinished: false,
                 source: "ui",
                 timestamp: Date.now(),
@@ -780,16 +755,18 @@ export default function FocusButton() {
             });
           }
         }
-        return;
-      }
 
-      lastTime = newTime;
-      setTime(newTime);
-      setDisplayTime(newTime);
+        return boundedTime;
+      });
     };
 
-    updateDisplay();
-    adjustIntervalRef.current = window.setInterval(updateDisplay, 16);
+    adjustTime(); // Initial adjustment
+
+    if (!adjustIntervalRef.current) {
+      // 500ms for minutes, 200ms for seconds
+      const intervalTime = isMinutes ? 500 : 200;
+      adjustIntervalRef.current = window.setInterval(adjustTime, intervalTime);
+    }
   };
 
   const stopAdjustment = () => {
@@ -798,12 +775,7 @@ export default function FocusButton() {
       adjustIntervalRef.current = null;
     }
 
-    // Start countdown with current time
-    if (time > 0) {
-      startCountdown(time);
-    }
-
-    // Update storage with final time
+    // Update storage with final time but keep paused state
     if (isExtension) {
       const browserAPI = getBrowserAPI();
       if (browserAPI) {
@@ -812,7 +784,7 @@ export default function FocusButton() {
             type: "TIMER_UPDATE",
             isCountingDown: false,
             time: time,
-            isPaused: false,
+            isPaused: true,
             isFinished: false,
             source: "ui",
             timestamp: Date.now(),
@@ -822,7 +794,6 @@ export default function FocusButton() {
       }
     }
 
-    // Don't auto-start countdown after adjustment
     setDisplayTime(time);
   };
 
@@ -1238,82 +1209,174 @@ export default function FocusButton() {
             [styles.finished]: isFinished,
           })}
         >
+          <div className={styles.themeToggle}>
+            {resolvedTheme === "dark" ? (
+              <Sun
+                className={styles.sun}
+                size={20}
+                onClick={() => {
+                  setTheme("light");
+                }}
+              />
+            ) : (
+              <Moon
+                className={styles.moon}
+                size={20}
+                onClick={() => {
+                  setTheme("dark");
+                }}
+              />
+            )}
+          </div>
           <div className={styles.timeDisplay}>
-            <button
-              ref={downButtonRef}
-              className={styles.timeAdjust}
-              onClick={(e) => e.stopPropagation()}
-              onMouseDown={(e) => {
-                e.stopPropagation();
-                if (e.buttons === 1) {
-                  // Only adjust if left mouse button is pressed
-                  startAdjustment(-1);
-                }
-              }}
-              onMouseUp={(e) => {
-                e.stopPropagation();
-                stopAdjustment();
-              }}
-              onMouseLeave={(e) => {
-                e.stopPropagation();
-                if (adjustIntervalRef.current) {
-                  stopAdjustment();
-                }
-              }}
-              onTouchStart={(e) => {
-                e.stopPropagation();
-                startAdjustment(-1);
-              }}
-              onTouchEnd={(e) => {
-                e.stopPropagation();
-                stopAdjustment();
-              }}
-            >
-              <ChevronDown size={16} />
-            </button>
-
-            <span
+            <div
               className={styles.time}
               onClick={(e) => {
                 e.stopPropagation();
-                setTheme(resolvedTheme === "dark" ? "light" : "dark");
               }}
             >
-              {formatTimeValues(displayTime)}
-            </span>
+              <div className={styles.minutes}>
+                <button
+                  ref={upButtonRef}
+                  className={styles.timeAdjust}
+                  onClick={(e) => e.stopPropagation()}
+                  onMouseDown={(e) => {
+                    e.stopPropagation();
+                    if (e.buttons === 1) {
+                      startAdjustment(1, true);
+                    }
+                  }}
+                  onMouseUp={(e) => {
+                    e.stopPropagation();
+                    stopAdjustment();
+                  }}
+                  onMouseLeave={(e) => {
+                    e.stopPropagation();
+                    if (adjustIntervalRef.current) {
+                      stopAdjustment();
+                    }
+                  }}
+                  onTouchStart={(e) => {
+                    e.stopPropagation();
+                    startAdjustment(1, true);
+                  }}
+                  onTouchEnd={(e) => {
+                    e.stopPropagation();
+                    stopAdjustment();
+                  }}
+                >
+                  <ChevronUp size={16} />
+                </button>
 
-            <button
-              ref={upButtonRef}
-              className={styles.timeAdjust}
-              onClick={(e) => e.stopPropagation()}
-              onMouseDown={(e) => {
-                e.stopPropagation();
-                if (e.buttons === 1) {
-                  // Only adjust if left mouse button is pressed
-                  startAdjustment(1);
-                }
-              }}
-              onMouseUp={(e) => {
-                e.stopPropagation();
-                stopAdjustment();
-              }}
-              onMouseLeave={(e) => {
-                e.stopPropagation();
-                if (adjustIntervalRef.current) {
-                  stopAdjustment();
-                }
-              }}
-              onTouchStart={(e) => {
-                e.stopPropagation();
-                startAdjustment(1);
-              }}
-              onTouchEnd={(e) => {
-                e.stopPropagation();
-                stopAdjustment();
-              }}
-            >
-              <ChevronUp size={16} />
-            </button>
+                <NumberFlow
+                  format={{ minimumIntegerDigits: 2 }}
+                  value={Math.floor(displayTime / 60)}
+                />
+
+                <button
+                  ref={downButtonRef}
+                  className={styles.timeAdjust}
+                  onClick={(e) => e.stopPropagation()}
+                  onMouseDown={(e) => {
+                    e.stopPropagation();
+                    if (e.buttons === 1) {
+                      startAdjustment(-1, true);
+                    }
+                  }}
+                  onMouseUp={(e) => {
+                    e.stopPropagation();
+                    stopAdjustment();
+                  }}
+                  onMouseLeave={(e) => {
+                    e.stopPropagation();
+                    if (adjustIntervalRef.current) {
+                      stopAdjustment();
+                    }
+                  }}
+                  onTouchStart={(e) => {
+                    e.stopPropagation();
+                    startAdjustment(-1, true);
+                  }}
+                  onTouchEnd={(e) => {
+                    e.stopPropagation();
+                    stopAdjustment();
+                  }}
+                >
+                  <ChevronDown size={16} />
+                </button>
+              </div>
+              :
+              <div className={styles.seconds}>
+                <button
+                  ref={upButtonRef}
+                  className={styles.timeAdjust}
+                  onClick={(e) => e.stopPropagation()}
+                  onMouseDown={(e) => {
+                    e.stopPropagation();
+                    if (e.buttons === 1) {
+                      startAdjustment(1, false);
+                    }
+                  }}
+                  onMouseUp={(e) => {
+                    e.stopPropagation();
+                    stopAdjustment();
+                  }}
+                  onMouseLeave={(e) => {
+                    e.stopPropagation();
+                    if (adjustIntervalRef.current) {
+                      stopAdjustment();
+                    }
+                  }}
+                  onTouchStart={(e) => {
+                    e.stopPropagation();
+                    startAdjustment(1, false);
+                  }}
+                  onTouchEnd={(e) => {
+                    e.stopPropagation();
+                    stopAdjustment();
+                  }}
+                >
+                  <ChevronUp size={16} />
+                </button>
+
+                <NumberFlow
+                  format={{ minimumIntegerDigits: 2 }}
+                  value={displayTime % 60}
+                />
+
+                <button
+                  ref={downButtonRef}
+                  className={styles.timeAdjust}
+                  onClick={(e) => e.stopPropagation()}
+                  onMouseDown={(e) => {
+                    e.stopPropagation();
+                    if (e.buttons === 1) {
+                      startAdjustment(-1, false);
+                    }
+                  }}
+                  onMouseUp={(e) => {
+                    e.stopPropagation();
+                    stopAdjustment();
+                  }}
+                  onMouseLeave={(e) => {
+                    e.stopPropagation();
+                    if (adjustIntervalRef.current) {
+                      stopAdjustment();
+                    }
+                  }}
+                  onTouchStart={(e) => {
+                    e.stopPropagation();
+                    startAdjustment(-1, false);
+                  }}
+                  onTouchEnd={(e) => {
+                    e.stopPropagation();
+                    stopAdjustment();
+                  }}
+                >
+                  <ChevronDown size={16} />
+                </button>
+              </div>
+            </div>
           </div>
         </div>
         <div
@@ -1325,7 +1388,7 @@ export default function FocusButton() {
             {isPaused ? (
               <>
                 <CirclePlay width={14} height={14} />
-                Resume
+                Start
               </>
             ) : (
               <>

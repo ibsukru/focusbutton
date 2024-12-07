@@ -150,6 +150,17 @@
   font-size: 0.9rem;
 }
 
+.themeToggle {
+  position: absolute;
+  cursor: pointer;
+  top: 15px;
+  color: var(--shade-4);
+}
+
+.themeToggle:active {
+  top: 16.2px;
+}
+
 @keyframes fadeIn {
   to {
     opacity: 1;
@@ -160,10 +171,20 @@
 .time {
   min-width: 100px;
   text-align: center;
-  cursor: pointer;
   user-select: none;
+  display: flex;
+  align-items: center;
+  gap: 2px;
 }
 
+.minutes,
+.seconds {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  flex-direction: column;
+}
 @keyframes countdown {
   from {
     box-shadow: 0 4px 6px rgba(246, 173, 85, 0.4);

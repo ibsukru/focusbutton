@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.3] - 2024-01-22
+
+### Fixed
+
+- Fixed timer adjustment not working on first click in extension
+- Fixed timer increment/decrement issues during press and hold
+- Improved timer state synchronization between UI and storage
+- Fixed race conditions in timer adjustment logic
+
+### Changed
+
+- Optimized timer adjustment mechanism for better responsiveness
+- Improved state management during timer adjustments
+- Enhanced storage update logic for more reliable synchronization
+
 ## [1.0.2] - 2024-01-21
 
 ### Fixed
