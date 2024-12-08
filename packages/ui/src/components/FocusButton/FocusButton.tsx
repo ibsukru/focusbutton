@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import styles from "./FocusButton.module.scss";
 import {
   ChevronDown,
@@ -82,6 +82,7 @@ interface TimerMessage {
 }
 
 const STORAGE_KEY = "focusbutton_timer_state";
+const MAX_TIME = 3600; // 60 minutes in seconds
 
 const getBrowserAPI = (): BrowserAPIType | null => {
   if (typeof window === "undefined") return null;
@@ -99,33 +100,6 @@ const getBrowserAPI = (): BrowserAPIType | null => {
   return null;
 };
 
-const getStorageData = async () => {
-  const browserAPI = getBrowserAPI();
-  if (!browserAPI) return null;
-
-  try {
-    const result = await browserAPI.storage.local.get(STORAGE_KEY);
-    return result[STORAGE_KEY];
-  } catch (error) {
-    console.error("Error getting storage data:", error);
-    return null;
-  }
-};
-
-const formatMinutes = (timeInSeconds: number): string => {
-  if (!timeInSeconds && timeInSeconds !== 0) return "00";
-
-  const minutes = Math.floor(timeInSeconds / 60);
-  return minutes.toString().padStart(2, "0");
-};
-
-const formatSeconds = (timeInSeconds: number): string => {
-  if (!timeInSeconds && timeInSeconds !== 0) return "00";
-
-  const seconds = timeInSeconds % 60;
-  return seconds.toString().padStart(2, "0");
-};
-
 export default function FocusButton() {
   const [isExtension, setIsExtension] = useState(false);
   const [time, setTime] = useState(0);
@@ -138,12 +112,10 @@ export default function FocusButton() {
   const audioContextRef = useRef<AudioContext | null>(null);
   const lastBackgroundStateRef = useRef<any>(null);
   const adjustIntervalRef = useRef<number | null>(null);
-  const adjustStartTimeRef = useRef<number | null>(null);
   const lastVisibilityUpdateRef = useRef<number>(0);
   const updateThrottleMs = 100;
   const { resolvedTheme, setTheme } = useTheme();
 
-  // Add global type declaration for browser
   const [initialMount, setInitialMount] = useState(true);
   const [isMounted, setIsMounted] = useState(false);
 
@@ -200,7 +172,7 @@ export default function FocusButton() {
   };
 
   const sendMessage = useCallback(
-    (msg: any) => {
+    async (msg: any) => {
       if (!isExtension) return;
 
       try {
@@ -210,16 +182,14 @@ export default function FocusButton() {
           throw new Error("Browser API not available");
         }
 
-        return browserAPI.runtime
-          .sendMessage(msg)
-          .then((response: any) => {
-            console.log("Message response:", response);
-            return response;
-          })
-          .catch((error: any) => {
-            console.error("Message sending error:", error);
-            return null;
-          });
+        try {
+          const response = await browserAPI.runtime.sendMessage(msg);
+          console.log("Message response:", response);
+          return response;
+        } catch (error) {
+          console.error("Message sending error:", error);
+          return null;
+        }
       } catch (error) {
         console.error("Error in sendMessage:", error);
         return null;
@@ -573,11 +543,6 @@ export default function FocusButton() {
     return () => chrome.storage.onChanged.removeListener(handleStorageChange);
   }, [isExtension]);
 
-  // Track last state update
-  const STATE_UPDATE_THROTTLE = 100;
-
-  // Track state updates from background
-
   // Listen for state changes
   useEffect(() => {
     if (!isExtension) return;
@@ -660,18 +625,6 @@ export default function FocusButton() {
 
   const isNotificationSupported = typeof Notification !== "undefined";
 
-  const requestNotificationPermission = useCallback(async () => {
-    if (!isNotificationSupported) return;
-
-    if (Notification.permission === "default") {
-      try {
-        await Notification.requestPermission();
-      } catch (error) {
-        console.log("Error requesting notification permission:", error);
-      }
-    }
-  }, []);
-
   const sendNotification = useCallback(() => {
     if (isExtension) {
       const browserAPI = getBrowserAPI();
@@ -701,8 +654,6 @@ export default function FocusButton() {
       }
     }
   }, [isExtension]);
-
-  const MAX_TIME = 3600; // 60 minutes in seconds
 
   const startAdjustment = (direction: number, isMinutes: boolean = false) => {
     // Stop countdown if running
