@@ -813,8 +813,11 @@ export default function FocusButton() {
     };
   }, [handleVisibilityChange]);
 
-  const upButtonRef = useRef<HTMLButtonElement>(null);
-  const downButtonRef = useRef<HTMLButtonElement>(null);
+  const secondsUpButtonRef = useRef<HTMLButtonElement>(null);
+  const secondsDownButtonRef = useRef<HTMLButtonElement>(null);
+
+  const minutesUpButtonRef = useRef<HTMLButtonElement>(null);
+  const minutesDownButtonRef = useRef<HTMLButtonElement>(null);
 
   // Handle keyboard events
   useEffect(() => {
@@ -830,7 +833,7 @@ export default function FocusButton() {
       switch (event.key) {
         case "ArrowUp":
           event.preventDefault();
-          upButtonRef.current?.focus();
+          secondsUpButtonRef.current?.focus();
           {
             const newTime = Math.min(time + 1, MAX_TIME);
             setTime(newTime);
@@ -856,7 +859,7 @@ export default function FocusButton() {
 
         case "ArrowDown":
           event.preventDefault();
-          downButtonRef.current?.focus();
+          secondsDownButtonRef.current?.focus();
           {
             const newTime = Math.max(time - 1, 0);
             setTime(newTime);
@@ -976,18 +979,6 @@ export default function FocusButton() {
       return () => {
         getBrowserAPI()?.runtime.onMessage.removeListener(handleMessage);
       };
-    }
-  }, []);
-
-  const updateTimerState = useCallback((message: TimerMessage) => {
-    if (!message.remainingTime) return;
-
-    setTime(message.remainingTime);
-    setDisplayTime(message.remainingTime);
-
-    if (message.running !== undefined) {
-      setIsCountingDown(message.running);
-      setIsPaused(!message.running);
     }
   }, []);
 
@@ -1123,7 +1114,7 @@ export default function FocusButton() {
             >
               <div className={styles.minutes}>
                 <button
-                  ref={upButtonRef}
+                  ref={minutesUpButtonRef}
                   className={styles.timeAdjust}
                   onClick={(e) => e.stopPropagation()}
                   onMouseDown={(e) => {
@@ -1160,7 +1151,7 @@ export default function FocusButton() {
                 />
 
                 <button
-                  ref={downButtonRef}
+                  ref={minutesDownButtonRef}
                   className={styles.timeAdjust}
                   onClick={(e) => e.stopPropagation()}
                   onMouseDown={(e) => {
@@ -1194,7 +1185,7 @@ export default function FocusButton() {
               :
               <div className={styles.seconds}>
                 <button
-                  ref={upButtonRef}
+                  ref={secondsUpButtonRef}
                   className={styles.timeAdjust}
                   onClick={(e) => e.stopPropagation()}
                   onMouseDown={(e) => {
@@ -1231,7 +1222,7 @@ export default function FocusButton() {
                 />
 
                 <button
-                  ref={downButtonRef}
+                  ref={secondsDownButtonRef}
                   className={styles.timeAdjust}
                   onClick={(e) => e.stopPropagation()}
                   onMouseDown={(e) => {

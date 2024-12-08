@@ -48,8 +48,6 @@ async function setupNotifications() {
   return finalStatus === "granted";
 }
 
-const TIMER_END_KEY = "timerEndTime";
-
 export function FocusButton() {
   const [isActive, setIsActive] = useState(false);
   const [minutes, setMinutes] = useState(0);
