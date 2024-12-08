@@ -19,17 +19,6 @@
   bottom: 10px;
   left: 50%;
   transform: translateX(-50%);
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.webStore,
-.donate {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  color: var(--foreground);
 }
 
 .github {

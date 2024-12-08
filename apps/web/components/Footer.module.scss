@@ -1,0 +1,22 @@
+.footer {
+  padding: 5px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  justify-content: center;
+
+  .links {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+}
+
+.webStore,
+.donate {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--foreground);
+}
