@@ -72,7 +72,6 @@ interface TimerState {
   startTime: number;
   isFinalState?: boolean;
   isCanceled?: boolean;
-  persistOnReload?: boolean;
 }
 
 interface TimerMessage {
@@ -410,7 +409,6 @@ export default function FocusButton() {
         source: "ui",
         timestamp: Date.now(),
         startTime: startTimeRef.current,
-        persistOnReload: true,
       };
 
       getBrowserAPI()?.storage.local.set({
@@ -426,7 +424,6 @@ export default function FocusButton() {
         source: "ui",
         timestamp: Date.now(),
         startTime: startTimeRef.current,
-        persistOnReload: true,
       };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     }
@@ -497,13 +494,21 @@ export default function FocusButton() {
           }
         }
 
-        if (state && state.persistOnReload) {
+        console.log("Restoring timer state:", state);
+
+        if (state) {
           setTime(state.time);
           setDisplayTime(state.time);
           setIsCountingDown(state.isCountingDown);
           setIsPaused(state.isPaused);
+          
           if (state.startTime) {
             startTimeRef.current = state.startTime;
+          }
+
+          // If timer was running, restart it
+          if (state.isCountingDown && !state.isPaused && state.time > 0) {
+            startCountdown(state.time);
           }
         }
       } catch (error) {
