@@ -1,6 +1,6 @@
 # FeedbackWallet
 
-FeedbackWallet, the platform where users can review apps and websites, connect with expert reviewers, and earn rewards
+feedbackwallet.com, the platform where users can review apps and websites, connect with expert reviewers, and earn rewards
 
 ## User Testing Guide: Timer and Notifications
 
