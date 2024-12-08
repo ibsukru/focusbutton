@@ -98,7 +98,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## Acknowledgments
 
 - Built with [Turborepo](https://turbo.build/repo)
-- UI components powered by [shadcn/ui](https://ui.shadcn.com/)
 - Icons from [Lucide](https://lucide.dev/)
 
 ## Support

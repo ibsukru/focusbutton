@@ -14,7 +14,6 @@ import {
 import type { BrowserAPIType } from "@focusbutton/extension/src/browser-api";
 import { useTheme } from "next-themes";
 import clsx from "clsx";
-import MotionNumber from "motion-number";
 import NumberFlow from "@number-flow/react";
 
 // Add global type declaration for browser
@@ -960,73 +959,6 @@ export default function FocusButton() {
     handleCancel,
   ]);
 
-  // Handle key repeat for arrows
-  useEffect(() => {
-    let repeatTimer: NodeJS.Timeout | null = null;
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (
-        isCountingDown ||
-        document.activeElement?.tagName === "INPUT" ||
-        document.activeElement?.tagName === "TEXTAREA"
-      ) {
-        return;
-      }
-
-      if (event.key === "ArrowUp" || event.key === "ArrowDown") {
-        event.preventDefault();
-
-        if (!repeatTimer) {
-          repeatTimer = setInterval(() => {
-            const delta = event.key === "ArrowUp" ? 1 : -1;
-            const newTime = Math.max(0, Math.min(time + delta, MAX_TIME));
-
-            setTime(newTime);
-            setDisplayTime(newTime);
-
-            if (isExtension) {
-              const browserAPI = getBrowserAPI();
-              if (browserAPI) {
-                browserAPI.storage.local.set({
-                  [STORAGE_KEY]: {
-                    type: "TIMER_UPDATE",
-                    isCountingDown: false,
-                    time: newTime,
-                    isPaused: false,
-                    source: "web",
-                    timestamp: Date.now(),
-                  },
-                });
-              }
-            }
-            startCountdown(newTime);
-          }, 100);
-        }
-      }
-    };
-
-    const handleKeyUp = (event: KeyboardEvent) => {
-      if (event.key === "ArrowUp" || event.key === "ArrowDown") {
-        if (repeatTimer) {
-          clearInterval(repeatTimer);
-          repeatTimer = null;
-        }
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    window.addEventListener("keyup", handleKeyUp);
-
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-      window.removeEventListener("keyup", handleKeyUp);
-      if (repeatTimer) {
-        clearInterval(repeatTimer);
-      }
-    };
-  }, [time, isCountingDown, isExtension]);
-
-  // Remove finished state after animation or when timer is adjusted
   useEffect(() => {
     if (isFinished) {
       const timer = setTimeout(() => {
