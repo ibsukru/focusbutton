@@ -414,7 +414,7 @@ export default function FocusButton() {
       };
 
       getBrowserAPI()?.storage.local.set({
-        focusbutton_timer_state: state,
+        [STORAGE_KEY]: state,
       });
     } else {
       // Update local storage for web version
@@ -448,7 +448,7 @@ export default function FocusButton() {
 
       // Ensure storage is updated
       getBrowserAPI()?.storage.local.set({
-        focusbutton_timer_state: {
+        [STORAGE_KEY]: {
           type: "TIMER_UPDATE",
           isCountingDown: true,
           time: displayTime,
@@ -488,10 +488,8 @@ export default function FocusButton() {
         let state;
 
         if (isExtension) {
-          const result = await chrome.storage.local.get([
-            "focusbutton_timer_state",
-          ]);
-          state = result.focusbutton_timer_state;
+          const result = await chrome.storage.local.get([STORAGE_KEY]);
+          state = result[STORAGE_KEY];
         } else {
           const savedState = localStorage.getItem(STORAGE_KEY);
           if (savedState) {
@@ -551,7 +549,7 @@ export default function FocusButton() {
     if (!browserAPI) return;
 
     const handleStorageChange = async (changes: any) => {
-      const state = changes.focusbutton_timer_state?.newValue;
+      const state = changes[STORAGE_KEY]?.newValue;
       if (!state) return;
 
       console.log("Storage state updated:", state);
