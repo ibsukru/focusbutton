@@ -20,37 +20,43 @@ export default function Footer({
 }) {
   const isExtensionEnabled = true;
   const { resolvedTheme } = useTheme();
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
 
   return (
     isDesktop &&
     isExtensionEnabled &&
     (isChrome ? (
       <div className={clsx(styles.footer, className)}>
-        {resolvedTheme === "light" ? (
-          <a
-            href="https://www.producthunt.com/products/focus-button/reviews?utm_source=badge-product_review&utm_medium=badge&utm_souce=badge-focus&#0045;button"
-            target="_blank"
-          >
-            <img
-              src="https://api.producthunt.com/widgets/embed-image/v1/product_review.svg?product_id=793552&theme=neutral"
-              alt="Focus&#0032;Button - A&#0032;minimalist&#0032;focus&#0032;timer&#0032;for&#0032;productivity | Product Hunt"
-              width="250"
-              height="54"
-            />
-          </a>
-        ) : (
-          <a
-            href="https://www.producthunt.com/products/focus-button/reviews?utm_source=badge-product_review&utm_medium=badge&utm_souce=badge-focus&#0045;button"
-            target="_blank"
-          >
-            <img
-              src="https://api.producthunt.com/widgets/embed-image/v1/product_review.svg?product_id=793552&theme=dark"
-              alt="Focus&#0032;Button - A&#0032;minimalist&#0032;focus&#0032;timer&#0032;for&#0032;productivity | Product Hunt"
-              width="250"
-              height="54"
-            />
-          </a>
-        )}
+        {mounted &&
+          (resolvedTheme === "light" ? (
+            <a
+              href="https://www.producthunt.com/products/focus-button/reviews?utm_source=badge-product_review&utm_medium=badge&utm_souce=badge-focus&#0045;button"
+              target="_blank"
+            >
+              <img
+                src="https://api.producthunt.com/widgets/embed-image/v1/product_review.svg?product_id=793552&theme=neutral"
+                alt="Focus&#0032;Button - A&#0032;minimalist&#0032;focus&#0032;timer&#0032;for&#0032;productivity | Product Hunt"
+                width="250"
+                height="54"
+              />
+            </a>
+          ) : (
+            <a
+              href="https://www.producthunt.com/products/focus-button/reviews?utm_source=badge-product_review&utm_medium=badge&utm_souce=badge-focus&#0045;button"
+              target="_blank"
+            >
+              <img
+                src="https://api.producthunt.com/widgets/embed-image/v1/product_review.svg?product_id=793552&theme=dark"
+                alt="Focus&#0032;Button - A&#0032;minimalist&#0032;focus&#0032;timer&#0032;for&#0032;productivity | Product Hunt"
+                width="250"
+                height="54"
+              />
+            </a>
+          ))}
         <div className={styles.links}>
           <a
             className={styles.webStore}
