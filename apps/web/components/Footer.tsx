@@ -32,13 +32,13 @@ export default function Footer({
     (isChrome ? (
       <div className={clsx(styles.footer, className)}>
         {mounted &&
-          (resolvedTheme === "light" ? (
+          (resolvedTheme === "dark" ? (
             <a
-              href="https://www.producthunt.com/products/focus-button/reviews?utm_source=badge-product_review&utm_medium=badge&utm_souce=badge-focus&#0045;button"
+              href="https://www.producthunt.com/posts/focus-button?embed=true&utm_source=badge-featured&utm_medium=badge&utm_souce=badge-focus&#0045;button"
               target="_blank"
             >
               <img
-                src="https://api.producthunt.com/widgets/embed-image/v1/product_review.svg?product_id=793552&theme=neutral"
+                src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=686086&theme=dark"
                 alt="Focus&#0032;Button - A&#0032;minimalist&#0032;focus&#0032;timer&#0032;for&#0032;productivity | Product Hunt"
                 width="250"
                 height="54"
@@ -46,11 +46,11 @@ export default function Footer({
             </a>
           ) : (
             <a
-              href="https://www.producthunt.com/products/focus-button/reviews?utm_source=badge-product_review&utm_medium=badge&utm_souce=badge-focus&#0045;button"
+              href="https://www.producthunt.com/posts/focus-button?embed=true&utm_source=badge-featured&utm_medium=badge&utm_souce=badge-focus&#0045;button"
               target="_blank"
             >
               <img
-                src="https://api.producthunt.com/widgets/embed-image/v1/product_review.svg?product_id=793552&theme=dark"
+                src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=686086&theme=neutral"
                 alt="Focus&#0032;Button - A&#0032;minimalist&#0032;focus&#0032;timer&#0032;for&#0032;productivity | Product Hunt"
                 width="250"
                 height="54"
