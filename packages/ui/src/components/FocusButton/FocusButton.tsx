@@ -501,7 +501,7 @@ export default function FocusButton() {
           setDisplayTime(state.time);
           setIsCountingDown(state.isCountingDown);
           setIsPaused(state.isPaused);
-          
+
           if (state.startTime) {
             startTimeRef.current = state.startTime;
           }
