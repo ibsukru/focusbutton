@@ -149,8 +149,15 @@
   cursor: pointer;
   top: 15px;
   color: var(--shade-4);
+  padding: 0;
+  background-color: var(--background);
+  border: none;
+  box-shadow: none;
 }
-
+.themeToggle:hover {
+  color: var(--shade-4);
+  background-color: var(--background);
+}
 .themeToggle:active {
   top: 16.2px;
 }

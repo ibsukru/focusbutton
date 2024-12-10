@@ -1086,7 +1086,7 @@ export default function FocusButton() {
             [styles.finished]: isFinished,
           })}
         >
-          <div className={styles.themeToggle}>
+          <button className={styles.themeToggle}>
             {resolvedTheme === "dark" ? (
               <Sun
                 className={styles.sun}
@@ -1104,7 +1104,7 @@ export default function FocusButton() {
                 }}
               />
             )}
-          </div>
+          </button>
           <div className={styles.timeDisplay}>
             <div
               className={styles.time}
