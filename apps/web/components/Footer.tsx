@@ -28,32 +28,15 @@ export default function Footer({
 
   return (
     <div className={clsx(styles.footer, className)}>
-      {mounted &&
-        (resolvedTheme === "dark" ? (
-          <a
-            href="https://www.producthunt.com/posts/focus-button?embed=true&utm_source=badge-featured&utm_medium=badge&utm_souce=badge-focus&#0045;button"
-            target="_blank"
-          >
-            <img
-              src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=686086&theme=dark"
-              alt="Focus&#0032;Button - A&#0032;minimalist&#0032;focus&#0032;timer&#0032;for&#0032;productivity | Product Hunt"
-              width="250"
-              height="54"
-            />
-          </a>
-        ) : (
-          <a
-            href="https://www.producthunt.com/posts/focus-button?embed=true&utm_source=badge-featured&utm_medium=badge&utm_souce=badge-focus&#0045;button"
-            target="_blank"
-          >
-            <img
-              src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=686086&theme=neutral"
-              alt="Focus&#0032;Button - A&#0032;minimalist&#0032;focus&#0032;timer&#0032;for&#0032;productivity | Product Hunt"
-              width="250"
-              height="54"
-            />
-          </a>
-        ))}
+      <a
+        className={clsx("button", styles.feedbackWallet)}
+        target="_blank"
+        rel="noreferrer"
+        href="https://feedbackwallet.com/teams/99ddcab9-99d6-41bd-8547-e3e08d0fb761"
+      >
+        <img width={20} height={20} src="/frog-128.webp" alt="FeedbackWallet" />{" "}
+        FeedbackWallet
+      </a>
       {isDesktop &&
         isExtensionEnabled &&
         (isChrome ? (
