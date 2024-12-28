@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.0] - 2024-12-26
+
+### Added
+
+- Added Pomodoro preset buttons (25min, 5min, 15min)
+- Added persistent timer state across page refreshes
+
+### Changed
+
+- Improved timer state management for better reliability
+- Enhanced UI layout with better spacing and animations
+- Optimized button interactions for better user experience
+
+### Fixed
+
+- Fixed timer state persistence in Firefox extension
+- Fixed controls visibility after page refresh
+- Fixed theme toggle button keyboard accessibility
+
 ## [1.0.3] - 2024-01-22
 
 ### Fixed

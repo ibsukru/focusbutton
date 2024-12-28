@@ -1,6 +1,12 @@
 "use client";
 
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, {
+  useState,
+  useRef,
+  useEffect,
+  useCallback,
+  useMemo,
+} from "react";
 import styles from "./FocusButton.module.scss";
 import {
   ChevronDown,
@@ -81,6 +87,7 @@ interface TimerMessage {
 }
 
 const STORAGE_KEY = "focusbutton_timer_state";
+const POMODORO_KEY = "focusbutton_active_pomodoro";
 const MAX_TIME = 3600; // 60 minutes in seconds
 
 const getBrowserAPI = (): BrowserAPIType | null => {
@@ -106,6 +113,7 @@ export default function FocusButton() {
   const [isCountingDown, setIsCountingDown] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [isFinished, setIsFinished] = useState(false);
+  const [activePomodoro, setActivePomodoro] = useState<number | null>(null);
   const timerRef = useRef<any | null>(null);
   const isTimerEndingRef = useRef<Boolean>(false);
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -159,6 +167,15 @@ export default function FocusButton() {
       isFinished,
     };
   }, [time, isCountingDown, isPaused, isFinished]);
+
+  useEffect(() => {
+    document.title = `${Math.floor(displayTime / 60)
+      .toString()
+      .padStart(
+        2,
+        "0",
+      )}:${(displayTime % 60).toString().padStart(2, "0")} - FocusButton`;
+  }, [displayTime]);
 
   // Track events with GA4
   const trackEvent = (eventName: string, params = {}) => {
@@ -290,23 +307,34 @@ export default function FocusButton() {
       } else {
         console.log("Starting web timer");
         // Start local timer for web mode
+        const initialTime = duration ?? time;
+        let lastUpdate = now;
+
         timerRef.current = setInterval(() => {
-          setDisplayTime((prevTime) => {
-            const newTime = Math.max(0, prevTime - 1);
-            console.log("Timer update:", newTime);
-            if (newTime === 0) {
-              console.log("Timer reached zero");
-              clearInterval(timerRef.current);
-              timerRef.current = null;
-              handleTimerEnd();
-            }
-            return newTime;
-          });
-        }, 1000);
+          const currentTime = Date.now();
+          const elapsedTime = Math.floor((currentTime - lastUpdate) / 1000);
+
+          if (elapsedTime > 0) {
+            lastUpdate = currentTime - ((currentTime - lastUpdate) % 1000);
+
+            setDisplayTime((prevTime) => {
+              const newTime = Math.max(0, prevTime - elapsedTime);
+              setTime(newTime);
+
+              if (newTime === 0) {
+                console.log("Timer reached zero");
+                clearInterval(timerRef.current);
+                timerRef.current = null;
+                handleTimerEnd();
+              }
+              return newTime;
+            });
+          }
+        }, 100);
 
         // Save state to localStorage
         const state: TimerState = {
-          time: duration ?? time,
+          time: initialTime,
           isCountingDown: true,
           isPaused: false,
           startTime: now,
@@ -468,6 +496,96 @@ export default function FocusButton() {
     trackEvent("timer_resume", { timeLeft: displayTime });
   };
 
+  const handlePresetTime = (minutes: number) => {
+    const newTime = minutes * 60;
+    setIsPaused(true);
+    setIsFinished(false);
+    setTime(newTime);
+    setDisplayTime(newTime);
+    setActivePomodoro(minutes);
+
+    // Stop any running timer
+    if (isCountingDown) {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+      setIsCountingDown(false);
+    }
+
+    // Save to storage
+    if (isExtension) {
+      const browserAPI = getBrowserAPI();
+      if (browserAPI) {
+        browserAPI.runtime.sendMessage({
+          type: "SET_TIMER",
+          time: newTime,
+        });
+        sendMessage({ type: "PAUSE_TIMER" });
+
+        // Save active Pomodoro in extension storage
+        browserAPI.storage.local.set({
+          [POMODORO_KEY]: minutes.toString(),
+        });
+      }
+    } else {
+      // Save timer state
+      const state: TimerState = {
+        time: newTime,
+        isCountingDown: false,
+        isPaused: true,
+        startTime: Date.now(),
+        isFinished: false,
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+
+      // Save active Pomodoro separately
+      localStorage.setItem(POMODORO_KEY, minutes.toString());
+    }
+
+    // Track event
+    trackEvent("timer_preset", { minutes, timeSet: newTime });
+  };
+
+  const handleTimeAdjust = useCallback(
+    (newTime: number) => {
+      setTime(newTime);
+      setDisplayTime(newTime);
+      setActivePomodoro(null);
+
+      if (isExtension) {
+        const browserAPI = getBrowserAPI();
+        if (browserAPI) {
+          browserAPI.storage.local.remove(POMODORO_KEY);
+        }
+      } else {
+        localStorage.removeItem(POMODORO_KEY);
+      }
+    },
+    [isExtension],
+  );
+
+  // Load active Pomodoro from storage
+  useEffect(() => {
+    const loadPomodoro = async () => {
+      if (isExtension) {
+        const browserAPI = getBrowserAPI();
+        if (browserAPI) {
+          const result = await browserAPI.storage.local.get(POMODORO_KEY);
+          if (result[POMODORO_KEY]) {
+            setActivePomodoro(parseInt(result[POMODORO_KEY]));
+          }
+        }
+      } else {
+        const savedPomodoro = localStorage.getItem(POMODORO_KEY);
+        if (savedPomodoro) {
+          setActivePomodoro(parseInt(savedPomodoro));
+        }
+      }
+    };
+    loadPomodoro();
+  }, [isExtension]);
+
   // Set mounted state
   useEffect(() => {
     setIsMounted(true);
@@ -479,45 +597,73 @@ export default function FocusButton() {
   }, []);
 
   // Restore timer state on mount
-  useEffect(() => {
-    const restoreTimerState = async () => {
-      try {
-        let state;
+  const restoreTimerState = useCallback(async () => {
+    try {
+      let state: TimerState | null = null;
 
-        if (isExtension) {
-          const result = await chrome.storage.local.get([STORAGE_KEY]);
-          state = result[STORAGE_KEY];
-        } else {
-          const savedState = localStorage.getItem(STORAGE_KEY);
-          if (savedState) {
-            state = JSON.parse(savedState);
+      if (isExtension) {
+        const browserAPI = getBrowserAPI();
+        const response = await browserAPI?.runtime.sendMessage({
+          type: "GET_TIMER_STATE",
+        });
+        if (response?.success) {
+          state = {
+            time: response.remainingTime,
+            isCountingDown: response.running,
+            isPaused: !response.running && response.remainingTime > 0,
+            startTime: Date.now(),
+            isFinished: false,
+          };
+        }
+      } else {
+        const savedState = localStorage.getItem(STORAGE_KEY);
+        if (savedState) {
+          state = JSON.parse(savedState);
+          if (!state) {
+            return;
+          }
+
+          // If timer was running, calculate elapsed time
+          if (state.isCountingDown && !state.isPaused && state.startTime) {
+            const elapsedTime = Math.floor(
+              (Date.now() - state.startTime) / 1000,
+            );
+            state.time = Math.max(0, state.time - elapsedTime);
           }
         }
-
-        console.log("Restoring timer state:", state);
-
-        if (state) {
-          setTime(state.time);
-          setDisplayTime(state.time);
-          setIsCountingDown(state.isCountingDown);
-          setIsPaused(state.isPaused);
-
-          if (state.startTime) {
-            startTimeRef.current = state.startTime;
-          }
-
-          // If timer was running, restart it
-          if (state.isCountingDown && !state.isPaused && state.time > 0) {
-            startCountdown(state.time);
-          }
-        }
-      } catch (error) {
-        console.error("Error restoring timer state:", error);
       }
-    };
 
-    restoreTimerState();
+      console.log("Restoring timer state:", state);
+
+      if (state) {
+        setTime(state.time);
+        setDisplayTime(state.time);
+        setIsCountingDown(state.isCountingDown);
+        setIsPaused(state.isPaused);
+        setIsFinished(state.isFinished);
+
+        if (state.startTime) {
+          startTimeRef.current = state.startTime;
+        }
+
+        // If timer was running, restart it
+        if (state.isCountingDown && !state.isPaused && state.time > 0) {
+          startCountdown(state.time);
+        }
+      }
+    } catch (error) {
+      console.error("Error restoring timer state:", error);
+    }
   }, [isExtension]);
+
+  useEffect(() => {
+    restoreTimerState();
+  }, [restoreTimerState]);
+
+  // Show controls if timer is set or running
+  const showControls = useMemo(() => {
+    return (time > 0 && (isCountingDown || isPaused)) || isFinished;
+  }, [time, isCountingDown, isPaused, isFinished]);
 
   // Listen for timer state changes
   useEffect(() => {
@@ -659,7 +805,7 @@ export default function FocusButton() {
   }, [isExtension]);
 
   const startAdjustment = (direction: number, isMinutes: boolean = false) => {
-    // Stop countdown if running
+    // Stop any running timer
     if (isCountingDown) {
       if (timerRef.current) {
         clearInterval(timerRef.current);
@@ -1078,6 +1224,44 @@ export default function FocusButton() {
   return (
     <div className={styles.page}>
       <main className={styles.main}>
+        <div className={styles.pomodoro}>
+          <button
+            className={clsx(
+              styles.timeAdjust,
+              displayTime !== 0 && activePomodoro === 25 && styles.active,
+            )}
+            onClick={(e) => {
+              e.stopPropagation();
+              handlePresetTime(25);
+            }}
+          >
+            25min
+          </button>
+          <button
+            className={clsx(
+              styles.timeAdjust,
+              displayTime !== 0 && activePomodoro === 15 && styles.active,
+            )}
+            onClick={(e) => {
+              e.stopPropagation();
+              handlePresetTime(15);
+            }}
+          >
+            15min
+          </button>
+          <button
+            className={clsx(
+              styles.timeAdjust,
+              displayTime !== 0 && activePomodoro === 5 && styles.active,
+            )}
+            onClick={(e) => {
+              e.stopPropagation();
+              handlePresetTime(5);
+            }}
+          >
+            5min
+          </button>
+        </div>
         <div
           className={clsx(styles.focusButton, {
             [styles.mounted]: initialMount && isMounted,
@@ -1257,9 +1441,7 @@ export default function FocusButton() {
           </div>
         </div>
         <div
-          className={`${styles.controls} ${
-            isCountingDown || time > 0 ? styles.visible : ""
-          }`}
+          className={`${styles.controls} ${showControls ? styles.visible : ""}`}
         >
           <button onClick={handleClick}>
             {isPaused ? (
