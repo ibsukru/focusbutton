@@ -30,36 +30,6 @@
   margin: 2rem 0;
 }
 
-.timeDisplay {
-  display: inline-flex;
-  align-items: center;
-  font-family: var(--font-mono);
-  font-size: 2rem;
-  font-weight: 500;
-  letter-spacing: -0.5px;
-  gap: 8px;
-}
-
-.timeAdjust {
-  background: none;
-  border: none;
-  padding: 4px;
-  color: var(--shade-6);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-  border-radius: var(--radius);
-  box-shadow: none;
-}
-
-.timeAdjust:hover {
-  background: var(--background);
-  color: var(--foreground);
-  box-shadow: var(--shadow);
-}
-
 .focusButton {
   width: 200px;
   height: 200px;
@@ -98,6 +68,36 @@
   &.finished {
     border: 1px solid var(--accent-4);
     animation: tiltShake 0.5s ease-in-out;
+  }
+}
+
+.timeDisplay {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: 2rem;
+  font-weight: 500;
+  letter-spacing: -0.5px;
+  gap: 8px;
+}
+
+.timeAdjust {
+  background: none;
+  border: none;
+  padding: 4px;
+  color: var(--shade-6);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  border-radius: var(--radius);
+  box-shadow: none;
+
+  &:hover {
+    background: var(--background);
+    color: var(--foreground);
+    box-shadow: var(--shadow);
   }
 }
 
@@ -150,23 +150,6 @@
   }
 }
 
-.controls {
-  gap: 20px;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  margin-top: 20px;
-
-  button {
-    cursor: default;
-  }
-}
-
-.instructions {
-  margin-top: 2rem;
-  color: #718096;
-  font-size: 0.9rem;
-}
-
 .themeToggle {
   position: absolute;
   cursor: pointer;
@@ -176,13 +159,15 @@
   background-color: var(--background);
   border: none;
   box-shadow: none;
-}
-.themeToggle:hover {
-  color: var(--shade-4);
-  background-color: var(--background);
-}
-.themeToggle:active {
-  top: 16.2px;
+
+  &:hover {
+    color: var(--shade-4);
+    background-color: var(--background);
+  }
+
+  &:active {
+    top: 16.2px;
+  }
 }
 
 .time {
@@ -201,6 +186,17 @@
   justify-content: center;
   user-select: none;
   flex-direction: column;
+}
+
+.controls {
+  gap: 20px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  margin-top: 20px;
+
+  button {
+    cursor: default;
+  }
 }
 
 @keyframes tiltShake {

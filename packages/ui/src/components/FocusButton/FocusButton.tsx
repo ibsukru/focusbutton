@@ -547,24 +547,6 @@ export default function FocusButton() {
     trackEvent("timer_preset", { minutes, timeSet: newTime });
   };
 
-  const handleTimeAdjust = useCallback(
-    (newTime: number) => {
-      setTime(newTime);
-      setDisplayTime(newTime);
-      setActivePomodoro(null);
-
-      if (isExtension) {
-        const browserAPI = getBrowserAPI();
-        if (browserAPI) {
-          browserAPI.storage.local.remove(POMODORO_KEY);
-        }
-      } else {
-        localStorage.removeItem(POMODORO_KEY);
-      }
-    },
-    [isExtension],
-  );
-
   // Load active Pomodoro from storage
   useEffect(() => {
     const loadPomodoro = async () => {
