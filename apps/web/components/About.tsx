@@ -37,38 +37,32 @@ export default function About({ className }: AboutProps) {
           both as a web tool and browser extension. In today&apos;s digital
           world, staying focused can be challenging with countless distracting
           websites just a click away. That&apos;s where Focus Button comes in -
-          offering a seamless solution to maintain your concentration and boost
-          productivity.
+          offering a simple solution to help you stay focused on your tasks.
         </p>
 
         <p>
           🚀 Whether you choose to use our instant web version or install our
-          powerful browser extension, Focus Button helps you take control of
-          your browsing habits. With a simple click, you can temporarily block
-          distracting sites, allowing you to focus on what truly matters. The
-          web version requires no installation - just visit and click, while our
-          browser extensions offer enhanced features and permanent accessibility
-          right in your browser.
+          browser extension, Focus Button helps you maintain focus during work
+          or study sessions. With a simple click, you can set a timer to stay
+          committed to your task, helping you achieve your goals without
+          distractions. The web version requires no installation - just visit
+          and click to start your focus session.
         </p>
 
         <div className={styles.features}>
           <h3>🌟 Key Features:</h3>
           <ul>
             <li>
-              ⚡️ Instant web access - no installation required for the web
-              version
+              ⚡️ Instant web access - start focusing with just one click
             </li>
             <li>
-              🔌 Browser extensions for Chrome and Firefox for enhanced
-              functionality
+              🔌 Available as web app and browser extensions
             </li>
-            <li>💫 Simple and intuitive interface across all platforms</li>
-            <li>
-              🔄 Seamless synchronization between devices (with extension)
-            </li>
-            <li>🔒 Privacy-focused - your data stays on your device</li>
-            <li>⚙️ Zero configuration needed - works right out of the box</li>
-            <li>📈 Regular updates and improvements</li>
+            <li>💫 Simple, distraction-free interface</li>
+            <li>🔄 Seamless synchronization between devices (with extension)</li>
+            <li>🔒 Privacy-first approach - no data collection</li>
+            <li>⚙️ Works instantly - no setup needed</li>
+            <li>📈 Continuous improvements based on user feedback</li>
           </ul>
         </div>
 
@@ -78,18 +72,17 @@ export default function About({ className }: AboutProps) {
             <div className={styles.version}>
               <h4>🌐 Web Version</h4>
               <p>
-                Access instantly through your browser - perfect for quick focus
-                sessions or trying out the service. No installation required,
-                just visit and start focusing.
+                Start focusing instantly through your browser - perfect for when
+                you need to concentrate on important tasks. No installation
+                required, just visit and click to begin your focus session.
               </p>
             </div>
             <div className={styles.version}>
               <h4>🧩 Browser Extensions</h4>
               <p>
-                Get enhanced features and permanent access with our browser
-                extensions. Install once and have Focus Button always at your
-                fingertips, with additional customization options and seamless
-                integration.
+                Get the same great focus-enhancing features with our browser
+                extensions. Install once and have Focus Button always ready
+                whenever you need to concentrate on your work.
               </p>
             </div>
           </div>
