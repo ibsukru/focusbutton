@@ -755,6 +755,7 @@ export default function FocusButton({ className }: { className?: string }) {
   };
 
   const isNotificationSupported = typeof Notification !== "undefined";
+  const isAndroid = /Android/i.test(navigator.userAgent);
 
   const sendNotification = useCallback(() => {
     if (isExtension) {
@@ -767,21 +768,29 @@ export default function FocusButton({ className }: { className?: string }) {
           message: "Your focus session has ended.",
         });
       }
-    } else if (isNotificationSupported) {
-      if (Notification.permission === "granted") {
-        new Notification("Time's up!", {
-          body: "Your focus session has ended.",
-          icon: "/icons/icon-128.png",
-        });
-      } else if (Notification.permission !== "denied") {
-        Notification.requestPermission().then((permission) => {
-          if (permission === "granted") {
-            new Notification("Time's up!", {
-              body: "Your focus session has ended.",
-              icon: "/icons/icon-128.png",
+    } else if (isNotificationSupported && !isAndroid) {
+      try {
+        if (Notification.permission === "granted") {
+          new Notification("Time's up!", {
+            body: "Your focus session has ended.",
+            icon: "/icons/icon-128.png",
+          });
+        } else if (Notification.permission !== "denied") {
+          Notification.requestPermission()
+            .then((permission) => {
+              if (permission === "granted") {
+                new Notification("Time's up!", {
+                  body: "Your focus session has ended.",
+                  icon: "/icons/icon-128.png",
+                });
+              }
+            })
+            .catch((error) => {
+              console.log("Notification permission request failed:", error);
             });
-          }
-        });
+        }
+      } catch (error) {
+        console.log("Notification failed:", error);
       }
     }
   }, [isExtension]);

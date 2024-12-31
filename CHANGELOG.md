@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.1] - 2024-12-31
+
+### Fixed
+
+- Fixed notification errors on Android web browsers by disabling notifications on Android devices
+- Added proper error handling for notifications and permissions
+- Improved cross-platform compatibility for timer end notifications
+
 ## [1.1.0] - 2024-12-26
 
 ### Added
