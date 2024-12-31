@@ -1228,7 +1228,7 @@ export default function FocusButton() {
           <button
             className={clsx(
               styles.timeAdjust,
-              displayTime !== 0 && activePomodoro === 25 && styles.active,
+              displayTime === 25 * 60 && activePomodoro === 25 && styles.active,
             )}
             onClick={(e) => {
               e.stopPropagation();
@@ -1240,7 +1240,7 @@ export default function FocusButton() {
           <button
             className={clsx(
               styles.timeAdjust,
-              displayTime !== 0 && activePomodoro === 15 && styles.active,
+              displayTime === 15 * 60 && activePomodoro === 15 && styles.active,
             )}
             onClick={(e) => {
               e.stopPropagation();
@@ -1252,7 +1252,7 @@ export default function FocusButton() {
           <button
             className={clsx(
               styles.timeAdjust,
-              displayTime !== 0 && activePomodoro === 5 && styles.active,
+              displayTime === 5 * 60 && activePomodoro === 5 && styles.active,
             )}
             onClick={(e) => {
               e.stopPropagation();
