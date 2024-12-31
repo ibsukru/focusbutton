@@ -106,7 +106,7 @@ const getBrowserAPI = (): BrowserAPIType | null => {
   return null;
 };
 
-export default function FocusButton() {
+export default function FocusButton({ className }: { className?: string }) {
   const [isExtension, setIsExtension] = useState(false);
   const [time, setTime] = useState(0);
   const [displayTime, setDisplayTime] = useState(0);
@@ -1204,7 +1204,7 @@ export default function FocusButton() {
   }
 
   return (
-    <div className={styles.page}>
+    <div className={clsx(styles.page, className)}>
       <main className={styles.main}>
         <div className={styles.pomodoro}>
           <button

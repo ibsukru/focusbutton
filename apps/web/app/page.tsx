@@ -6,6 +6,7 @@ import { getUserAgentInfo } from "../utils/userAgent";
 import styles from "./page.module.scss";
 import { FaGithub } from "react-icons/fa";
 import Footer from "components/Footer";
+import About from "components/About";
 
 export default async function Home() {
   const { isDesktop, isChrome, isFirefox } = await getUserAgentInfo();
@@ -21,18 +22,18 @@ export default async function Home() {
         <FaGithub size={20} />
       </a>
       <main className={styles.main}>
-        <div className={styles.container}>
-          <div className={styles.content}>
+        <div className={styles.content}>
+          <div className={styles.focusButton}>
             <FocusButton />
-
-            <Footer
-              className={styles.footer}
-              isDesktop={isDesktop}
-              isChrome={isChrome}
-              isFirefox={isFirefox}
-            />
           </div>
+          <Footer
+            className={styles.footer}
+            isDesktop={isDesktop}
+            isChrome={isChrome}
+            isFirefox={isFirefox}
+          />
         </div>
+        <About className={styles.about} />
       </main>
     </div>
   );
