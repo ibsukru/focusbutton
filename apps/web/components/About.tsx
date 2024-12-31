@@ -62,7 +62,6 @@ export default function About({ className }: AboutProps) {
               🔌 Browser extensions for Chrome and Firefox for enhanced
               functionality
             </li>
-            <li>🎯 One-click website blocking with customizable duration</li>
             <li>💫 Simple and intuitive interface across all platforms</li>
             <li>
               🔄 Seamless synchronization between devices (with extension)
