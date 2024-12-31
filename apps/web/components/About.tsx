@@ -52,14 +52,12 @@ export default function About({ className }: AboutProps) {
         <div className={styles.features}>
           <h3>🌟 Key Features:</h3>
           <ul>
-            <li>
-              ⚡️ Instant web access - start focusing with just one click
-            </li>
-            <li>
-              🔌 Available as web app and browser extensions
-            </li>
+            <li>⚡️ Instant web access - start focusing with just one click</li>
+            <li>🔌 Available as web app and browser extensions</li>
             <li>💫 Simple, distraction-free interface</li>
-            <li>🔄 Seamless synchronization between devices (with extension)</li>
+            <li>
+              🔄 Seamless synchronization between devices (with extension)
+            </li>
             <li>🔒 Privacy-first approach - no data collection</li>
             <li>⚙️ Works instantly - no setup needed</li>
             <li>📈 Continuous improvements based on user feedback</li>
