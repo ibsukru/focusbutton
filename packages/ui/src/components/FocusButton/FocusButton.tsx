@@ -521,6 +521,7 @@ export default function FocusButton({ className }: { className?: string }) {
           type: "SET_TIMER",
           time: newTime,
         });
+
         sendMessage({ type: "PAUSE_TIMER" });
 
         // Save active Pomodoro in extension storage
