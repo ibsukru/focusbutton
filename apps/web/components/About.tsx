@@ -4,32 +4,14 @@ import { useTheme } from "next-themes";
 import React, { useEffect } from "react";
 import clsx from "clsx";
 import styles from "./About.module.scss";
-import { FaChrome, FaFirefoxBrowser } from "react-icons/fa";
 
 interface AboutProps {
   className?: string;
 }
 
 export default function About({ className }: AboutProps) {
-  const { resolvedTheme } = useTheme();
-
-  const [mounted, setMounted] = React.useState(false);
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) {
-    return null;
-  }
-
   return (
-    <div
-      className={clsx(
-        styles.about,
-        resolvedTheme === "dark" ? styles.dark : styles.light,
-        className,
-      )}
-    >
+    <div className={clsx(styles.about, className)}>
       <h1>✨FocusButton</h1>
       <div className={styles.aboutContent}>
         <p>
