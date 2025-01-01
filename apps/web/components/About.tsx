@@ -1,7 +1,6 @@
 "use client";
 
-import { useTheme } from "next-themes";
-import React, { useEffect } from "react";
+import React from "react";
 import clsx from "clsx";
 import styles from "./About.module.scss";
 
