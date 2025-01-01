@@ -5,11 +5,7 @@ import React, { useEffect } from "react";
 import clsx from "clsx";
 import styles from "./About.module.scss";
 
-interface AboutProps {
-  className?: string;
-}
-
-export default function About({ className }: AboutProps) {
+export default function About({ className }: { className?: string }) {
   return (
     <div className={clsx(styles.about, className)}>
       <h1>✨FocusButton</h1>
