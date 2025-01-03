@@ -1468,103 +1468,123 @@ export default function FocusButton({ className }: { className?: string }) {
           </button>
         </div>
       </main>
-      <div className={styles.tasks}>
-        {addingTask ? (
-          <div className={styles.addTask}>
-            <input
-              name="newTask"
-              value={newTask?.title || ""}
-              placeholder="Task title"
-              onChange={(e) => {
-                setNewTask({
-                  title: e.target.value,
-                  id: uuidv4(),
-                  createdOn: new Date(),
-                  modifiedOn: new Date(),
-                });
-              }}
-              type="text"
-            />
-            <button
-              onClick={() => {
-                setTasks([...tasks, newTask]);
-                setNewTask(undefined);
-                setAddingTask(false);
-              }}
-            >
-              Add
-            </button>
-          </div>
-        ) : (
-          <div className={styles.newTask}>
-            <button
-              className={styles.newTaskButton}
-              onClick={() => {
-                setAddingTask(true);
-              }}
-            >
-              <AlarmClockCheck width={14} height={14} />
-              New task
-            </button>
-          </div>
-        )}
-        {editingTask ? (
-          <div className={styles.editTask}>
-            <input
-              name="editTask"
-              value={editingTask?.title || ""}
-              placeholder="Task title"
-              onChange={(e) => {
-                setEditingTask({
-                  ...editingTask,
-                  title: e.target.value,
-                  modifiedOn: new Date(),
-                });
-              }}
-              type="text"
-            />
-            <button
-              onClick={() => {
-                setTasks(
-                  tasks.map((t) => (t.id === editingTask.id ? editingTask : t)),
-                );
-                setEditingTask(undefined);
-              }}
-            >
-              Save
-            </button>
-          </div>
-        ) : (
-          tasks
-            .sort(
-              (a, b) =>
-                new Date(b.createdOn).getTime() -
-                new Date(a.createdOn).getTime(),
-            )
-            .map((task, index) => (
-              <div
-                key={task.id}
-                className={clsx(
-                  editingTask?.id === task.id
-                    ? styles.taskEditing
-                    : styles.task,
-                  index === 0 && styles.currentTask,
-                )}
-              >
-                <>
-                  <div className={styles.taskTitle}>{task.title}</div>
-                  <button
-                    className={clsx("link", styles.editButton)}
-                    onClick={() => {
-                      setEditingTask(task);
-                    }}
-                  >
-                    <Pencil width={18} height={18} />
-                  </button>
-                </>
+      <div className={styles.taskSection}>
+        {(() => {
+          if (addingTask) {
+            return (
+              <div className={styles.addTask}>
+                <input
+                  name="newTask"
+                  value={newTask?.title || ""}
+                  placeholder="Task title"
+                  onChange={(e) => {
+                    setNewTask({
+                      title: e.target.value,
+                      id: uuidv4(),
+                      createdOn: new Date(),
+                      modifiedOn: new Date(),
+                    });
+                  }}
+                  type="text"
+                />
+                <button
+                  onClick={() => {
+                    setTasks([...tasks, newTask]);
+                    setNewTask(undefined);
+                    setAddingTask(false);
+                  }}
+                >
+                  Add
+                </button>
               </div>
-            ))
-        )}
+            );
+          }
+
+          if (editingTask) {
+            return (
+              <div className={styles.editTask}>
+                <input
+                  name="editTask"
+                  value={editingTask?.title || ""}
+                  placeholder="Task title"
+                  onChange={(e) => {
+                    setEditingTask({
+                      ...editingTask,
+                      title: e.target.value,
+                      modifiedOn: new Date(),
+                    });
+                  }}
+                  type="text"
+                />
+                <button
+                  onClick={() => {
+                    setTasks(
+                      tasks.map((t) =>
+                        t.id === editingTask.id ? editingTask : t,
+                      ),
+                    );
+                    setEditingTask(undefined);
+                  }}
+                >
+                  Save
+                </button>
+              </div>
+            );
+          }
+
+          return (
+            <>
+              <div className={styles.newTask}>
+                <button
+                  className={styles.newTaskButton}
+                  onClick={() => {
+                    setAddingTask(true);
+                  }}
+                >
+                  <AlarmClockCheck width={14} height={14} />
+                  New task
+                </button>
+              </div>
+              {tasks.length > 0 ? (
+                <div className={styles.tasks}>
+                  {tasks
+                    .filter(
+                      (task): task is Task =>
+                        task !== null && task !== undefined,
+                    )
+                    .sort(
+                      (a, b) =>
+                        new Date(b.createdOn).getTime() -
+                        new Date(a.createdOn).getTime(),
+                    )
+                    .map((task, index) => (
+                      <div
+                        key={task.id}
+                        className={clsx(
+                          editingTask?.id === task.id
+                            ? styles.taskEditing
+                            : styles.task,
+                          index === 0 && styles.currentTask,
+                        )}
+                      >
+                        <>
+                          <div className={styles.taskTitle}>{task.title}</div>
+                          <button
+                            className={clsx("link", styles.editButton)}
+                            onClick={() => {
+                              setEditingTask(task);
+                            }}
+                          >
+                            <Pencil width={18} height={18} />
+                          </button>
+                        </>
+                      </div>
+                    ))}
+                </div>
+              ) : null}
+            </>
+          );
+        })()}
       </div>
     </div>
   );
