@@ -1717,8 +1717,6 @@ export default function FocusButton({ className }: { className?: string }) {
 
                               return newTasks;
                             });
-
-                            // handleResume();
                           }}
                         >
                           <div
@@ -1781,6 +1779,9 @@ export default function FocusButton({ className }: { className?: string }) {
                               <button
                                 className={clsx("link", styles.editButton)}
                                 onClick={() => {
+                                  if (selectedTask?.id === task.id) {
+                                    handlePause();
+                                  }
                                   setEditingTask(task);
                                 }}
                               >
