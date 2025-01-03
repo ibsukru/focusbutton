@@ -19,6 +19,7 @@ import {
   Moon,
   Pencil,
   Sun,
+  Trash2,
 } from "lucide-react";
 import type { BrowserAPIType } from "@focusbutton/extension/src/browser-api";
 import { useTheme } from "next-themes";
@@ -1627,6 +1628,17 @@ export default function FocusButton({ className }: { className?: string }) {
                     }}
                   >
                     Cancel
+                  </button>
+                  <button
+                    className={styles.deleteTaskButton}
+                    onClick={() => {
+                      setTasks(
+                        tasks.filter((task) => task.id !== editingTask.id),
+                      );
+                      setEditingTask(undefined);
+                    }}
+                  >
+                    <Trash2 width={14} height={14} /> Delete
                   </button>
                 </div>
               </form>
