@@ -1757,6 +1757,7 @@ export default function FocusButton({ className }: { className?: string }) {
                                 className={styles.taskTitle}
                               >
                                 {task.id === selectedTask?.id &&
+                                  showControls &&
                                   (isCountingDown ? (
                                     <CirclePause width={14} height={14} />
                                   ) : (
