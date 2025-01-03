@@ -6,7 +6,7 @@ import styles from "./About.module.scss";
 export default function About({ className }: { className?: string }) {
   return (
     <div className={clsx(styles.about, className)}>
-      <h1>✨FocusButton</h1>
+      <h1>✨ FocusButton</h1>
       <div className={styles.aboutContent}>
         <p>
           🎯 Focus Button is your ultimate productivity companion, available
