@@ -137,6 +137,17 @@ export default function FocusButton({ className }: { className?: string }) {
   const [addingTask, setAddingTask] = useState(false);
   const [newTask, setNewTask] = useState<Task | undefined>();
   const [editingTask, setEditingTask] = useState<Task | undefined>();
+  const [selectedTask, setSelectedTask] = useLocalStorage<Task | undefined>(
+    "focusbutton_task",
+    undefined,
+  );
+
+  useEffect(() => {
+    if (!selectedTask) {
+      setSelectedTask(tasks?.[0]);
+    }
+  }, [selectedTask, tasks]);
+
   const [initialMount, setInitialMount] = useState(true);
   const [isMounted, setIsMounted] = useState(false);
 
@@ -1534,17 +1545,6 @@ export default function FocusButton({ className }: { className?: string }) {
 
           return (
             <>
-              <div className={styles.newTask}>
-                <button
-                  className={styles.newTaskButton}
-                  onClick={() => {
-                    setAddingTask(true);
-                  }}
-                >
-                  <AlarmClockCheck width={14} height={14} />
-                  New task
-                </button>
-              </div>
               {tasks.length > 0 ? (
                 <div className={styles.tasks}>
                   {tasks
@@ -1554,8 +1554,8 @@ export default function FocusButton({ className }: { className?: string }) {
                     )
                     .sort(
                       (a, b) =>
-                        new Date(b.createdOn).getTime() -
-                        new Date(a.createdOn).getTime(),
+                        new Date(a.createdOn).getTime() -
+                        new Date(b.createdOn).getTime(),
                     )
                     .map((task, index) => (
                       <div
@@ -1565,10 +1565,43 @@ export default function FocusButton({ className }: { className?: string }) {
                             ? styles.taskEditing
                             : styles.task,
                           index === 0 && styles.currentTask,
+                          task.id === selectedTask?.id && styles.selectedTask,
+                          isCountingDown && !isPaused && styles.counting,
+                          isPaused && styles.paused,
+                          isFinished && styles.finished,
                         )}
                       >
                         <>
-                          <div className={styles.taskTitle}>{task.title}</div>
+                          <div
+                            onClick={() => {
+                              if (time === 0) {
+                                setSelectedTask(task);
+                                handlePresetTime(25);
+                              }
+
+                              if (task.id === selectedTask?.id) {
+                                if (!isCountingDown && time > 0) {
+                                  startCountdown();
+                                } else if (isCountingDown && !isPaused) {
+                                  handlePause();
+                                } else if (isPaused) {
+                                  handleResume();
+                                }
+                              } else {
+                                setSelectedTask(task);
+                                handlePresetTime(25);
+                              }
+                            }}
+                            className={styles.taskTitle}
+                          >
+                            {task.id === selectedTask?.id &&
+                              (isCountingDown ? (
+                                <CirclePause width={14} height={14} />
+                              ) : (
+                                <CirclePlay width={14} height={14} />
+                              ))}
+                            {task.title}
+                          </div>
                           <button
                             className={clsx("link", styles.editButton)}
                             onClick={() => {
@@ -1582,6 +1615,18 @@ export default function FocusButton({ className }: { className?: string }) {
                     ))}
                 </div>
               ) : null}
+
+              <div className={styles.newTask}>
+                <button
+                  className={styles.newTaskButton}
+                  onClick={() => {
+                    setAddingTask(true);
+                  }}
+                >
+                  <AlarmClockCheck width={14} height={14} />
+                  New task
+                </button>
+              </div>
             </>
           );
         })()}
