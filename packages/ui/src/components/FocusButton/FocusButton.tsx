@@ -1704,6 +1704,9 @@ export default function FocusButton({ className }: { className?: string }) {
                           key={task.id}
                           index={index}
                           moveItem={(from, to) => {
+                            if (isCountingDown && !isPaused) {
+                              handlePause();
+                            }
                             setTasks((prevTasks) => {
                               const newTasks = [...prevTasks];
                               newTasks.splice(
@@ -1714,6 +1717,8 @@ export default function FocusButton({ className }: { className?: string }) {
 
                               return newTasks;
                             });
+
+                            // handleResume();
                           }}
                         >
                           <div

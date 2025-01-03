@@ -253,6 +253,10 @@
   .link {
     color: var(--foreground);
   }
+
+  &:hover {
+    border: 1px dashed var(--accent-1);
+  }
 }
 
 .selectedTask {
