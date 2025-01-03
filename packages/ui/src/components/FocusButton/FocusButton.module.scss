@@ -235,6 +235,10 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
+
+  > div {
+    cursor: default !important;
+  }
 }
 
 .task {
@@ -280,6 +284,42 @@
   &:hover {
     color: var(--shade-6);
   }
+}
+
+.taskContent {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex: 1;
+}
+
+.addTaskButtons,
+.editTaskButtons {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.cancelEditTaskButton,
+.cancelAddTaskButton {
+  background: var(--background);
+  color: var(--foreground);
+  box-shadow: none;
+  border: 1px solid var(--shade-2);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.dragHandle {
+  margin-left: auto;
+  cursor: move;
+}
+
+.fieldError {
+  color: var(--accent-0);
+  font-size: 0.8rem;
+  margin: -5px 0 10px 0;
 }
 
 @keyframes tiltShake {

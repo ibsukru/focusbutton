@@ -15,6 +15,7 @@ import {
   CirclePause,
   CirclePlay,
   CircleX,
+  GripVertical,
   Moon,
   Pencil,
   Sun,
@@ -25,6 +26,12 @@ import clsx from "clsx";
 import NumberFlow from "@number-flow/react";
 import { useLocalStorage } from "../../hooks";
 import { v4 as uuidv4 } from "uuid";
+import { DndProvider } from "react-dnd";
+import { HTML5Backend } from "react-dnd-html5-backend";
+import DraggableItem from "../../components/DraggableItem";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 
 // Add global type declaration for browser
 declare global {
@@ -90,6 +97,16 @@ type TimerMessage = {
   remainingTime?: number;
 };
 
+const newTaskSchema = z.object({
+  title: z.string().min(1, { message: "Title is required" }),
+});
+
+const editTaskSchema = z.object({
+  title: z.string().min(1, { message: "Title is required" }),
+  id: z.string(),
+  createdOn: z.date(),
+});
+
 type Task = {
   title: string;
   id: string;
@@ -147,6 +164,72 @@ export default function FocusButton({ className }: { className?: string }) {
       setSelectedTask(tasks?.[0]);
     }
   }, [selectedTask, tasks]);
+
+  const {
+    handleSubmit: handleNewTaskSubmit,
+    formState: { errors: newTaskErrors },
+    reset: resetNewTask,
+    register: registerNewTask,
+  } = useForm<z.infer<typeof newTaskSchema>>({
+    mode: "onChange",
+    resolver: zodResolver(newTaskSchema),
+    defaultValues: {
+      title: "",
+    },
+  });
+
+  const onAddTask = handleNewTaskSubmit(async (data) => {
+    const newTask: Task = {
+      id: uuidv4(),
+      title: data.title,
+      createdOn: new Date(),
+      modifiedOn: new Date(),
+    };
+
+    setTasks([...tasks, newTask]);
+    setNewTask(undefined);
+    setAddingTask(false);
+    resetNewTask();
+  });
+
+  const {
+    handleSubmit: handleEditTaskSubmit,
+    formState: { errors: editTaskErrors },
+    reset: resetEditTask,
+    register: registerEditTask,
+  } = useForm<z.infer<typeof editTaskSchema>>({
+    mode: "onChange",
+    resolver: zodResolver(editTaskSchema),
+  });
+
+  useEffect(() => {
+    if (editingTask) {
+      resetEditTask({
+        title: editingTask.title,
+        id: editingTask.id,
+        createdOn: editingTask.createdOn,
+      });
+    }
+  }, [editingTask, resetEditTask]);
+
+  const onEditTask = handleEditTaskSubmit(async (data) => {
+    const updatedTask: Task = {
+      ...editingTask,
+      title: data.title,
+      modifiedOn: new Date(),
+    };
+
+    const updatedTasks = tasks.map((task) => {
+      if (task.id === updatedTask.id) {
+        return updatedTask;
+      }
+      return task;
+    });
+
+    setTasks(updatedTasks);
+    setEditingTask(undefined);
+    resetEditTask();
+  });
 
   const [initialMount, setInitialMount] = useState(true);
   const [isMounted, setIsMounted] = useState(false);
@@ -1483,63 +1566,70 @@ export default function FocusButton({ className }: { className?: string }) {
         {(() => {
           if (addingTask) {
             return (
-              <div className={styles.addTask}>
+              <form className={styles.addTask} onSubmit={onAddTask}>
                 <input
                   name="newTask"
-                  value={newTask?.title || ""}
+                  {...registerNewTask("title")}
                   placeholder="Task title"
-                  onChange={(e) => {
-                    setNewTask({
-                      title: e.target.value,
-                      id: uuidv4(),
-                      createdOn: new Date(),
-                      modifiedOn: new Date(),
-                    });
-                  }}
                   type="text"
                 />
-                <button
-                  onClick={() => {
-                    setTasks([...tasks, newTask]);
-                    setNewTask(undefined);
-                    setAddingTask(false);
-                  }}
-                >
-                  Add
-                </button>
-              </div>
+                {newTaskErrors.title && (
+                  <div className={styles.fieldError}>
+                    {newTaskErrors.title?.message}
+                  </div>
+                )}
+                <div className={styles.addTaskButtons}>
+                  <button type="submit">Add</button>
+                  <button
+                    className={styles.cancelAddTaskButton}
+                    onClick={() => {
+                      setAddingTask(false);
+                      setNewTask(undefined);
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
             );
           }
 
           if (editingTask) {
             return (
-              <div className={styles.editTask}>
+              <form className={styles.editTask} onSubmit={onEditTask}>
                 <input
                   name="editTask"
-                  value={editingTask?.title || ""}
+                  {...registerEditTask("title", { value: editingTask.title })}
                   placeholder="Task title"
-                  onChange={(e) => {
-                    setEditingTask({
-                      ...editingTask,
-                      title: e.target.value,
-                      modifiedOn: new Date(),
-                    });
-                  }}
                   type="text"
                 />
-                <button
-                  onClick={() => {
-                    setTasks(
-                      tasks.map((t) =>
-                        t.id === editingTask.id ? editingTask : t,
-                      ),
-                    );
-                    setEditingTask(undefined);
-                  }}
-                >
-                  Save
-                </button>
-              </div>
+                {editTaskErrors.title && (
+                  <div className={styles.fieldError}>
+                    {editTaskErrors.title.message}
+                  </div>
+                )}
+                <input
+                  type="hidden"
+                  {...registerEditTask("id")}
+                  value={editingTask.id}
+                />
+                <input
+                  type="hidden"
+                  {...registerEditTask("createdOn", { valueAsDate: true })}
+                  value={editingTask.createdOn.toString()}
+                />
+                <div className={styles.addTaskButtons}>
+                  <button type="submit">Save</button>
+                  <button
+                    className={styles.cancelEditTaskButton}
+                    onClick={() => {
+                      setEditingTask(undefined);
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
             );
           }
 
@@ -1547,72 +1637,92 @@ export default function FocusButton({ className }: { className?: string }) {
             <>
               {tasks.length > 0 ? (
                 <div className={styles.tasks}>
-                  {tasks
-                    .filter(
-                      (task): task is Task =>
-                        task !== null && task !== undefined,
-                    )
-                    .sort(
-                      (a, b) =>
-                        new Date(a.createdOn).getTime() -
-                        new Date(b.createdOn).getTime(),
-                    )
-                    .map((task, index) => (
-                      <div
-                        key={task.id}
-                        className={clsx(
-                          editingTask?.id === task.id
-                            ? styles.taskEditing
-                            : styles.task,
-                          index === 0 && styles.currentTask,
-                          task.id === selectedTask?.id && styles.selectedTask,
-                          isCountingDown && !isPaused && styles.counting,
-                          isPaused && styles.paused,
-                          isFinished && styles.finished,
-                        )}
-                      >
-                        <>
-                          <div
-                            onClick={() => {
-                              if (time === 0) {
-                                setSelectedTask(task);
-                                handlePresetTime(25);
-                              }
+                  <DndProvider backend={HTML5Backend}>
+                    {tasks
+                      .filter(
+                        (task): task is Task =>
+                          task !== null && task !== undefined,
+                      )
+                      .map((task, index) => (
+                        <DraggableItem
+                          key={task.id}
+                          index={index}
+                          moveItem={(from, to) => {
+                            setTasks((prevTasks) => {
+                              const newTasks = [...prevTasks];
+                              newTasks.splice(
+                                to,
+                                0,
+                                newTasks.splice(from, 1)[0],
+                              );
 
-                              if (task.id === selectedTask?.id) {
-                                if (!isCountingDown && time > 0) {
-                                  startCountdown();
-                                } else if (isCountingDown && !isPaused) {
-                                  handlePause();
-                                } else if (isPaused) {
-                                  handleResume();
-                                }
-                              } else {
-                                setSelectedTask(task);
-                                handlePresetTime(25);
-                              }
-                            }}
-                            className={styles.taskTitle}
+                              return newTasks;
+                            });
+                          }}
+                        >
+                          <div
+                            key={task.id}
+                            className={clsx(
+                              editingTask?.id === task.id
+                                ? styles.taskEditing
+                                : styles.task,
+                              index === 0 && styles.currentTask,
+                              task.id === selectedTask?.id &&
+                                styles.selectedTask,
+                              isCountingDown && !isPaused && styles.counting,
+                              isPaused && styles.paused,
+                              isFinished && styles.finished,
+                            )}
                           >
-                            {task.id === selectedTask?.id &&
-                              (isCountingDown ? (
-                                <CirclePause width={14} height={14} />
-                              ) : (
-                                <CirclePlay width={14} height={14} />
-                              ))}
-                            {task.title}
+                            <div className={styles.taskContent}>
+                              <div
+                                onClick={() => {
+                                  if (time === 0) {
+                                    setSelectedTask(task);
+                                    handlePresetTime(25);
+                                  }
+
+                                  if (task.id === selectedTask?.id) {
+                                    if (!isCountingDown && time > 0) {
+                                      startCountdown();
+                                    } else if (isCountingDown && !isPaused) {
+                                      handlePause();
+                                    } else if (isPaused) {
+                                      handleResume();
+                                    }
+                                  } else {
+                                    setSelectedTask(task);
+                                    handlePresetTime(25);
+                                  }
+                                }}
+                                className={styles.taskTitle}
+                              >
+                                {task.id === selectedTask?.id &&
+                                  (isCountingDown ? (
+                                    <CirclePause width={14} height={14} />
+                                  ) : (
+                                    <CirclePlay width={14} height={14} />
+                                  ))}
+                                {task.title}
+                              </div>
+                              <GripVertical
+                                width={22}
+                                height={22}
+                                className={styles.dragHandle}
+                              />
+                              <button
+                                className={clsx("link", styles.editButton)}
+                                onClick={() => {
+                                  setEditingTask(task);
+                                }}
+                              >
+                                <Pencil width={18} height={18} />
+                              </button>
+                            </div>
                           </div>
-                          <button
-                            className={clsx("link", styles.editButton)}
-                            onClick={() => {
-                              setEditingTask(task);
-                            }}
-                          >
-                            <Pencil width={18} height={18} />
-                          </button>
-                        </>
-                      </div>
-                    ))}
+                        </DraggableItem>
+                      ))}
+                  </DndProvider>
                 </div>
               ) : null}
 
