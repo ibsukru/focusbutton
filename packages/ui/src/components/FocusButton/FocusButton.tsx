@@ -113,6 +113,7 @@ type Task = {
   id: string;
   createdOn: Date;
   modifiedOn: Date;
+  totalTime?: number;
 };
 
 const STORAGE_KEY = "focusbutton_timer_state";
@@ -159,9 +160,10 @@ export default function FocusButton({ className }: { className?: string }) {
     "focusbutton_task",
     undefined,
   );
+  const [elapsedTime, setElapsedTime] = useState(0);
 
   useEffect(() => {
-    if (!selectedTask) {
+    if (!selectedTask && tasks?.length) {
       setSelectedTask(tasks?.[0]);
     }
   }, [selectedTask, tasks]);
@@ -237,6 +239,48 @@ export default function FocusButton({ className }: { className?: string }) {
 
   // Add startTimeRef declaration
   const startTimeRef = useRef<number>(0);
+
+  const initialTimeRef = useRef(0);
+
+  useEffect(() => {
+    if (selectedTask) {
+      initialTimeRef.current = selectedTask.totalTime || 0;
+    }
+  }, [selectedTask]);
+
+  useEffect(() => {
+    let intervalId: NodeJS.Timeout;
+
+    if (isCountingDown && selectedTask && !isPaused) {
+      intervalId = setInterval(() => {
+        const currentElapsed = startTimeRef.current
+          ? Math.floor((Date.now() - startTimeRef.current) / 1000)
+          : 0;
+        setElapsedTime(currentElapsed);
+
+        // Update task's total time
+        setTasks((prevTasks) =>
+          prevTasks.map((task) => {
+            if (task.id === selectedTask.id) {
+              const newTotal = initialTimeRef.current + currentElapsed;
+
+              return {
+                ...task,
+                totalTime: newTotal,
+              };
+            }
+            return task;
+          }),
+        );
+      }, 1000);
+    }
+
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+    };
+  }, [isCountingDown, selectedTask, isPaused]);
 
   // Check for extension context after mount
   useEffect(() => {
@@ -1717,6 +1761,13 @@ export default function FocusButton({ className }: { className?: string }) {
                                   ))}
                                 {task.title}
                               </div>
+                              {task.totalTime > 0 && (
+                                <span className={styles.taskTime} style={{}}>
+                                  {Math.floor(task.totalTime / 3600)}h{" "}
+                                  {Math.floor((task.totalTime % 3600) / 60)}m{" "}
+                                  {Math.floor(task.totalTime % 60)}s
+                                </span>
+                              )}
                               <GripVertical
                                 width={22}
                                 height={22}
