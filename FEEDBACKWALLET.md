@@ -91,6 +91,58 @@ feedbackwallet.com, the platform where users can review apps and websites, conne
 3. Continue browsing other sites
 4. Check that timer completes correctly
 
+
+## Pomodoro and Tasks Testing Steps
+
+### 4. Test Pomodoro Timer
+
+1. Start a pomodoro session:
+   - Click the timer to start 25-minute focus session
+   - Verify countdown starts
+2. Test timer controls:
+   - Pause the timer - should stop
+   - Resume - should continue from paused time
+   - Verify state persists on page refresh
+3. Test completion:
+   - Let timer reach zero after resetting for 5 seconds
+   - Verify notification sound plays
+   - Check completion animation
+
+### 5. Test Task Management
+
+1. Create new tasks:
+   - Click "New task" button
+   - Enter task title
+   - Verify task appears in list
+2. Test task operations:
+   - Edit task (click pencil icon)
+   - Delete task (click trash icon)
+   - Confirm delete with "Are you sure?"
+3. Test task ordering:
+   - Add tasks
+   - Drag tasks to reorder
+   - Verify new order persists
+4. Test task selection:
+   - Click task to select
+   - Verify timer sets for selected task
+   - Verify timer starts when click again
+   - Check task highlighting
+
+### 6. Test Reports Feature
+
+1. Access reports:
+   - Click "Reports" button
+   - Verify chart appears
+2. Check chart data:
+   - Verify task completion times shown
+   - Check multiple days of data
+   - Confirm task colors match
+3. Test data persistence:
+   - Add new task completions
+   - Refresh page
+   - Verify data remains
+   - Check historical trends
+
 ### What Makes a Successful Test
 
 Your tests are successful when:

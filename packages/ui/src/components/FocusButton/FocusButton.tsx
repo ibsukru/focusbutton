@@ -1461,6 +1461,8 @@ export default function FocusButton({ className }: { className?: string }) {
           >
             <ChartColumnBig width={14} height={14} /> Close
           </button>
+        </div>
+        <div className={styles.chartContainer}>
           <div className={styles.chart}>
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={chartData}>
