@@ -1903,6 +1903,7 @@ export default function FocusButton({ className }: { className?: string }) {
                                         handleResume();
                                       }
                                     } else {
+                                      trackEvent("task_preset");
                                       setSelectedTask(task);
                                       handlePresetTime(25);
                                     }
