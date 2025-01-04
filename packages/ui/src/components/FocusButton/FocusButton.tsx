@@ -10,6 +10,7 @@ import React, {
 import styles from "./FocusButton.module.scss";
 import {
   AlarmClockCheck,
+  ChartColumnBig,
   ChevronDown,
   ChevronUp,
   CirclePause,
@@ -33,6 +34,16 @@ import DraggableItem from "../../components/DraggableItem";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from "recharts";
 
 // Add global type declaration for browser
 declare global {
@@ -113,7 +124,7 @@ type Task = {
   id: string;
   createdOn: Date;
   modifiedOn: Date;
-  totalTime?: number;
+  total?: { date: Date; count: number }[];
 };
 
 const STORAGE_KEY = "focusbutton_timer_state";
@@ -160,7 +171,8 @@ export default function FocusButton({ className }: { className?: string }) {
     "focusbutton_task",
     undefined,
   );
-  const [elapsedTime, setElapsedTime] = useState(0);
+
+  const [showReport, setShowReport] = useState(false);
 
   useEffect(() => {
     if (!selectedTask && tasks?.length) {
@@ -240,28 +252,51 @@ export default function FocusButton({ className }: { className?: string }) {
   // Add startTimeRef declaration
   const startTimeRef = useRef<number>(0);
 
+  const isSameDay = (date1: Date, date2: Date) => {
+    return (
+      date1.getDate() === date2.getDate() &&
+      date1.getMonth() === date2.getMonth() &&
+      date1.getFullYear() === date2.getFullYear()
+    );
+  };
+
   useEffect(() => {
     if (isCountingDown && selectedTask && !isPaused) {
       const currentElapsed = startTimeRef.current
         ? Math.floor((Date.now() - startTimeRef.current) / 1000)
         : 0;
 
-      setElapsedTime(currentElapsed);
+      if (currentElapsed > 0) {
+        const currentDay = new Date();
 
-      // Update task's total time
-      setTasks((prevTasks) =>
-        prevTasks.map((task) => {
-          if (task.id === selectedTask.id) {
-            const newTotal = (task.totalTime || 0) + 1;
+        // Update task's total time
+        setTasks((prevTasks) =>
+          prevTasks.map((task) => {
+            if (task.id === selectedTask.id) {
+              const hasDay = task.total?.find((t) =>
+                isSameDay(new Date(t.date), currentDay),
+              );
 
-            return {
-              ...task,
-              totalTime: newTotal,
-            };
-          }
-          return task;
-        }),
-      );
+              return {
+                ...task,
+                total: hasDay
+                  ? task.total?.map((t) => {
+                      return {
+                        ...t,
+                        count: isSameDay(new Date(t.date), currentDay)
+                          ? t.count + 1
+                          : t.count,
+                      };
+                    })
+                  : task.total?.length
+                    ? [...task.total, { date: currentDay, count: 1 }]
+                    : [{ date: currentDay, count: 1 }],
+              };
+            }
+            return task;
+          }),
+        );
+      }
     }
   }, [time, isCountingDown, selectedTask, isPaused]);
 
@@ -1349,6 +1384,65 @@ export default function FocusButton({ className }: { className?: string }) {
     return;
   }
 
+  if (showReport) {
+    // Process data for the chart
+    const allDates = tasks
+      .reduce((dates, task) => {
+        task.total?.forEach((t) => {
+          const dateStr = new Date(t.date).toLocaleDateString();
+          if (!dates.includes(dateStr)) {
+            dates.push(dateStr);
+          }
+        });
+        return dates;
+      }, [] as string[])
+      .sort();
+
+    const chartData = allDates.map((dateStr) => {
+      const dataPoint: any = { date: dateStr };
+      tasks.forEach((task) => {
+        const dayData = task.total?.find(
+          (t) => new Date(t.date).toLocaleDateString() === dateStr,
+        );
+        dataPoint[task.title] = dayData?.count || 0;
+      });
+      return dataPoint;
+    });
+
+    return (
+      <>
+        <div className={styles.reports}>
+          <button
+            className={styles.reportsButton}
+            onClick={() => setShowReport(false)}
+          >
+            <ChartColumnBig width={14} height={14} /> Close
+          </button>
+          <div className={styles.chart}>
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="date" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                {tasks.map((task, index) => (
+                  <Line
+                    key={task.id}
+                    type="monotone"
+                    dataKey={task.title}
+                    stroke={`hsl(${(index * 137.5) % 360}, 70%, 50%)`}
+                    dot={false}
+                  />
+                ))}
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </>
+    );
+  }
+
   return (
     <div className={clsx(styles.page, className)}>
       <main className={styles.main}>
@@ -1675,108 +1769,128 @@ export default function FocusButton({ className }: { className?: string }) {
           return (
             <>
               {tasks.length > 0 ? (
-                <div className={styles.tasks}>
-                  <DndProvider backend={HTML5Backend}>
-                    {tasks
-                      .filter(
-                        (task): task is Task =>
-                          task !== null && task !== undefined,
-                      )
-                      .map((task, index) => (
-                        <DraggableItem
-                          key={task.id}
-                          index={index}
-                          moveItem={(from, to) => {
-                            if (isCountingDown && !isPaused) {
-                              handlePause();
-                            }
-                            setTasks((prevTasks) => {
-                              const newTasks = [...prevTasks];
-                              newTasks.splice(
-                                to,
-                                0,
-                                newTasks.splice(from, 1)[0],
-                              );
-
-                              return newTasks;
-                            });
-                          }}
-                        >
-                          <div
+                <>
+                  <div className={styles.reports}>
+                    <button
+                      className={styles.reportsButton}
+                      onClick={() => setShowReport(true)}
+                    >
+                      <ChartColumnBig width={14} height={14} /> Reports
+                    </button>
+                  </div>
+                  <div className={styles.tasks}>
+                    <DndProvider backend={HTML5Backend}>
+                      {tasks
+                        .filter(
+                          (task): task is Task =>
+                            task !== null && task !== undefined,
+                        )
+                        .map((task, index) => (
+                          <DraggableItem
                             key={task.id}
-                            className={clsx(
-                              editingTask?.id === task.id
-                                ? styles.taskEditing
-                                : styles.task,
-                              index === 0 && styles.currentTask,
-                              task.id === selectedTask?.id &&
-                                styles.selectedTask,
-                              isCountingDown && !isPaused && styles.counting,
-                              isPaused && styles.paused,
-                              isFinished && styles.finished,
-                            )}
-                          >
-                            <div className={styles.taskContent}>
-                              <div
-                                onClick={() => {
-                                  if (!isCountingDown && time === 0) {
-                                    setSelectedTask(task);
-                                    handlePresetTime(25);
-                                  }
+                            index={index}
+                            moveItem={(from, to) => {
+                              if (isCountingDown && !isPaused) {
+                                handlePause();
+                              }
+                              setTasks((prevTasks) => {
+                                const newTasks = [...prevTasks];
+                                newTasks.splice(
+                                  to,
+                                  0,
+                                  newTasks.splice(from, 1)[0],
+                                );
 
-                                  if (task.id === selectedTask?.id) {
-                                    if (!isCountingDown && time > 0) {
-                                      startCountdown();
-                                    } else if (isCountingDown && !isPaused) {
-                                      handlePause();
-                                    } else if (isPaused) {
-                                      handleResume();
-                                    }
-                                  } else {
-                                    setSelectedTask(task);
-                                    handlePresetTime(25);
-                                  }
-                                }}
-                                className={styles.taskTitle}
-                              >
-                                {task.id === selectedTask?.id &&
-                                  showControls &&
-                                  (isCountingDown ? (
-                                    <CirclePause width={14} height={14} />
-                                  ) : (
-                                    <CirclePlay width={14} height={14} />
-                                  ))}
-                                {task.title}
-                              </div>
-                              {task.totalTime > 0 && (
-                                <span className={styles.taskTime} style={{}}>
-                                  {Math.floor(task.totalTime / 3600)}h{" "}
-                                  {Math.floor((task.totalTime % 3600) / 60)}m{" "}
-                                  {Math.floor(task.totalTime % 60)}s
-                                </span>
+                                return newTasks;
+                              });
+                            }}
+                          >
+                            <div
+                              key={task.id}
+                              className={clsx(
+                                editingTask?.id === task.id
+                                  ? styles.taskEditing
+                                  : styles.task,
+                                index === 0 && styles.currentTask,
+                                task.id === selectedTask?.id &&
+                                  styles.selectedTask,
+                                isCountingDown && !isPaused && styles.counting,
+                                isPaused && styles.paused,
+                                isFinished && styles.finished,
                               )}
-                              <GripVertical
-                                width={22}
-                                height={22}
-                                className={styles.dragHandle}
-                              />
-                              <button
-                                className={clsx("link", styles.editButton)}
-                                onClick={() => {
-                                  if (selectedTask?.id === task.id) {
-                                    handlePause();
-                                  }
-                                  setEditingTask(task);
-                                }}
-                              >
-                                <Pencil width={18} height={18} />
-                              </button>
+                            >
+                              <div className={styles.taskContent}>
+                                <div
+                                  onClick={() => {
+                                    if (!isCountingDown && time === 0) {
+                                      setSelectedTask(task);
+                                      handlePresetTime(25);
+                                    }
+
+                                    if (task.id === selectedTask?.id) {
+                                      if (!isCountingDown && time > 0) {
+                                        startCountdown();
+                                      } else if (isCountingDown && !isPaused) {
+                                        handlePause();
+                                      } else if (isPaused) {
+                                        handleResume();
+                                      }
+                                    } else {
+                                      setSelectedTask(task);
+                                      handlePresetTime(25);
+                                    }
+                                  }}
+                                  className={styles.taskTitle}
+                                >
+                                  {task.id === selectedTask?.id &&
+                                    showControls &&
+                                    (isCountingDown ? (
+                                      <CirclePause width={14} height={14} />
+                                    ) : (
+                                      <CirclePlay width={14} height={14} />
+                                    ))}
+                                  {task.title}
+                                  {(() => {
+                                    const totalTime = task.total?.reduce(
+                                      (total, item) => total + item.count,
+                                      0,
+                                    );
+
+                                    if (totalTime > 0) {
+                                      return (
+                                        <span className={styles.taskTime}>
+                                          {Math.floor(totalTime / 3600)}h{" "}
+                                          {Math.floor((totalTime % 3600) / 60)}m{" "}
+                                          {Math.floor(totalTime % 60)}s
+                                        </span>
+                                      );
+                                    }
+                                  })()}
+                                </div>
+
+                                <GripVertical
+                                  width={22}
+                                  height={22}
+                                  className={styles.dragHandle}
+                                />
+                                <button
+                                  className={clsx("link", styles.editButton)}
+                                  onClick={() => {
+                                    if (selectedTask?.id === task.id) {
+                                      handlePause();
+                                    }
+                                    setEditingTask(task);
+                                  }}
+                                >
+                                  <Pencil width={18} height={18} />
+                                </button>
+                              </div>
                             </div>
-                          </div>
-                        </DraggableItem>
-                      ))}
-                  </DndProvider>
-                </div>
+                          </DraggableItem>
+                        ))}
+                    </DndProvider>
+                  </div>
+                </>
               ) : null}
 
               <div className={styles.newTask}>

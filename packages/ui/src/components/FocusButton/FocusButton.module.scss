@@ -168,7 +168,7 @@
   gap: 20px;
   opacity: 0;
   transition: opacity 0.3s ease;
-  margin-top: 20px;
+  margin-top: 10px;
 
   button {
     cursor: default;
@@ -307,14 +307,22 @@
 
 .cancelEditTaskButton,
 .cancelAddTaskButton,
-.deleteTaskButton {
-  background: var(--background);
-  color: var(--foreground);
-  box-shadow: none;
-  border: 1px solid var(--shade-2);
-  display: flex;
-  align-items: center;
-  gap: 5px;
+.deleteTaskButton,
+.reportsButton {
+  & {
+    background: var(--background);
+    color: var(--foreground);
+    box-shadow: none;
+    border: 1px solid var(--shade-2);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  &:hover {
+    background: var(--foreground);
+    color: var(--background);
+  }
 }
 
 .deleteTaskButton {
@@ -336,6 +344,20 @@
   margin-left: auto;
   font-size: 12px;
   opacity: 0.7;
+}
+
+.reports {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+  flex-direction: column;
+}
+
+.chart {
+  width: 100%;
+  height: 300px;
+  padding: 50px;
 }
 
 @keyframes tiltShake {
