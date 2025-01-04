@@ -133,7 +133,6 @@ feedbackwallet.com, the platform where users can review apps and websites, conne
 2. Check chart data:
    - Verify task times shown
 
-
 ### What Makes a Successful Test
 
 Your tests are successful when:
