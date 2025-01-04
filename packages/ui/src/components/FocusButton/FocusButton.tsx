@@ -252,7 +252,7 @@ export default function FocusButton({ className }: { className?: string }) {
       setTasks((prevTasks) =>
         prevTasks.map((task) => {
           if (task.id === selectedTask.id) {
-            const newTotal = (task.totalTime || 0) + currentElapsed;
+            const newTotal = (task.totalTime || 0) + 1;
 
             return {
               ...task,
