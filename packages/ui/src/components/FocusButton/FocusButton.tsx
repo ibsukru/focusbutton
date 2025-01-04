@@ -109,6 +109,14 @@ type TimerMessage = {
   remainingTime?: number;
 };
 
+type Task = {
+  id: string;
+  title: string;
+  createdOn: Date;
+  modifiedOn: Date;
+  total?: { date: Date; count: number }[];
+};
+
 const NewTaskSchema = z.object({
   title: z.string().min(1, { message: "Title is required" }),
 });
@@ -118,14 +126,6 @@ const EditTaskSchema = z.object({
   id: z.string(),
   createdOn: z.date(),
 });
-
-type Task = {
-  id: string;
-  title: string;
-  createdOn: Date;
-  modifiedOn: Date;
-  total?: { date: Date; count: number }[];
-};
 
 const STORAGE_KEY = "focusbutton_timer_state";
 const POMODORO_KEY = "focusbutton_active_pomodoro";
