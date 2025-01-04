@@ -91,7 +91,6 @@ feedbackwallet.com, the platform where users can review apps and websites, conne
 3. Continue browsing other sites
 4. Check that timer completes correctly
 
-
 ## Pomodoro and Tasks Testing Steps
 
 ### 4. Test Pomodoro Timer
