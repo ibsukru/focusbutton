@@ -4,6 +4,10 @@
   max-width: 200px;
   margin: 0 auto;
   gap: 20px;
+
+  button {
+    font-size: 1rem;
+  }
 }
 
 .focusButton {
@@ -180,6 +184,7 @@
   margin: 0 auto;
   padding: 10px;
   margin-top: 30px;
+  font-size: 1rem;
 }
 
 .addTask {
@@ -284,11 +289,20 @@
 }
 
 .editButton {
+  position: relative;
+  text-decoration: none;
+  cursor: pointer;
+  background-color: transparent;
+  box-shadow: none;
+  padding: 0;
+  margin: 0;
   color: var(--foreground);
   margin-left: auto;
 
   &:hover {
     color: var(--shade-6);
+    text-decoration: none;
+    background-color: transparent;
   }
 }
 

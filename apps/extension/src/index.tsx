@@ -2,13 +2,14 @@ import React from "react";
 import { createRoot } from "react-dom/client";
 import { ThemeProvider } from "next-themes";
 import { FocusButton } from "@focusbutton/ui";
-import "./index.css";
+import "./globals.css";
+import styles from "./index.module.css";
 
 function Popup() {
   return (
     <ThemeProvider attribute="class">
-      <div className="page">
-        <div className="main">
+      <div className={styles.page}>
+        <div className={styles.main}>
           <FocusButton />
         </div>
       </div>

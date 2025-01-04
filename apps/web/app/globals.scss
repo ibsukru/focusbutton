@@ -74,6 +74,8 @@ html.dark {
 html,
 body {
   background-color: var(--background);
+  margin: 0;
+  padding: 0;
 }
 
 body {
@@ -129,6 +131,7 @@ button {
   box-shadow: var(--shadow);
   position: relative;
   line-height: 1.15;
+  font-size: 1rem;
 }
 
 button:focus-visible,
@@ -161,6 +164,7 @@ button.link {
 input[type="text"],
 input[type="search"],
 textarea {
+  font-size: 1rem;
   padding: 0.5rem;
   border: 1px solid var(--shade-2);
   border-radius: var(--radius);

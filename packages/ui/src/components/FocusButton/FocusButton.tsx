@@ -27,7 +27,6 @@ import { useTheme } from "next-themes";
 import clsx from "clsx";
 import NumberFlow from "@number-flow/react";
 import { useLocalStorage } from "../../hooks";
-import { v4 as uuidv4 } from "uuid";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import DraggableItem from "../../components/DraggableItem";
@@ -120,8 +119,8 @@ const editTaskSchema = z.object({
 });
 
 type Task = {
-  title: string;
   id: string;
+  title: string;
   createdOn: Date;
   modifiedOn: Date;
   total?: { date: Date; count: number }[];
@@ -155,24 +154,61 @@ export default function FocusButton({ className }: { className?: string }) {
   const [isPaused, setIsPaused] = useState(false);
   const [isFinished, setIsFinished] = useState(false);
   const [activePomodoro, setActivePomodoro] = useState<number | null>(null);
+  const [tasks, setTasks] = useLocalStorage<Task[]>("focusbutton_tasks", []);
+  const [addingTask, setAddingTask] = useState(false);
+  const [editingTask, setEditingTask] = useState<Task | undefined>();
+  const [showReport, setShowReport] = useState(false);
+  const [sure, setSure] = useState(false);
+  const [selectedTask, setSelectedTask] = useLocalStorage<Task | undefined>(
+    "focusbutton_task",
+    undefined,
+  );
+  const { resolvedTheme, setTheme } = useTheme();
+
   const timerRef = useRef<any | null>(null);
   const isTimerEndingRef = useRef<Boolean>(false);
   const audioContextRef = useRef<AudioContext | null>(null);
   const lastBackgroundStateRef = useRef<any>(null);
   const adjustIntervalRef = useRef<number | null>(null);
   const lastVisibilityUpdateRef = useRef<number>(0);
+  const deleteTaskButtonRef = useRef<HTMLButtonElement>(null);
   const updateThrottleMs = 100;
-  const { resolvedTheme, setTheme } = useTheme();
-  const [tasks, setTasks] = useLocalStorage<Task[]>("focusbutton_tasks", []);
-  const [addingTask, setAddingTask] = useState(false);
-  const [newTask, setNewTask] = useState<Task | undefined>();
-  const [editingTask, setEditingTask] = useState<Task | undefined>();
-  const [selectedTask, setSelectedTask] = useLocalStorage<Task | undefined>(
-    "focusbutton_task",
-    undefined,
-  );
 
-  const [showReport, setShowReport] = useState(false);
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        deleteTaskButtonRef.current &&
+        !deleteTaskButtonRef.current.contains(event.target as Node)
+      ) {
+        setSure(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (addingTask) {
+      (
+        document.querySelector(
+          '#addTaskForm input[name="title"]',
+        ) as HTMLInputElement
+      )?.focus();
+    }
+  }, [addingTask]);
+
+  useEffect(() => {
+    if (editingTask) {
+      (
+        document.querySelector(
+          '#editTaskForm input[name="title"]',
+        ) as HTMLInputElement
+      )?.focus();
+    }
+  }, [editingTask]);
 
   useEffect(() => {
     if (!selectedTask && tasks?.length) {
@@ -193,16 +229,17 @@ export default function FocusButton({ className }: { className?: string }) {
     },
   });
 
-  const onAddTask = handleNewTaskSubmit(async (data) => {
-    const newTask: Task = {
-      id: uuidv4(),
+  const onAddTask = handleNewTaskSubmit((data) => {
+    const now = new Date();
+    const updatedTask: Task = {
+      id: crypto.randomUUID(),
       title: data.title,
-      createdOn: new Date(),
-      modifiedOn: new Date(),
+      createdOn: now,
+      modifiedOn: now,
+      total: [],
     };
 
-    setTasks([...tasks, newTask]);
-    setNewTask(undefined);
+    setTasks((prevTasks) => [...prevTasks, updatedTask]);
     setAddingTask(false);
     resetNewTask();
   });
@@ -215,6 +252,11 @@ export default function FocusButton({ className }: { className?: string }) {
   } = useForm<z.infer<typeof editTaskSchema>>({
     mode: "onChange",
     resolver: zodResolver(editTaskSchema),
+    defaultValues: {
+      title: editingTask?.title || "",
+      id: editingTask?.id || "",
+      createdOn: editingTask?.createdOn || new Date(),
+    },
   });
 
   useEffect(() => {
@@ -227,21 +269,21 @@ export default function FocusButton({ className }: { className?: string }) {
     }
   }, [editingTask, resetEditTask]);
 
-  const onEditTask = handleEditTaskSubmit(async (data) => {
+  const onEditTask = handleEditTaskSubmit((data) => {
+    if (!editingTask) return;
+
+    const now = new Date();
     const updatedTask: Task = {
       ...editingTask,
       title: data.title,
-      modifiedOn: new Date(),
+      modifiedOn: now,
     };
 
-    const updatedTasks = tasks.map((task) => {
-      if (task.id === updatedTask.id) {
-        return updatedTask;
-      }
-      return task;
-    });
-
-    setTasks(updatedTasks);
+    setTasks((prevTasks) =>
+      prevTasks.map((task) =>
+        task.id === editingTask.id ? updatedTask : task,
+      ),
+    );
     setEditingTask(undefined);
     resetEditTask();
   });
@@ -1662,9 +1704,7 @@ export default function FocusButton({ className }: { className?: string }) {
             </div>
           </div>
         </div>
-        <div
-          className={`${styles.controls} ${showControls ? styles.visible : ""}`}
-        >
+        <div className={clsx(styles.controls, showControls && styles.visible)}>
           <button onClick={handleClick}>
             {isPaused ? (
               <>
@@ -1688,7 +1728,11 @@ export default function FocusButton({ className }: { className?: string }) {
         {(() => {
           if (addingTask) {
             return (
-              <form className={styles.addTask} onSubmit={onAddTask}>
+              <form
+                id="addTaskForm"
+                className={styles.addTask}
+                onSubmit={onAddTask}
+              >
                 <input
                   {...registerNewTask("title")}
                   placeholder="Task title"
@@ -1705,7 +1749,6 @@ export default function FocusButton({ className }: { className?: string }) {
                     className={styles.cancelAddTaskButton}
                     onClick={() => {
                       setAddingTask(false);
-                      setNewTask(undefined);
                     }}
                   >
                     Cancel
@@ -1717,9 +1760,13 @@ export default function FocusButton({ className }: { className?: string }) {
 
           if (editingTask) {
             return (
-              <form className={styles.editTask} onSubmit={onEditTask}>
+              <form
+                id="editTaskForm"
+                className={styles.editTask}
+                onSubmit={onEditTask}
+              >
                 <input
-                  {...registerEditTask("title", { value: editingTask.title })}
+                  {...registerEditTask("title")}
                   placeholder="Task title"
                   type="text"
                 />
@@ -1749,15 +1796,25 @@ export default function FocusButton({ className }: { className?: string }) {
                     Cancel
                   </button>
                   <button
+                    ref={deleteTaskButtonRef}
                     className={styles.deleteTaskButton}
-                    onClick={() => {
+                    onClick={(e) => {
+                      if (!sure) {
+                        e.preventDefault();
+                        setSure(true);
+                        return;
+                      }
+
+                      setSure(false);
+
                       setTasks(
                         tasks.filter((task) => task.id !== editingTask.id),
                       );
                       setEditingTask(undefined);
                     }}
                   >
-                    <Trash2 width={14} height={14} /> Delete
+                    <Trash2 width={14} height={14} />{" "}
+                    {sure ? "Are you sure?" : "Delete"}
                   </button>
                 </div>
               </form>
@@ -1806,9 +1863,7 @@ export default function FocusButton({ className }: { className?: string }) {
                             <div
                               key={task.id}
                               className={clsx(
-                                editingTask?.id === task.id
-                                  ? styles.taskEditing
-                                  : styles.task,
+                                styles.task,
                                 index === 0 && styles.currentTask,
                                 task.id === selectedTask?.id &&
                                   styles.selectedTask,
@@ -1854,7 +1909,7 @@ export default function FocusButton({ className }: { className?: string }) {
                                       0,
                                     );
 
-                                    if (totalTime > 0) {
+                                    if (totalTime && totalTime > 0) {
                                       return (
                                         <span className={styles.taskTime}>
                                           {Math.floor(totalTime / 3600)}h{" "}
@@ -1872,7 +1927,7 @@ export default function FocusButton({ className }: { className?: string }) {
                                   className={styles.dragHandle}
                                 />
                                 <button
-                                  className={clsx("link", styles.editButton)}
+                                  className={styles.editButton}
                                   onClick={() => {
                                     if (selectedTask?.id === task.id) {
                                       handlePause();
