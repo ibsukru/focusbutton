@@ -43,6 +43,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
+import sanitizeHtml from "sanitize-html";
 
 // Add global type declaration for browser
 declare global {
@@ -233,7 +234,7 @@ export default function FocusButton({ className }: { className?: string }) {
     const now = new Date();
     const updatedTask: Task = {
       id: crypto.randomUUID(),
-      title: data.title,
+      title: sanitizeHtml(data.title),
       createdOn: now,
       modifiedOn: now,
       total: [],
@@ -275,7 +276,7 @@ export default function FocusButton({ className }: { className?: string }) {
     const now = new Date();
     const updatedTask: Task = {
       ...editingTask,
-      title: data.title,
+      title: sanitizeHtml(data.title),
       modifiedOn: now,
     };
 
@@ -1902,7 +1903,7 @@ export default function FocusButton({ className }: { className?: string }) {
                                     ) : (
                                       <CirclePlay width={14} height={14} />
                                     ))}
-                                  {task.title}
+                                  {sanitizeHtml(task.title)}
                                   {(() => {
                                     const totalTime = task.total?.reduce(
                                       (total, item) => total + item.count,
