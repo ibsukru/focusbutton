@@ -187,12 +187,12 @@ export default function FocusButton({ className }: { className?: string }) {
   const adjustIntervalRef = useRef<number | null>(null);
   const lastVisibilityUpdateRef = useRef<number>(0);
   const deleteTaskButtonRef = useRef<HTMLButtonElement>(null);
-  const updateThrottleMs = 100;
-
   const secondsUpButtonRef = useRef<HTMLButtonElement>(null);
   const secondsDownButtonRef = useRef<HTMLButtonElement>(null);
   const minutesUpButtonRef = useRef<HTMLButtonElement>(null);
   const minutesDownButtonRef = useRef<HTMLButtonElement>(null);
+
+  const updateThrottleMs = 100;
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
