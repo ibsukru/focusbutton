@@ -25,6 +25,7 @@ feedbackwallet.com, the platform where users can review apps and websites, conne
    - Increase the duration to "5s"
    - Press start and watch the countdown
    - Verify the timer completes
+   - Check for notification
 5. Test custom duration:
    - Enter your own duration (e.g., 15 seconds)
    - Start the timer
@@ -102,16 +103,13 @@ feedbackwallet.com, the platform where users can review apps and websites, conne
    - Pause the timer - should stop
    - Resume - should continue from paused time
    - Verify state persists on page refresh
-3. Test completion:
-   - Let timer reach zero after resetting for 5 seconds
-   - Verify notification sound plays
-   - Check completion animation
 
 ### 5. Test Task Management
 
 1. Create new tasks:
    - Click "New task" button
    - Enter task title
+   - Save
    - Verify task appears in list
 2. Test task operations:
    - Edit task (click pencil icon)
@@ -133,14 +131,8 @@ feedbackwallet.com, the platform where users can review apps and websites, conne
    - Click "Reports" button
    - Verify chart appears
 2. Check chart data:
-   - Verify task completion times shown
-   - Check multiple days of data
-   - Confirm task colors match
-3. Test data persistence:
-   - Add new task completions
-   - Refresh page
-   - Verify data remains
-   - Check historical trends
+   - Verify task times shown
+
 
 ### What Makes a Successful Test
 

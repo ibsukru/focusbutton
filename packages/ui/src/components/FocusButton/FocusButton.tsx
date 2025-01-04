@@ -240,6 +240,8 @@ export default function FocusButton({ className }: { className?: string }) {
       total: [],
     };
 
+    trackEvent("task_add");
+
     setTasks((prevTasks) => [...prevTasks, updatedTask]);
     setAddingTask(false);
     resetNewTask();
@@ -279,6 +281,8 @@ export default function FocusButton({ className }: { className?: string }) {
       title: sanitizeHtml(data.title),
       modifiedOn: now,
     };
+
+    trackEvent("task_edit");
 
     setTasks((prevTasks) =>
       prevTasks.map((task) =>
@@ -1810,6 +1814,8 @@ export default function FocusButton({ className }: { className?: string }) {
 
                       setSure(false);
 
+                      trackEvent("task_delete");
+
                       setTasks(
                         tasks.filter((task) => task.id !== editingTask.id),
                       );
@@ -1859,6 +1865,8 @@ export default function FocusButton({ className }: { className?: string }) {
                                   newTasks.splice(from, 1)[0],
                                 );
 
+                                trackEvent("task_move");
+
                                 return newTasks;
                               });
                             }}
@@ -1885,10 +1893,13 @@ export default function FocusButton({ className }: { className?: string }) {
 
                                     if (task.id === selectedTask?.id) {
                                       if (!isCountingDown && time > 0) {
+                                        trackEvent("task_start");
                                         startCountdown();
                                       } else if (isCountingDown && !isPaused) {
+                                        trackEvent("task_pause");
                                         handlePause();
                                       } else if (isPaused) {
+                                        trackEvent("task_resume");
                                         handleResume();
                                       }
                                     } else {
