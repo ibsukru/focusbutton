@@ -1690,7 +1690,6 @@ export default function FocusButton({ className }: { className?: string }) {
             return (
               <form className={styles.addTask} onSubmit={onAddTask}>
                 <input
-                  name="newTask"
                   {...registerNewTask("title")}
                   placeholder="Task title"
                   type="text"
@@ -1720,7 +1719,6 @@ export default function FocusButton({ className }: { className?: string }) {
             return (
               <form className={styles.editTask} onSubmit={onEditTask}>
                 <input
-                  name="editTask"
                   {...registerEditTask("title", { value: editingTask.title })}
                   placeholder="Task title"
                   type="text"
