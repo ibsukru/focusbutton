@@ -240,47 +240,30 @@ export default function FocusButton({ className }: { className?: string }) {
   // Add startTimeRef declaration
   const startTimeRef = useRef<number>(0);
 
-  const initialTimeRef = useRef(0);
-
   useEffect(() => {
-    if (selectedTask) {
-      initialTimeRef.current = selectedTask.totalTime || 0;
-    }
-  }, [selectedTask]);
-
-  useEffect(() => {
-    let intervalId: NodeJS.Timeout;
-
     if (isCountingDown && selectedTask && !isPaused) {
-      intervalId = setInterval(() => {
-        const currentElapsed = startTimeRef.current
-          ? Math.floor((Date.now() - startTimeRef.current) / 1000)
-          : 0;
-        setElapsedTime(currentElapsed);
+      const currentElapsed = startTimeRef.current
+        ? Math.floor((Date.now() - startTimeRef.current) / 1000)
+        : 0;
 
-        // Update task's total time
-        setTasks((prevTasks) =>
-          prevTasks.map((task) => {
-            if (task.id === selectedTask.id) {
-              const newTotal = initialTimeRef.current + currentElapsed;
+      setElapsedTime(currentElapsed);
 
-              return {
-                ...task,
-                totalTime: newTotal,
-              };
-            }
-            return task;
-          }),
-        );
-      }, 1000);
+      // Update task's total time
+      setTasks((prevTasks) =>
+        prevTasks.map((task) => {
+          if (task.id === selectedTask.id) {
+            const newTotal = (task.totalTime || 0) + currentElapsed;
+
+            return {
+              ...task,
+              totalTime: newTotal,
+            };
+          }
+          return task;
+        }),
+      );
     }
-
-    return () => {
-      if (intervalId) {
-        clearInterval(intervalId);
-      }
-    };
-  }, [isCountingDown, selectedTask, isPaused]);
+  }, [time, isCountingDown, selectedTask, isPaused]);
 
   // Check for extension context after mount
   useEffect(() => {
@@ -1736,7 +1719,7 @@ export default function FocusButton({ className }: { className?: string }) {
                             <div className={styles.taskContent}>
                               <div
                                 onClick={() => {
-                                  if (time === 0) {
+                                  if (!isCountingDown && time === 0) {
                                     setSelectedTask(task);
                                     handlePresetTime(25);
                                   }
