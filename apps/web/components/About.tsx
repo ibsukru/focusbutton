@@ -30,10 +30,10 @@ export default function About({ className }: { className?: string }) {
           <ul>
             <li>⚡️ Instant web access - start focusing with just one click</li>
             <li>🔌 Available as web app and browser extensions</li>
+            <li>📋 Task management with time tracking</li>
+            <li>📊 Visual reports of your focus sessions</li>
+            <li>🎯 Pomodoro timer with customizable durations</li>
             <li>💫 Simple, distraction-free interface</li>
-            <li>
-              🔄 Seamless synchronization between devices (with extension)
-            </li>
             <li>🔒 Privacy-first approach - no data collection</li>
             <li>⚙️ Works instantly - no setup needed</li>
             <li>📈 Continuous improvements based on user feedback</li>
@@ -47,8 +47,10 @@ export default function About({ className }: { className?: string }) {
               <h4>🌐 Web Version</h4>
               <p>
                 Start focusing instantly through your browser - perfect for when
-                you need to concentrate on important tasks. No installation
-                required, just visit and click to begin your focus session.
+                you need to concentrate on important tasks. Track your tasks,
+                monitor progress, and visualize your productivity with our
+                built-in reports. No installation required, just visit and click
+                to begin your focus session.
               </p>
             </div>
             <div className={styles.version}>

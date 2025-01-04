@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.0] - 2025-01-04
+
+### Added
+
+- Task management system with drag-and-drop reordering
+- Task completion tracking with time statistics
+- Visual reports showing task completion trends
+- Task persistence using local storage
+- Task editing and deletion with confirmation
+- Sanitized task input for security
+- Auto-focus on task input fields
+- Improved button hover states and animations
+
+### Changed
+
+- Enhanced UI layout for better task management
+- Optimized chart display for better readability
+- Improved task state management and persistence
+- Updated all dependencies to latest versions
+
 ## [1.1.1] - 2024-12-31
 
 ### Fixed
