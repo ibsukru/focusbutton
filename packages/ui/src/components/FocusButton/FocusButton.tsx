@@ -128,6 +128,9 @@ const EditTaskSchema = z.object({
 });
 
 const STORAGE_KEY = "focusbutton_timer_state";
+const STORAGE_TASKS_KEY = "focusbutton_tasks";
+const STORAGE_TASK_KEY = "focusbutton_task";
+
 const POMODORO_KEY = "focusbutton_active_pomodoro";
 const MAX_TIME = 3600; // 60 minutes in seconds
 
@@ -147,6 +150,16 @@ const getBrowserAPI = (): BrowserAPIType | null => {
   return null;
 };
 
+// Track events with GA4
+const trackEvent = (eventName: string, params = {}) => {
+  if (typeof window !== "undefined" && (window as any).gtag) {
+    (window as any).gtag("event", eventName, {
+      ...params,
+      source: "FocusButton",
+    });
+  }
+};
+
 export default function FocusButton({ className }: { className?: string }) {
   const [isExtension, setIsExtension] = useState(false);
   const [time, setTime] = useState(0);
@@ -155,17 +168,18 @@ export default function FocusButton({ className }: { className?: string }) {
   const [isPaused, setIsPaused] = useState(false);
   const [isFinished, setIsFinished] = useState(false);
   const [activePomodoro, setActivePomodoro] = useState<number | null>(null);
-  const [tasks, setTasks] = useLocalStorage<Task[]>("focusbutton_tasks", []);
+  const [tasks, setTasks] = useLocalStorage<Task[]>(STORAGE_TASKS_KEY, []);
   const [addingTask, setAddingTask] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | undefined>();
   const [showReport, setShowReport] = useState(false);
   const [sure, setSure] = useState(false);
   const [selectedTask, setSelectedTask] = useLocalStorage<Task | undefined>(
-    "focusbutton_task",
+    STORAGE_TASK_KEY,
     undefined,
   );
   const { resolvedTheme, setTheme } = useTheme();
 
+  const startTimeRef = useRef<number>(0);
   const timerRef = useRef<any | null>(null);
   const isTimerEndingRef = useRef<Boolean>(false);
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -174,6 +188,11 @@ export default function FocusButton({ className }: { className?: string }) {
   const lastVisibilityUpdateRef = useRef<number>(0);
   const deleteTaskButtonRef = useRef<HTMLButtonElement>(null);
   const updateThrottleMs = 100;
+
+  const secondsUpButtonRef = useRef<HTMLButtonElement>(null);
+  const secondsDownButtonRef = useRef<HTMLButtonElement>(null);
+  const minutesUpButtonRef = useRef<HTMLButtonElement>(null);
+  const minutesDownButtonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -296,9 +315,6 @@ export default function FocusButton({ className }: { className?: string }) {
   const [initialMount, setInitialMount] = useState(true);
   const [isMounted, setIsMounted] = useState(false);
 
-  // Add startTimeRef declaration
-  const startTimeRef = useRef<number>(0);
-
   const isSameDay = (date1: Date, date2: Date) => {
     return (
       date1.getDate() === date2.getDate() &&
@@ -394,16 +410,6 @@ export default function FocusButton({ className }: { className?: string }) {
         "0",
       )}:${(displayTime % 60).toString().padStart(2, "0")} - FocusButton`;
   }, [displayTime]);
-
-  // Track events with GA4
-  const trackEvent = (eventName: string, params = {}) => {
-    if (typeof window !== "undefined" && (window as any).gtag) {
-      (window as any).gtag("event", eventName, {
-        ...params,
-        source: "FocusButton",
-      });
-    }
-  };
 
   const sendMessage = useCallback(
     async (msg: any) => {
@@ -1168,12 +1174,6 @@ export default function FocusButton({ className }: { className?: string }) {
       );
     };
   }, [handleVisibilityChange]);
-
-  const secondsUpButtonRef = useRef<HTMLButtonElement>(null);
-  const secondsDownButtonRef = useRef<HTMLButtonElement>(null);
-
-  const minutesUpButtonRef = useRef<HTMLButtonElement>(null);
-  const minutesDownButtonRef = useRef<HTMLButtonElement>(null);
 
   // Handle keyboard events
   useEffect(() => {
