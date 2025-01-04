@@ -109,11 +109,11 @@ type TimerMessage = {
   remainingTime?: number;
 };
 
-const newTaskSchema = z.object({
+const NewTaskSchema = z.object({
   title: z.string().min(1, { message: "Title is required" }),
 });
 
-const editTaskSchema = z.object({
+const EditTaskSchema = z.object({
   title: z.string().min(1, { message: "Title is required" }),
   id: z.string(),
   createdOn: z.date(),
@@ -222,9 +222,9 @@ export default function FocusButton({ className }: { className?: string }) {
     formState: { errors: newTaskErrors },
     reset: resetNewTask,
     register: registerNewTask,
-  } = useForm<z.infer<typeof newTaskSchema>>({
+  } = useForm<z.infer<typeof NewTaskSchema>>({
     mode: "onChange",
-    resolver: zodResolver(newTaskSchema),
+    resolver: zodResolver(NewTaskSchema),
     defaultValues: {
       title: "",
     },
@@ -252,9 +252,9 @@ export default function FocusButton({ className }: { className?: string }) {
     formState: { errors: editTaskErrors },
     reset: resetEditTask,
     register: registerEditTask,
-  } = useForm<z.infer<typeof editTaskSchema>>({
+  } = useForm<z.infer<typeof EditTaskSchema>>({
     mode: "onChange",
-    resolver: zodResolver(editTaskSchema),
+    resolver: zodResolver(EditTaskSchema),
     defaultValues: {
       title: editingTask?.title || "",
       id: editingTask?.id || "",
