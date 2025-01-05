@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>FocusButton</title>
+    <style>
+        body {
+            background-color: #000000;
+            color: #ffffff;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        #root {
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <!-- Load React -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+
+    <!-- Load your React component -->
+    <script type="text/babel">
+        const FocusButton = () => {
+            const [focusModeOn, setFocusModeOn] = React.useState(false);
+            const [time, setTime] = React.useState(1440); // 24:00 in minutes
+            const [isRunning, setIsRunning] = React.useState(false);
+            const [isPaused, setIsPaused] = React.useState(false);
+
+            const toggleFocusMode = () => {
+                setFocusModeOn(!focusModeOn);
+                // Send message to Swift
+                window.webkit.messageHandlers.focusApp.postMessage({
+                    type: 'toggleFocusMode'
+                });
+            };
+
+            const formatTime = (minutes) => {
+                const hours = Math.floor(minutes / 60);
+                const mins = minutes % 60;
+                return `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
+            };
+
+            return (
+                <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px' }}>
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                        <button 
+                            onClick={() => setTime(25)}
+                            style={{
+                                backgroundColor: 'rgba(255,255,255,0.1)',
+                                border: 'none',
+                                color: 'white',
+                                padding: '8px 16px',
+                                borderRadius: '20px',
+                                cursor: 'pointer'
+                            }}
+                        >
+                            25min
+                        </button>
+                        <button 
+                            onClick={() => setTime(15)}
+                            style={{
+                                backgroundColor: 'rgba(255,255,255,0.1)',
+                                border: 'none',
+                                color: 'white',
+                                padding: '8px 16px',
+                                borderRadius: '20px',
+                                cursor: 'pointer'
+                            }}
+                        >
+                            15min
+                        </button>
+                        <button 
+                            onClick={() => setTime(5)}
+                            style={{
+                                backgroundColor: 'rgba(255,255,255,0.1)',
+                                border: 'none',
+                                color: 'white',
+                                padding: '8px 16px',
+                                borderRadius: '20px',
+                                cursor: 'pointer'
+                            }}
+                        >
+                            5min
+                        </button>
+                    </div>
+
+                    <div style={{
+                        width: '200px',
+                        height: '200px',
+                        borderRadius: '50%',
+                        border: '2px solid #1DB954',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '48px',
+                        fontWeight: '300',
+                        letterSpacing: '2px'
+                    }}>
+                        {formatTime(time)}
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                        <button 
+                            onClick={() => setIsPaused(!isPaused)}
+                            style={{
+                                backgroundColor: 'rgba(255,255,255,0.1)',
+                                border: 'none',
+                                color: 'white',
+                                padding: '8px 20px',
+                                borderRadius: '20px',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '5px'
+                            }}
+                        >
+                            {isPaused ? '▶️ Resume' : '⏸️ Pause'}
+                        </button>
+                        <button 
+                            onClick={() => {
+                                setIsRunning(false);
+                                setIsPaused(false);
+                            }}
+                            style={{
+                                backgroundColor: 'rgba(255,255,255,0.1)',
+                                border: 'none',
+                                color: 'white',
+                                padding: '8px 20px',
+                                borderRadius: '20px',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '5px'
+                            }}
+                        >
+                            ⏹️ Cancel
+                        </button>
+                    </div>
+
+                    <button 
+                        style={{
+                            backgroundColor: 'transparent',
+                            border: '1px solid rgba(255,255,255,0.2)',
+                            color: 'white',
+                            padding: '8px 20px',
+                            borderRadius: '20px',
+                            cursor: 'pointer'
+                        }}
+                    >
+                        📊 Reports
+                    </button>
+
+                    <div style={{ width: '100%', maxWidth: '400px' }}>
+                        <div style={{
+                            backgroundColor: 'rgba(255,255,255,0.1)',
+                            padding: '12px 16px',
+                            margin: '8px 0',
+                            borderRadius: '8px',
+                            display: 'flex',
+                            justifyContent: 'space-between'
+                        }}>
+                            <span>Study for upcoming exam</span>
+                            <span style={{ color: 'rgba(255,255,255,0.6)' }}>9h 21m 10s</span>
+                        </div>
+                        <div style={{
+                            backgroundColor: 'rgba(255,255,255,0.1)',
+                            padding: '12px 16px',
+                            margin: '8px 0',
+                            borderRadius: '8px',
+                            display: 'flex',
+                            justifyContent: 'space-between'
+                        }}>
+                            <span>Read 30 pages of book</span>
+                            <span style={{ color: 'rgba(255,255,255,0.6)' }}>1h 8m 50s</span>
+                        </div>
+                        <div style={{
+                            backgroundColor: 'rgba(255,255,255,0.1)',
+                            padding: '12px 16px',
+                            margin: '8px 0',
+                            borderRadius: '8px',
+                            display: 'flex',
+                            justifyContent: 'space-between'
+                        }}>
+                            <span>Exercise routine</span>
+                            <span style={{ color: 'rgba(255,255,255,0.6)' }}>24h 26m 40s</span>
+                        </div>
+                    </div>
+
+                    <button 
+                        style={{
+                            backgroundColor: 'transparent',
+                            border: '1px solid rgba(255,255,255,0.2)',
+                            color: 'white',
+                            padding: '8px 20px',
+                            borderRadius: '20px',
+                            cursor: 'pointer'
+                        }}
+                    >
+                        + New task
+                    </button>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<FocusButton />);
+    </script>
+</body>
+</html>

@@ -64,7 +64,6 @@ apps/web/
 - [React](https://reactjs.org/)
 - [TypeScript](https://www.typescriptlang.org/)
 - [shadcn/ui](https://ui.shadcn.com/)
-- [Tailwind CSS](https://tailwindcss.com/)
 
 ### Building for Production
 
