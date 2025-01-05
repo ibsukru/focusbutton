@@ -1758,6 +1758,7 @@ export default function FocusButton({ className }: { className?: string }) {
                 <div className={styles.addTaskButtons}>
                   <button type="submit">Add</button>
                   <button
+                    type="button"
                     className={styles.cancelAddTaskButton}
                     onClick={() => {
                       setAddingTask(false);
@@ -1804,6 +1805,7 @@ export default function FocusButton({ className }: { className?: string }) {
                 <div className={styles.addTaskButtons}>
                   <button type="submit">Save</button>
                   <button
+                    type="button"
                     className={styles.cancelEditTaskButton}
                     onClick={() => {
                       setEditingTask(undefined);
@@ -1812,6 +1814,7 @@ export default function FocusButton({ className }: { className?: string }) {
                     Cancel
                   </button>
                   <button
+                    type="button"
                     ref={deleteTaskButtonRef}
                     className={styles.deleteTaskButton}
                     onClick={(e) => {

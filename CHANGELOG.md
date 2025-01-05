@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.1] - 2025-01-05
+
+### Fixed
+
+- Fixed form submission issues in task management
+- Added proper button types to prevent unwanted form submissions
+- Improved form handling and state management
+
 ## [1.2.0] - 2025-01-04
 
 ### Added
