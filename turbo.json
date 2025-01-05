@@ -24,6 +24,10 @@
     "build:firefox": {
       "cache": false,
       "persistent": true
+    },
+    "build:chrome": {
+      "cache": false,
+      "persistent": true
     }
   }
 }

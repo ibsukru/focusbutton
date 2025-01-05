@@ -7,6 +7,7 @@
     "dev": "vite",
     "dev:firefox": "vite --mode firefox",
     "build": "tsc && vite build && npm run zip",
+    "build:chrome": "npm run build",
     "build:firefox": "tsc && vite build --mode firefox && npm run zip:firefox",
     "preview": "vite preview",
     "zip": "cd dist && zip -r ../dist.zip .",
