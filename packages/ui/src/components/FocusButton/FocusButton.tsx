@@ -1742,6 +1742,10 @@ export default function FocusButton({ className }: { className?: string }) {
                 onSubmit={onAddTask}
               >
                 <input
+                  className={clsx(
+                    styles.addTaskInput,
+                    newTaskErrors.title && styles.inputError,
+                  )}
                   {...registerNewTask("title")}
                   placeholder="Task title"
                   type="text"
@@ -1774,6 +1778,10 @@ export default function FocusButton({ className }: { className?: string }) {
                 onSubmit={onEditTask}
               >
                 <input
+                  className={clsx(
+                    styles.editTaskInput,
+                    editTaskErrors.title && styles.inputError,
+                  )}
                   {...registerEditTask("title")}
                   placeholder="Task title"
                   type="text"

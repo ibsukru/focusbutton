@@ -355,6 +355,13 @@
   margin: -5px 0 10px 0;
 }
 
+input {
+  &.inputError,
+  &.inputError:focus {
+    border-color: var(--accent-0);
+  }
+}
+
 .taskTime {
   margin-left: auto;
   font-size: 12px;
