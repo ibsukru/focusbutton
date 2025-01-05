@@ -165,7 +165,6 @@ FocusButton respects your privacy:
 - No data collection or tracking
 - All data stored locally
 - No external services used
-- No analytics or telemetry
 
 ## Contributing
 
