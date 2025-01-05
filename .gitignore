@@ -36,3 +36,7 @@ yarn-error.log*
 # Misc
 .DS_Store
 *.pem
+
+# Extension builds
+apps/extension/dist.zip
+apps/extension/dist-firefox.zip
