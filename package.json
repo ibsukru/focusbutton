@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "build": "turbo build",
+    "build:extension": "turbo run build --filter=@focusbutton/extension && turbo run build:firefox --filter=@focusbutton/extension",
     "dev": "turbo dev",
     "lint": "turbo lint",
     "format": "prettier --write \"**/*.{ts,tsx,md,css,scss}\"",

@@ -1534,12 +1534,13 @@ export default function FocusButton({ className }: { className?: string }) {
           </button>
         </div>
         <div
-          className={clsx(styles.focusButton, {
-            [styles.mounted]: initialMount && isMounted,
-            [styles.counting]: isCountingDown && !isPaused,
-            [styles.paused]: isPaused,
-            [styles.finished]: isFinished,
-          })}
+          className={clsx(
+            styles.focusButton,
+            initialMount && isMounted && styles.mounted,
+            isCountingDown && !isPaused && styles.counting,
+            isPaused && styles.paused,
+            isFinished && styles.finished,
+          )}
         >
           <button className={styles.themeToggle}>
             {resolvedTheme === "dark" ? (
@@ -1844,118 +1845,113 @@ export default function FocusButton({ className }: { className?: string }) {
                   </div>
                   <div className={styles.tasks}>
                     <DndProvider backend={HTML5Backend}>
-                      {tasks
-                        .filter(
-                          (task): task is Task =>
-                            task !== null && task !== undefined,
-                        )
-                        .map((task, index) => (
-                          <DraggableItem
+                      {tasks.filter(Boolean).map((task, index) => (
+                        <DraggableItem
+                          key={task.id}
+                          index={index}
+                          moveItem={(from, to) => {
+                            if (isCountingDown && !isPaused) {
+                              handlePause();
+                            }
+                            setTasks((prevTasks) => {
+                              const newTasks = [...prevTasks];
+                              newTasks.splice(
+                                to,
+                                0,
+                                newTasks.splice(from, 1)[0],
+                              );
+
+                              trackEvent("task_move");
+
+                              return newTasks;
+                            });
+                          }}
+                        >
+                          <div
                             key={task.id}
-                            index={index}
-                            moveItem={(from, to) => {
-                              if (isCountingDown && !isPaused) {
-                                handlePause();
-                              }
-                              setTasks((prevTasks) => {
-                                const newTasks = [...prevTasks];
-                                newTasks.splice(
-                                  to,
-                                  0,
-                                  newTasks.splice(from, 1)[0],
-                                );
-
-                                trackEvent("task_move");
-
-                                return newTasks;
-                              });
-                            }}
+                            className={clsx(
+                              styles.task,
+                              index === 0 && styles.currentTask,
+                              task.id === selectedTask?.id &&
+                                styles.selectedTask,
+                              isCountingDown && !isPaused && styles.counting,
+                              isPaused && styles.paused,
+                              isFinished && styles.finished,
+                            )}
                           >
-                            <div
-                              key={task.id}
-                              className={clsx(
-                                styles.task,
-                                index === 0 && styles.currentTask,
-                                task.id === selectedTask?.id &&
-                                  styles.selectedTask,
-                                isCountingDown && !isPaused && styles.counting,
-                                isPaused && styles.paused,
-                                isFinished && styles.finished,
-                              )}
-                            >
-                              <div className={styles.taskContent}>
-                                <div
-                                  onClick={() => {
-                                    if (!isCountingDown && time === 0) {
-                                      setSelectedTask(task);
-                                      handlePresetTime(25);
-                                    }
+                            <div className={styles.taskContent}>
+                              <div
+                                onClick={() => {
+                                  if (!isCountingDown && time === 0) {
+                                    setSelectedTask(task);
+                                    handlePresetTime(25);
+                                  }
 
-                                    if (task.id === selectedTask?.id) {
-                                      if (!isCountingDown && time > 0) {
-                                        trackEvent("task_start");
-                                        startCountdown();
-                                      } else if (isCountingDown && !isPaused) {
-                                        trackEvent("task_pause");
-                                        handlePause();
-                                      } else if (isPaused) {
-                                        trackEvent("task_resume");
-                                        handleResume();
-                                      }
-                                    } else {
-                                      trackEvent("task_preset");
-                                      setSelectedTask(task);
-                                      handlePresetTime(25);
-                                    }
-                                  }}
-                                  className={styles.taskTitle}
-                                >
-                                  {task.id === selectedTask?.id &&
-                                    showControls &&
-                                    (isCountingDown ? (
-                                      <CirclePause width={14} height={14} />
-                                    ) : (
-                                      <CirclePlay width={14} height={14} />
-                                    ))}
-                                  {sanitizeHtml(task.title)}
-                                  {(() => {
-                                    const totalTime = task.total?.reduce(
-                                      (total, item) => total + item.count,
-                                      0,
-                                    );
-
-                                    if (totalTime && totalTime > 0) {
-                                      return (
-                                        <span className={styles.taskTime}>
-                                          {Math.floor(totalTime / 3600)}h{" "}
-                                          {Math.floor((totalTime % 3600) / 60)}m{" "}
-                                          {Math.floor(totalTime % 60)}s
-                                        </span>
-                                      );
-                                    }
-                                  })()}
-                                </div>
-
-                                <GripVertical
-                                  width={22}
-                                  height={22}
-                                  className={styles.dragHandle}
-                                />
-                                <button
-                                  className={styles.editButton}
-                                  onClick={() => {
-                                    if (selectedTask?.id === task.id) {
+                                  if (task.id === selectedTask?.id) {
+                                    if (!isCountingDown && time > 0) {
+                                      trackEvent("task_start");
+                                      startCountdown();
+                                    } else if (isCountingDown && !isPaused) {
+                                      trackEvent("task_pause");
                                       handlePause();
+                                    } else if (isPaused) {
+                                      trackEvent("task_resume");
+                                      handleResume();
                                     }
-                                    setEditingTask(task);
-                                  }}
-                                >
-                                  <Pencil width={18} height={18} />
-                                </button>
+                                  } else {
+                                    trackEvent("task_preset");
+                                    setSelectedTask(task);
+                                    handlePresetTime(25);
+                                  }
+                                }}
+                                className={styles.taskTitle}
+                              >
+                                {task.id === selectedTask?.id &&
+                                  showControls &&
+                                  (isCountingDown ? (
+                                    <CirclePause width={14} height={14} />
+                                  ) : (
+                                    <CirclePlay width={14} height={14} />
+                                  ))}
+                                {sanitizeHtml(task.title)}
+                                {(() => {
+                                  const totalTime = task.total?.reduce(
+                                    (total, item) => total + item.count,
+                                    0,
+                                  );
+
+                                  if (totalTime && totalTime > 0) {
+                                    return (
+                                      <span className={styles.taskTime}>
+                                        {Math.floor(totalTime / 3600)}h{" "}
+                                        {Math.floor((totalTime % 3600) / 60)}m{" "}
+                                        {Math.floor(totalTime % 60)}s
+                                      </span>
+                                    );
+                                  }
+                                })()}
                               </div>
+
+                              <GripVertical
+                                width={22}
+                                height={22}
+                                className={styles.dragHandle}
+                              />
+                              <button
+                                className={styles.editButton}
+                                onClick={() => {
+                                  if (selectedTask?.id === task.id) {
+                                    handlePause();
+                                  }
+                                  setEditingTask(task);
+                                }}
+                              >
+                                <Pencil width={18} height={18} />
+                              </button>
                             </div>
-                          </DraggableItem>
-                        ))}
+                          </div>
+                        </DraggableItem>
+                      ))}
                     </DndProvider>
                   </div>
                 </>

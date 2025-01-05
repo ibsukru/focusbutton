@@ -16,6 +16,14 @@
     "dev": {
       "cache": false,
       "persistent": true
+    },
+    "build:extension": {
+      "cache": false,
+      "persistent": true
+    },
+    "build:firefox": {
+      "cache": false,
+      "persistent": true
     }
   }
 }
