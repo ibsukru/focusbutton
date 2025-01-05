@@ -980,7 +980,6 @@ export default function FocusButton({ className }: { className?: string }) {
   };
 
   const isNotificationSupported = typeof Notification !== "undefined";
-  const isAndroid = /Android/i.test(navigator.userAgent);
 
   const sendNotification = useCallback(() => {
     if (isExtension) {
@@ -993,7 +992,7 @@ export default function FocusButton({ className }: { className?: string }) {
           message: "Your focus session has ended.",
         });
       }
-    } else if (isNotificationSupported && !isAndroid) {
+    } else if (isNotificationSupported) {
       try {
         if (Notification.permission === "granted") {
           new Notification("Time's up!", {
