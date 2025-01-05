@@ -38,5 +38,5 @@ yarn-error.log*
 *.pem
 
 # Extension builds
-apps/extension/dist.zip
+apps/extension/dist-chrome.zip
 apps/extension/dist-firefox.zip
