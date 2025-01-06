@@ -4,13 +4,13 @@
   min-height: 100vh;
   background-color: var(--background);
   color: var(--foreground);
-  margin-top: 20px;
+  padding: 20px 10px;
 }
 
 .exitButton {
-  position: fixed;
-  top: 5px;
-  left: 5px;
+  position: absolute;
+  top: 10px;
+  left: 10px;
   display: flex;
   align-items: center;
   gap: 5px;
@@ -28,5 +28,5 @@
 }
 
 .exitButton:active {
-  top: 6.2px;
+  top: 11.2px;
 }
