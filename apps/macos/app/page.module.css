@@ -4,41 +4,29 @@
   min-height: 100vh;
   background-color: var(--background);
   color: var(--foreground);
-}
-
-.main {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem;
-}
-
-.content {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1rem;
-}
-
-.focusButton {
-  display: flex;
-  justify-content: center;
+  margin-top: 20px;
 }
 
 .exitButton {
-  margin-top: 1rem;
-  padding: 0.5rem 1rem;
-  background-color: var(--accent-0);
-  color: var(--foreground);
+  position: fixed;
+  top: 5px;
+  left: 5px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background-color: transparent;
   border: none;
-  border-radius: 0.5rem;
+  color: var(--shade-4);
   cursor: pointer;
-  font-size: 1rem;
-  transition: background-color 0.2s ease;
+  padding: 0;
+  margin: 0;
 }
 
 .exitButton:hover {
-  background-color: var(--accent-1);
+  color: var(--accent-1);
+  background-color: transparent;
+}
+
+.exitButton:active {
+  top: 6.2px;
 }

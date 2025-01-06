@@ -2,6 +2,7 @@
 
 import { FocusButton } from "@focusbutton/ui";
 import styles from "./page.module.css";
+import { CircleX } from "lucide-react";
 
 // Declare the webkit type for the window object
 declare global {
@@ -29,14 +30,10 @@ export default function Home() {
   return (
     <div className={styles.page}>
       <main className={styles.main}>
-        <div className={styles.content}>
-          <div className={styles.focusButton}>
-            <FocusButton />
-          </div>
-          <button onClick={handleExit} className={styles.exitButton}>
-            Exit
-          </button>
-        </div>
+        <FocusButton className={styles.focusButton} />
+        <button className={styles.exitButton} onClick={handleExit}>
+          <CircleX size={20} />
+        </button>
       </main>
     </div>
   );

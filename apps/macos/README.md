@@ -13,16 +13,19 @@ A native macOS menubar app for FocusButton built with React Native.
 ## Development
 
 1. Install dependencies:
+
 ```bash
 npm install
 ```
 
 2. Start Metro bundler:
+
 ```bash
 npm start
 ```
 
 3. Run the app:
+
 ```bash
 npm run ios
 ```
