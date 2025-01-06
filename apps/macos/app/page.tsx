@@ -17,6 +17,25 @@ declare global {
   }
 }
 
+// Function to update timer in menu bar
+const updateMenuBarTimer = (time: number) => {
+  if (window.webkit?.messageHandlers?.focusApp) {
+    window.webkit.messageHandlers.focusApp.postMessage({
+      type: "updateTimer",
+      time,
+    });
+  }
+};
+
+// Function to clear timer in menu bar
+const clearMenuBarTimer = () => {
+  if (window.webkit?.messageHandlers?.focusApp) {
+    window.webkit.messageHandlers.focusApp.postMessage({
+      type: "clearTimer",
+    });
+  }
+};
+
 export default function Home() {
   const handleExit = () => {
     // Send message to Swift to quit the app
@@ -30,7 +49,13 @@ export default function Home() {
   return (
     <div className={styles.page}>
       <main className={styles.main}>
-        <FocusButton className={styles.focusButton} />
+        <FocusButton
+          className={styles.focusButton}
+          onTimer={updateMenuBarTimer}
+          onTimerEnd={clearMenuBarTimer}
+          onTimerCancel={clearMenuBarTimer}
+          onTimerPause={clearMenuBarTimer}
+        />
         <button className={styles.exitButton} onClick={handleExit}>
           <CircleX size={20} />
         </button>

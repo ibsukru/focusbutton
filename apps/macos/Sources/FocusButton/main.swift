@@ -49,6 +49,13 @@ extension PopoverViewController: WKScriptMessageHandler {
             (NSApplication.shared.delegate as? AppDelegate)?.statusBarController.toggleFocusMode()
         case "quit":
             NSApplication.shared.terminate(nil)
+        case "updateTimer":
+            guard let time = dict["time"] as? Int else { return }
+            (NSApplication.shared.delegate as? AppDelegate)?.statusBarController.updateTimer(time: time)
+        case "clearTimer":
+            (NSApplication.shared.delegate as? AppDelegate)?.statusBarController.clearTimer()
+        case "playSound":
+            (NSApplication.shared.delegate as? AppDelegate)?.statusBarController.playSound()
         default:
             break
         }
@@ -61,10 +68,12 @@ class StatusBarController {
     private var focusModeOn = false
     private let defaults = UserDefaults.standard
     private var statusBarIcon: NSImage?
+    private var notificationSound: NSSound?
     
     init() {
         setupStatusItem()
         setupPopover()
+        notificationSound = NSSound(named: "Ping")
     }
     
     private func setupStatusItem() {
@@ -129,6 +138,34 @@ class StatusBarController {
         task.launchPath = "/usr/bin/defaults"
         task.arguments = ["-currentHost", "write", "~/Library/Preferences/ByHost/com.apple.notificationcenterui", "doNotDisturb", "0"]
         try? task.run()
+    }
+    
+    func updateTimer(time: Int) {
+        DispatchQueue.main.async {
+            let minutes = time / 60
+            let seconds = time % 60
+            let timeString = String(format: "%02d:%02d", minutes, seconds)
+            
+            if let button = self.statusItem.button {
+                button.title = timeString
+                button.image = self.statusBarIcon
+                button.imagePosition = .imageLeft
+            }
+        }
+    }
+    
+    func clearTimer() {
+        DispatchQueue.main.async {
+            if let button = self.statusItem.button {
+                button.title = ""
+                button.image = self.statusBarIcon
+            }
+        }
+    }
+    
+    func playSound() {
+        NSSound.beep()
+        notificationSound?.play()
     }
 }
 

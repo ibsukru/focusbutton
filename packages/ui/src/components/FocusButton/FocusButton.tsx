@@ -160,7 +160,23 @@ const trackEvent = (eventName: string, params = {}) => {
   }
 };
 
-export default function FocusButton({ className }: { className?: string }) {
+export default function FocusButton({
+  className,
+  onTimer,
+  onTimerEnd,
+  onTimerStart,
+  onTimerPause,
+  onTimerResume,
+  onTimerCancel,
+}: {
+  onTimer?: (time: number) => void;
+  onTimerEnd?: () => void;
+  onTimerStart?: () => void;
+  onTimerPause?: () => void;
+  onTimerResume?: () => void;
+  onTimerCancel?: () => void;
+  className?: string;
+}) {
   const [isExtension, setIsExtension] = useState(false);
   const [time, setTime] = useState(0);
   const [displayTime, setDisplayTime] = useState(0);
@@ -472,6 +488,8 @@ export default function FocusButton({ className }: { className?: string }) {
       timerRef.current = null;
     }
 
+    onTimerEnd?.();
+
     // Play sound and show notification
     if (isExtension) {
       sendMessage({ type: "PLAY_SOUND" });
@@ -500,6 +518,7 @@ export default function FocusButton({ className }: { className?: string }) {
       setIsCountingDown(true);
       setIsPaused(false);
       setIsFinished(false);
+      onTimerStart?.();
 
       const now = Date.now();
       startTimeRef.current = now;
@@ -585,6 +604,8 @@ export default function FocusButton({ className }: { className?: string }) {
       timerRef.current = null;
     }
 
+    onTimerCancel?.();
+
     if (isExtension) {
       const browserAPI = getBrowserAPI();
       if (browserAPI) {
@@ -649,6 +670,8 @@ export default function FocusButton({ className }: { className?: string }) {
       timerRef.current = null;
     }
 
+    onTimerPause?.();
+
     if (isExtension) {
       sendMessage({ type: "PAUSE_TIMER" });
 
@@ -692,6 +715,8 @@ export default function FocusButton({ className }: { className?: string }) {
     const now = Date.now();
     startTimeRef.current = now;
 
+    onTimerResume?.();
+
     if (isExtension) {
       sendMessage({ type: "RESUME_TIMER" });
 
@@ -720,6 +745,10 @@ export default function FocusButton({ className }: { className?: string }) {
     trackEvent("timer_resume", { timeLeft: displayTime });
   };
 
+  useEffect(() => {
+    onTimer?.(time);
+  }, [time]);
+
   const handlePresetTime = (minutes: number) => {
     const newTime = minutes * 60;
     setIsPaused(true);
@@ -741,11 +770,12 @@ export default function FocusButton({ className }: { className?: string }) {
     if (isExtension) {
       const browserAPI = getBrowserAPI();
       if (browserAPI) {
-        browserAPI.runtime.sendMessage({
+        sendMessage({
           type: "SET_TIMER",
           time: newTime,
         });
 
+        onTimerPause?.();
         sendMessage({ type: "PAUSE_TIMER" });
 
         // Save active Pomodoro in extension storage
@@ -809,8 +839,7 @@ export default function FocusButton({ className }: { className?: string }) {
       let state: TimerState | null = null;
 
       if (isExtension) {
-        const browserAPI = getBrowserAPI();
-        const response = await browserAPI?.runtime.sendMessage({
+        const response = await sendMessage({
           type: "GET_TIMER_STATE",
         });
         if (response?.success) {
@@ -1029,6 +1058,7 @@ export default function FocusButton({ className }: { className?: string }) {
       setIsCountingDown(false);
       setIsPaused(false);
       setIsFinished(false);
+      onTimerPause?.();
 
       // Clear extension timer state if in extension
       if (isExtension) {
@@ -1412,16 +1442,16 @@ export default function FocusButton({ className }: { className?: string }) {
       const browserAPI = getBrowserAPI();
       if (!browserAPI) return;
 
-      browserAPI.runtime
-        .sendMessage({ type: "GET_TIMER_STATE" })
-        .then((response: TimerMessage) => {
+      sendMessage({ type: "GET_TIMER_STATE" }).then(
+        (response: TimerMessage) => {
           if (response?.running) {
             setTime(response.remainingTime || 0);
             setDisplayTime(response.remainingTime || 0);
             setIsCountingDown(true);
             setIsPaused(false);
           }
-        });
+        },
+      );
     }
   }, [isExtension]);
 
