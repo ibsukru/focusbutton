@@ -60,6 +60,7 @@ class StatusBarController {
     private var popover: NSPopover!
     private var focusModeOn = false
     private let defaults = UserDefaults.standard
+    private var statusBarIcon: NSImage?
     
     init() {
         setupStatusItem()
@@ -70,8 +71,15 @@ class StatusBarController {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         focusModeOn = defaults.bool(forKey: "focusModeEnabled")
         
+        // Load custom icon
+        if let iconURL = Bundle.module.url(forResource: "icon-128", withExtension: "png"),
+           let image = NSImage(contentsOf: iconURL) {
+            image.size = NSSize(width: 18, height: 18) // Resize for menu bar
+            statusBarIcon = image
+        }
+        
         if let button = statusItem.button {
-            button.image = NSImage(systemSymbolName: focusModeOn ? "moon.fill" : "moon", accessibilityDescription: "Focus Mode")
+            button.image = statusBarIcon ?? NSImage(systemSymbolName: focusModeOn ? "moon.fill" : "moon", accessibilityDescription: "Focus Mode")
             button.target = self
             button.action = #selector(togglePopover)
         }
@@ -99,7 +107,7 @@ class StatusBarController {
         defaults.set(focusModeOn, forKey: "focusModeEnabled")
         
         if let button = statusItem.button {
-            button.image = NSImage(systemSymbolName: focusModeOn ? "moon.fill" : "moon", accessibilityDescription: "Focus Mode")
+            button.image = statusBarIcon ?? NSImage(systemSymbolName: focusModeOn ? "moon.fill" : "moon", accessibilityDescription: "Focus Mode")
         }
         
         if focusModeOn {
