@@ -71,7 +71,7 @@ export default function About({ className }: { className?: string }) {
                   className={styles.webStore}
                   href="https://addons.mozilla.org/en-US/firefox/addon/focusbutton"
                 >
-                  download for Firefox
+                  Download for Firefox
                 </a>
               </p>
             </div>
