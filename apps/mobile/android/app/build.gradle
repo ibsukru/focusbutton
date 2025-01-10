@@ -93,9 +93,9 @@ android {
         versionCode 1
         versionName "1.0.0"
         
-        resValue "string", "app_name", "Focus Button"
-        resValue "string", "notification_channel_name", "Focus Button Notifications"
-        resValue "string", "notification_channel_description", "Notifications for Focus Button app"
+        resValue "string", "app_name", "FocusButton"
+        resValue "string", "notification_channel_name", "FocusButton Notifications"
+        resValue "string", "notification_channel_description", "Notifications for FocusButton app"
     }
 
     signingConfigs {

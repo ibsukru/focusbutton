@@ -13,7 +13,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Focus Button",
+    title: "FocusButton",
   },
   viewport: {
     width: "device-width",
@@ -23,8 +23,8 @@ export const metadata: Metadata = {
   other: {
     "mobile-web-app-capable": "yes",
     "apple-mobile-web-app-capable": "yes",
-    "application-name": "Focus Button",
-    "apple-mobile-web-app-title": "Focus Button",
+    "application-name": "FocusButton",
+    "apple-mobile-web-app-title": "FocusButton",
     "theme-color": "#000000",
     "msapplication-navbutton-color": "#000000",
     "apple-mobile-web-app-status-bar-style": "black-translucent",
