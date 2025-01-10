@@ -5,7 +5,7 @@
   <h3>Stay focused and productive with FocusButton</h3>
 </div>
 
-FocusButton is an open-source browser extension and web app that helps you stay focused and productive using the Pomodoro Technique. It features a clean interface, customizable timers, and cross-browser support.
+FocusButton is an open-source browser extension and web app that helps you stay focused and productive using the Pomodoro Technique. It features a clean interface, customizable timers, and cross-browser support. Additionally, FocusButton is available as a native macOS application.
 
 ## Features
 
@@ -16,6 +16,7 @@ FocusButton is an open-source browser extension and web app that helps you stay 
 - 💻 Web app version available
 - 🎨 Clean, modern interface
 - ⚡ Built with performance in mind
+- 🖥 Native macOS app with menu bar integration
 
 ## Getting Started
 
@@ -25,23 +26,43 @@ FocusButton is an open-source browser extension and web app that helps you stay 
 
 ### Installation
 
-1. Clone the repository:
+#### Browser Extensions
 
+#### Chrome
+1. Visit the [Chrome Web Store](https://chromewebstore.google.com/detail/focusbutton/nkomoiomfaeodakglkihapminhpgnibl)
+2. Click "Add to Chrome"
+3. Follow the installation prompts
+
+#### Firefox
+1. Visit the [Firefox Add-ons Store](https://addons.mozilla.org/en-US/firefox/addon/focusbutton)
+2. Click "Add to Firefox"
+3. Follow the installation prompts
+
+#### macOS App
+
+##### Installation via DMG
+1. Download [FocusButton.dmg](https://focusbutton.app/FocusButton-1.3.0.dmg)
+2. Open the DMG file
+3. Drag FocusButton to your Applications folder
+4. Launch FocusButton from Applications or Spotlight
+5. The app will appear in your menu bar
+
+##### Building from Source
 ```bash
+# Clone the repository
 git clone https://github.com/ibsukru/focusbutton.git
 cd focusbutton
-```
 
-2. Install dependencies:
-
-```bash
+# Install dependencies
 npm install
-```
 
-3. Build all packages:
+# Build the macOS app
+cd apps/macos
+chmod +x package_app.sh
+./package_app.sh
 
-```bash
-npm run build
+# The app bundle and DMG will be created in the current directory
+# - FocusButton-1.3.0.dmg
 ```
 
 ### Development
@@ -82,6 +103,7 @@ npm run dev
 - `apps/`
   - `extension/` - Browser extension
   - `web/` - Next.js web app
+  - `macos/` - macOS application
 - `packages/`
   - `ui/` - Shared React components
   - `eslint-config/` - ESLint configurations
