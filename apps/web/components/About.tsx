@@ -9,17 +9,17 @@ export default function About({ className }: { className?: string }) {
       <h1>✨ FocusButton</h1>
       <div className={styles.aboutContent}>
         <p>
-          🎯 Focus Button is your ultimate productivity companion, available as
-          a web tool, browser extension, and native macOS app. In today&apos;s
+          🎯 FocusButton is your ultimate productivity companion, available as a
+          web tool, browser extension, and native macOS app. In today&apos;s
           digital world, staying focused can be challenging with countless
-          distracting websites just a click away. That&apos;s where Focus Button
+          distracting websites just a click away. That&apos;s where FocusButton
           comes in - offering a simple solution to help you stay focused on your
           tasks.
         </p>
 
         <p>
           🚀 Whether you choose to use our instant web version, install our
-          browser extension, or use our native macOS app, Focus Button helps you
+          browser extension, or use our native macOS app, FocusButton helps you
           maintain focus during work or study sessions. With a simple click, you
           can set a timer to stay committed to your task, helping you achieve
           your goals without distractions. The web version requires no
@@ -58,7 +58,7 @@ export default function About({ className }: { className?: string }) {
               <h4>🧩 Browser Extensions</h4>
               <p>
                 Get the same great focus-enhancing features with our browser
-                extensions. Install once and have Focus Button always ready
+                extensions. Install once and have FocusButton always ready
                 whenever you need to concentrate on your work.{" "}
                 <a
                   className={styles.webStore}
@@ -78,7 +78,7 @@ export default function About({ className }: { className?: string }) {
             <div className={styles.version}>
               <h4>🖥 macOS App</h4>
               <p>
-                Experience Focus Button as a native macOS application with menu
+                Experience FocusButton as a native macOS application with menu
                 bar integration and seamless desktop experience. Perfect for
                 users who want quick access to focus tools right from their
                 desktop.{" "}

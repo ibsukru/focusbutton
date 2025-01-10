@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Focus Button",
+    "name": "FocusButton",
     "slug": "focusbutton",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -11,16 +11,12 @@
       "resizeMode": "contain",
       "backgroundColor": "#000000"
     },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
+    "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.focusbutton.app",
       "infoPlist": {
-        "UIBackgroundModes": [
-          "audio"
-        ]
+        "UIBackgroundModes": ["audio"]
       }
     },
     "android": {
@@ -46,12 +42,10 @@
         {
           "icon": "./assets/images/icon.png",
           "color": "#000000",
-          "sounds": [
-            "./assets/sounds/timer_end.mp3"
-          ],
+          "sounds": ["./assets/sounds/timer_end.mp3"],
           "mode": "production",
           "androidMode": "default",
-          "androidCollapsedTitle": "Focus Button",
+          "androidCollapsedTitle": "FocusButton",
           "androidImportance": "max",
           "androidShowBadge": true,
           "androidNotificationIcon": "./assets/images/icon.png",

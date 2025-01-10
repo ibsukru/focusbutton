@@ -1,6 +1,6 @@
 {
   "name": "@focusbutton/macos",
-  "version": "0.1.0",
+  "version": "1.3.0",
   "private": true,
   "scripts": {
     "dev": "pkill -f next &&next dev -p 3006",
