@@ -5,8 +5,6 @@ import React from "react";
 import { FaChrome, FaFirefoxBrowser } from "react-icons/fa";
 import clsx from "clsx";
 import styles from "./Footer.module.scss";
-import { useTheme } from "next-themes";
-import { SiMacos } from "react-icons/si";
 
 export default function Footer({
   isDesktop,
@@ -46,6 +44,7 @@ export default function Footer({
                 <span style={{ width: 20, height: 20 }}>
                   <FaChrome title="Chrome Web Store" size={20} />
                 </span>
+                Chrome
               </a>
               |{" "}
             </>
@@ -57,13 +56,13 @@ export default function Footer({
               >
                 <FaFirefoxBrowser title="Download from Firefox Add-on Store" />
               </a>
-              |{" "}
+              Firefox |{" "}
             </>
           ) : null)}
         {isDesktop && isMacOs ? (
           <>
             <a href="/FocusButton-1.3.0.dmg" className={styles.donate}>
-              <SiMacos title="Download macOS app" size={40} />
+              🖥 macOS
             </a>{" "}
             |{" "}
           </>
