@@ -6,17 +6,20 @@ import { FaChrome, FaFirefoxBrowser } from "react-icons/fa";
 import clsx from "clsx";
 import styles from "./Footer.module.scss";
 import { useTheme } from "next-themes";
+import { SiMacos } from "react-icons/si";
 
 export default function Footer({
   isDesktop,
   isChrome,
   isFirefox,
   className,
+  isMacOs,
 }: {
   isDesktop: boolean;
   isChrome: boolean;
   isFirefox: boolean;
   className?: string;
+  isMacOs?: boolean;
 }) {
   const isExtensionEnabled = true;
   const { resolvedTheme } = useTheme();
@@ -47,11 +50,18 @@ export default function Footer({
                 href="https://chromewebstore.google.com/detail/focusbutton/nkomoiomfaeodakglkihapminhpgnibl?authuser=0&hl=en&pli=1"
               >
                 <span style={{ width: 20, height: 20 }}>
-                  <FaChrome size={20} />
+                  <FaChrome title="Chrome Web Store" size={20} />
                 </span>{" "}
-                Download from Chrome Web Store
               </a>
               |{" "}
+              {isMacOs ? (
+                <>
+                  <a href="/FocusButton-1.3.0.dmg" className={styles.donate}>
+                    <SiMacos title="Download macOS app" size={40} />
+                  </a>{" "}
+                  |{" "}
+                </>
+              ) : null}
               <a
                 target="_blank"
                 rel="noreferrer"
@@ -69,10 +79,17 @@ export default function Footer({
                 className={styles.webStore}
                 href="https://addons.mozilla.org/en-US/firefox/addon/focusbutton"
               >
-                <FaFirefoxBrowser />
-                Download from Firefox Add-on Store
+                <FaFirefoxBrowser title="Download from Firefox Add-on Store" />
               </a>
               |{" "}
+              {isMacOs ? (
+                <>
+                  <a href="/FocusButton-1.3.0.dmg" className={styles.donate}>
+                    <SiMacos title="Download macOS app" size={40} />
+                  </a>{" "}
+                  |{" "}
+                </>
+              ) : null}
               <a
                 target="_blank"
                 rel="noreferrer"
