@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "macos": "swift run",
-    "macos:release": "./package_app.sh",
+    "macos:release": "chmod +x package_app.sh && ./package_app.sh",
     "k": "pkill -f FocusButton"
   },
   "dependencies": {
