@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.0] - 2025-01-10
+
+### Added
+
+- Released native macOS application
+- Menu bar integration for quick access
+- Local timer management
+- DMG installer for easy installation
+- Native window management
+
+### Changed
+
+- Improved UI responsiveness in native app
+- Enhanced focus mode integration with system
+- Optimized performance for macOS
+
 ## [1.2.1] - 2025-01-05
 
 ### Fixed
