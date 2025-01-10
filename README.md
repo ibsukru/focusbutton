@@ -44,7 +44,7 @@ FocusButton is an open-source browser extension and web app that helps you stay 
 
 ##### Installation via DMG
 
-1. Download [FocusButton.dmg](https://focusbutton.app/FocusButton-1.3.0.dmg)
+1. Download [FocusButton.dmg](https://focusbutton.com/FocusButton-1.3.0.dmg)
 2. Open the DMG file
 3. Drag FocusButton to your Applications folder
 4. Launch FocusButton from Applications or Spotlight
