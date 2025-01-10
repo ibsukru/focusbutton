@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@focusbutton/ui": "*",
+    "@next/third-parties": "^15.1.4",
     "lucide-react": "^0.469.0",
     "next": "^14.0.0",
     "react": "^18.2.0",

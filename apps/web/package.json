@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@focusbutton/ui": "*",
+    "@next/third-parties": "^15.1.4",
     "@number-flow/react": "^0.4.2",
     "lucide-react": "^0.462.0",
     "motion-number": "^0.1.7",

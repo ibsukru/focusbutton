@@ -4,6 +4,7 @@ import "./globals.scss";
 import { ThemeProvider } from "next-themes";
 import Splash from "./Splash";
 import ServiceWorkerRegistration from "./ServiceWorkerRegistration";
+import { GoogleAnalytics } from "@next/third-parties/google";
 
 export const metadata: Metadata = {
   title: "FocusButton",
@@ -47,21 +48,6 @@ export default function RootLayout({
           name="apple-mobile-web-app-status-bar-style"
           content="black-translucent"
         />
-        {/* Google Analytics */}
-        <script
-          async
-          src="https://www.googletagmanager.com/gtag/js?id=G-JWGLMW333E"
-        ></script>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              window.dataLayer = window.dataLayer || [];
-              function gtag(){dataLayer.push(arguments);}
-              gtag('js', new Date());
-              gtag('config', 'G-JWGLMW333E');
-            `,
-          }}
-        />
       </head>
       <body>
         <ThemeProvider
@@ -73,6 +59,7 @@ export default function RootLayout({
           <ServiceWorkerRegistration />
           {children}
         </ThemeProvider>
+        <GoogleAnalytics gaId="G-JWGLMW333E" />
       </body>
     </html>
   );
