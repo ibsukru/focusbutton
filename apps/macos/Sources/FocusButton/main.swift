@@ -69,28 +69,35 @@ class StatusBarController {
     private let defaults = UserDefaults.standard
     private var statusBarIcon: NSImage?
     private var notificationSound: NSSound?
+    private var lastUpdateTime: TimeInterval = 0
+    private let itemWidth: CGFloat = 65 // Reduced width for menu bar item
     
     init() {
         setupStatusItem()
         setupPopover()
         notificationSound = NSSound(named: "Ping")
+        updateTimer(time: 0) // Set initial display to 00:00
     }
     
     private func setupStatusItem() {
-        statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+        statusItem = NSStatusBar.system.statusItem(withLength: itemWidth)
         focusModeOn = defaults.bool(forKey: "focusModeEnabled")
         
         // Load custom icon
         if let iconURL = Bundle.module.url(forResource: "icon-128", withExtension: "png"),
            let image = NSImage(contentsOf: iconURL) {
-            image.size = NSSize(width: 18, height: 18) // Resize for menu bar
+            image.size = NSSize(width: 16, height: 16) // Slightly smaller icon
             statusBarIcon = image
         }
         
         if let button = statusItem.button {
             button.image = statusBarIcon ?? NSImage(systemSymbolName: focusModeOn ? "moon.fill" : "moon", accessibilityDescription: "Focus Mode")
+            button.imagePosition = .imageLeft
             button.target = self
             button.action = #selector(togglePopover)
+            
+            // Set fixed width for the button
+            button.frame.size.width = itemWidth
         }
     }
     
@@ -141,26 +148,29 @@ class StatusBarController {
     }
     
     func updateTimer(time: Int) {
-        DispatchQueue.main.async {
-            let minutes = time / 60
-            let seconds = time % 60
-            let timeString = String(format: "%02d:%02d", minutes, seconds)
-            
-            if let button = self.statusItem.button {
-                button.title = timeString
-                button.image = self.statusBarIcon
-                button.imagePosition = .imageLeft
+        let currentTime = Date().timeIntervalSince1970
+        
+        // Only update if more than 0.2 seconds have passed since last update
+        // This prevents too frequent updates while still maintaining smoothness
+        if currentTime - lastUpdateTime >= 0.2 {
+            DispatchQueue.main.async {
+                let minutes = time / 60
+                let seconds = time % 60
+                let timeString = String(format: "%02d:%02d", minutes, seconds)
+                
+                if let button = self.statusItem.button {
+                    button.title = timeString
+                    button.image = self.statusBarIcon
+                    button.imagePosition = .imageLeft
+                    button.frame.size.width = self.itemWidth // Maintain fixed width
+                }
             }
+            lastUpdateTime = currentTime
         }
     }
     
     func clearTimer() {
-        DispatchQueue.main.async {
-            if let button = self.statusItem.button {
-                button.title = ""
-                button.image = self.statusBarIcon
-            }
-        }
+        updateTimer(time: 0) // Show 00:00 instead of clearing the text
     }
     
     func playSound() {

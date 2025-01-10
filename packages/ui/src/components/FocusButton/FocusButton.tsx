@@ -745,10 +745,6 @@ export default function FocusButton({
     trackEvent("timer_resume", { timeLeft: displayTime });
   };
 
-  useEffect(() => {
-    onTimer?.(time);
-  }, [time]);
-
   const handlePresetTime = (minutes: number) => {
     const newTime = minutes * 60;
     setIsPaused(true);
@@ -895,6 +891,12 @@ export default function FocusButton({
   useEffect(() => {
     restoreTimerState();
   }, [restoreTimerState]);
+
+  useEffect(() => {
+    if (isCountingDown && !isPaused) {
+      onTimer?.(time);
+    }
+  }, [isCountingDown, isPaused, time]);
 
   // Show controls if timer is set or running
   const showControls = useMemo(() => {
