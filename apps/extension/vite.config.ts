@@ -164,12 +164,14 @@ export default defineConfig(({ command, mode }: ConfigEnv): UserConfig => {
       },
     ],
     esbuild: {
-      pure: isProduction ? ['console.log', 'console.info', 'console.debug'] : [],
-      drop: isProduction ? ['debugger'] : [],
+      pure: isProduction
+        ? ["console.log", "console.info", "console.debug"]
+        : [],
+      drop: isProduction ? ["debugger"] : [],
     },
     define: {
       "process.env.BROWSER": JSON.stringify(env.VITE_BROWSER || "chrome"),
-      "__DEV__": JSON.stringify(!isProduction),
+      __DEV__: JSON.stringify(!isProduction),
     },
     build: {
       rollupOptions: {
