@@ -1,9 +1,10 @@
 "use client";
 
 import { FocusButton } from "@focusbutton/ui";
-import { CircleX } from "lucide-react";
+import { XCircle } from "lucide-react";
 
 import styles from "./page.module.css";
+import { useEffect, useState } from "react";
 
 // Declare the webkit type for the window object
 declare global {
@@ -38,6 +39,16 @@ const clearMenuBarTimer = () => {
 };
 
 export default function HomeClient() {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return null;
+  }
+
   const handleExit = () => {
     // Send message to Swift to quit the app
     if (window.webkit?.messageHandlers?.focusApp) {
@@ -57,7 +68,7 @@ export default function HomeClient() {
           // onTimerPause={clearMenuBarTimer}
         />
         <button className={styles.exitButton} onClick={handleExit}>
-          <CircleX size={20} />
+          <XCircle size={20} />
         </button>
       </main>
     </div>
