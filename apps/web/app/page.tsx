@@ -9,7 +9,7 @@ import Footer from "components/Footer";
 import About from "components/About";
 
 export default async function Home() {
-  const { isDesktop, isChrome, isFirefox } = await getUserAgentInfo();
+  const userAgentInfo = await getUserAgentInfo();
 
   return (
     <div className={styles.page}>
@@ -28,9 +28,10 @@ export default async function Home() {
           </div>
           <Footer
             className={styles.footer}
-            isDesktop={isDesktop}
-            isChrome={isChrome}
-            isFirefox={isFirefox}
+            isDesktop={userAgentInfo.isDesktop}
+            isChrome={userAgentInfo.isChrome}
+            isFirefox={userAgentInfo.isFirefox}
+            isMacOs={userAgentInfo.isMacOs}
           />
         </div>
         <About className={styles.about} />

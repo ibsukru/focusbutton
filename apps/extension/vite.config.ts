@@ -23,9 +23,10 @@ function chromeExtensionPlugin(): Plugin {
   };
 }
 
-export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
+export default defineConfig(({ command, mode }: ConfigEnv): UserConfig => {
   const env = loadEnv(mode, process.cwd(), "");
   const isFirefox = env.VITE_BROWSER === "firefox";
+  const isProduction = command === "build";
 
   const manifestBase = {
     manifest_version: 3,
@@ -162,6 +163,16 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
         },
       },
     ],
+    esbuild: {
+      pure: isProduction
+        ? ["console.log", "console.info", "console.debug"]
+        : [],
+      drop: isProduction ? ["debugger"] : [],
+    },
+    define: {
+      "process.env.BROWSER": JSON.stringify(env.VITE_BROWSER || "chrome"),
+      __DEV__: JSON.stringify(!isProduction),
+    },
     build: {
       rollupOptions: {
         input: {
@@ -177,9 +188,6 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
       minify: false,
       outDir: "dist",
       emptyOutDir: true,
-    },
-    define: {
-      "process.env.BROWSER": JSON.stringify(env.VITE_BROWSER || "chrome"),
     },
   };
 });

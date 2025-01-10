@@ -1,0 +1,32 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: var(--background);
+  color: var(--foreground);
+  padding: 20px 10px;
+}
+
+.exitButton {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background-color: transparent;
+  border: none;
+  color: var(--shade-4);
+  cursor: pointer;
+  padding: 0;
+  margin: 0;
+}
+
+.exitButton:hover {
+  color: var(--accent-1);
+  background-color: transparent;
+}
+
+.exitButton:active {
+  top: 11.2px;
+}

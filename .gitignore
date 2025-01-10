@@ -25,6 +25,7 @@ coverage
 .next/
 out/
 build
+.build
 dist
 
 
@@ -40,3 +41,6 @@ yarn-error.log*
 # Extension builds
 apps/extension/dist-chrome.zip
 apps/extension/dist-firefox.zip
+
+# macos
+apps/macos/FocusButton-*.dmg
