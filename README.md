@@ -29,11 +29,13 @@ FocusButton is an open-source browser extension and web app that helps you stay 
 #### Browser Extensions
 
 #### Chrome
+
 1. Visit the [Chrome Web Store](https://chromewebstore.google.com/detail/focusbutton/nkomoiomfaeodakglkihapminhpgnibl)
 2. Click "Add to Chrome"
 3. Follow the installation prompts
 
 #### Firefox
+
 1. Visit the [Firefox Add-ons Store](https://addons.mozilla.org/en-US/firefox/addon/focusbutton)
 2. Click "Add to Firefox"
 3. Follow the installation prompts
@@ -41,6 +43,7 @@ FocusButton is an open-source browser extension and web app that helps you stay 
 #### macOS App
 
 ##### Installation via DMG
+
 1. Download [FocusButton.dmg](https://focusbutton.app/FocusButton-1.3.0.dmg)
 2. Open the DMG file
 3. Drag FocusButton to your Applications folder
@@ -48,6 +51,7 @@ FocusButton is an open-source browser extension and web app that helps you stay 
 5. The app will appear in your menu bar
 
 ##### Building from Source
+
 ```bash
 # Clone the repository
 git clone https://github.com/ibsukru/focusbutton.git
