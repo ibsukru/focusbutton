@@ -1,10 +1,12 @@
-import type { Metadata } from "next";
-import "normalize.css";
-import "./globals.scss";
-import { ThemeProvider } from "next-themes";
 import Splash from "./Splash";
 import ServiceWorkerRegistration from "./ServiceWorkerRegistration";
+
+import type { Metadata } from "next";
+import { ThemeProvider } from "next-themes";
 import { GoogleAnalytics } from "@next/third-parties/google";
+
+import "normalize.css";
+import "./globals.scss";
 
 export const metadata: Metadata = {
   title: "FocusButton",
@@ -38,6 +40,8 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const isDev = process.env.NODE_ENV === "development";
+
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -59,7 +63,7 @@ export default function RootLayout({
           <ServiceWorkerRegistration />
           {children}
         </ThemeProvider>
-        <GoogleAnalytics gaId="G-JWGLMW333E" />
+        {!isDev && <GoogleAnalytics gaId="G-JWGLMW333E" />}
       </body>
     </html>
   );

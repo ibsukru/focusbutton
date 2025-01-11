@@ -19,6 +19,7 @@ import {
   GripVertical,
   Moon,
   Pencil,
+  SettingsIcon,
   Sun,
   Trash2,
 } from "lucide-react";
@@ -189,6 +190,10 @@ export default function FocusButton({
   const [editingTask, setEditingTask] = useState<Task | undefined>();
   const [showReport, setShowReport] = useState(false);
   const [sure, setSure] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [presetMin1, setPresetMin1] = useLocalStorage("presetMin1", 25);
+  const [presetMin2, setPresetMin2] = useLocalStorage("presetMin2", 15);
+  const [presetMin3, setPresetMin3] = useLocalStorage("presetMin3", 5);
   const [selectedTask, setSelectedTask] = useLocalStorage<Task | undefined>(
     STORAGE_TASK_KEY,
     undefined,
@@ -1462,6 +1467,56 @@ export default function FocusButton({
     return;
   }
 
+  if (showSettings) {
+    return (
+      <div className={styles.settingsContainer}>
+        <div className={styles.closeSettingsButtonWrapper}>
+          <button
+            className={styles.closeSettingsButton}
+            onClick={() => setShowSettings(false)}
+          >
+            <CircleX width={14} height={14} /> Presets
+          </button>
+        </div>
+        <div className={styles.settings}>
+          <span>
+            <input
+              type="number"
+              min="0"
+              max="60"
+              placeholder="Minutes"
+              defaultValue={presetMin1}
+              onChange={(e) => setPresetMin1(Number(e.target.value))}
+            />
+            min
+          </span>
+          <span>
+            <input
+              type="number"
+              min="0"
+              max="60"
+              placeholder="Minutes"
+              defaultValue={presetMin2}
+              onChange={(e) => setPresetMin2(Number(e.target.value))}
+            />
+            min
+          </span>
+          <span>
+            <input
+              type="number"
+              min="0"
+              max="60"
+              placeholder="Minutes"
+              defaultValue={presetMin3}
+              onChange={(e) => setPresetMin3(Number(e.target.value))}
+            />
+            min
+          </span>
+        </div>
+      </div>
+    );
+  }
+
   if (showReport) {
     // Process data for the chart
     const allDates = tasks
@@ -1530,38 +1585,47 @@ export default function FocusButton({
           <button
             className={clsx(
               styles.timeAdjust,
-              displayTime === 25 * 60 && activePomodoro === 25 && styles.active,
+              displayTime === presetMin1 * 60 &&
+                activePomodoro === presetMin1 &&
+                styles.active,
             )}
             onClick={(e) => {
               e.stopPropagation();
-              handlePresetTime(25);
+              handlePresetTime(presetMin1);
+              onTimer?.(presetMin1 * 60);
             }}
           >
-            25min
+            {presetMin1}min
           </button>
           <button
             className={clsx(
               styles.timeAdjust,
-              displayTime === 15 * 60 && activePomodoro === 15 && styles.active,
+              displayTime === presetMin2 * 60 &&
+                activePomodoro === presetMin2 &&
+                styles.active,
             )}
             onClick={(e) => {
               e.stopPropagation();
-              handlePresetTime(15);
+              handlePresetTime(presetMin2);
+              onTimer?.(presetMin2 * 60);
             }}
           >
-            15min
+            {presetMin2}min
           </button>
           <button
             className={clsx(
               styles.timeAdjust,
-              displayTime === 5 * 60 && activePomodoro === 5 && styles.active,
+              displayTime === presetMin3 * 60 &&
+                activePomodoro === presetMin3 &&
+                styles.active,
             )}
             onClick={(e) => {
               e.stopPropagation();
-              handlePresetTime(5);
+              handlePresetTime(presetMin3);
+              onTimer?.(presetMin3 * 60);
             }}
           >
-            5min
+            {presetMin3}min
           </button>
         </div>
         <div
@@ -1573,25 +1637,13 @@ export default function FocusButton({
             isFinished && styles.finished,
           )}
         >
-          <button className={styles.themeToggle}>
-            {resolvedTheme === "dark" ? (
-              <Sun
-                className={styles.sun}
-                size={20}
-                onClick={() => {
-                  setTheme("light");
-                }}
-              />
-            ) : (
-              <Moon
-                className={styles.moon}
-                size={20}
-                onClick={() => {
-                  setTheme("dark");
-                }}
-              />
-            )}
+          <button
+            className={styles.showSettings}
+            onClick={() => setShowSettings(true)}
+          >
+            <SettingsIcon size={20} />
           </button>
+
           <div className={styles.timeDisplay}>
             <div
               className={styles.time}
@@ -1742,6 +1794,25 @@ export default function FocusButton({
               </div>
             </div>
           </div>
+          <button className={styles.themeToggle}>
+            {resolvedTheme === "dark" ? (
+              <Sun
+                className={styles.sun}
+                size={20}
+                onClick={() => {
+                  setTheme("light");
+                }}
+              />
+            ) : (
+              <Moon
+                className={styles.moon}
+                size={20}
+                onClick={() => {
+                  setTheme("dark");
+                }}
+              />
+            )}
+          </button>
         </div>
         <div className={clsx(styles.controls, showControls && styles.visible)}>
           <button onClick={handleClick}>

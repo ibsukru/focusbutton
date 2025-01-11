@@ -14,6 +14,8 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const isDev = process.env.NODE_ENV === "development";
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body>
@@ -25,7 +27,7 @@ export default function RootLayout({
         >
           {children}
         </ThemeProvider>
-        <GoogleAnalytics gaId="G-JWGLMW333E" />
+        {!isDev && <GoogleAnalytics gaId="G-JWGLMW333E" />}
       </body>
     </html>
   );
