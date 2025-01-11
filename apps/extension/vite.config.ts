@@ -31,7 +31,7 @@ export default defineConfig(({ command, mode }: ConfigEnv): UserConfig => {
   const manifestBase = {
     manifest_version: 3,
     name: "FocusButton",
-    version: "1.2.1",
+    version: "1.3.1",
     description: "Track your focus time with a simple press and hold button",
     permissions: isFirefox
       ? ["storage", "notifications", "alarms", "tabs"]
