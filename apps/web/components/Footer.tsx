@@ -61,7 +61,7 @@ export default function Footer({
           ) : null)}
         {isDesktop && isMacOs ? (
           <>
-            <a href="/FocusButton-1.3.0.dmg" className={styles.donate}>
+            <a href="/FocusButton-1.3.1.dmg" className={styles.donate}>
               🖥 macOS
             </a>{" "}
             |{" "}

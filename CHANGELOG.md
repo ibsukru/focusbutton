@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.1] - 2025-01-11
+
+### Added
+- Customizable timer presets with persistent storage
+- Settings panel for managing timer presets
+- Improved theme toggle button positioning
+- Enhanced UI responsiveness
+
+### Changed
+- Moved theme toggle to bottom of timer
+- Updated Google Analytics implementation using @next/third-parties
+- Simplified footer component structure
+- Improved macOS app icon resolution
+
 ## [1.3.0] - 2025-01-10
 
 ### Added

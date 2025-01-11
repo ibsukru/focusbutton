@@ -8,7 +8,7 @@ MACOS_DIR="$CONTENTS_DIR/MacOS"
 RESOURCES_DIR="$CONTENTS_DIR/Resources"
 
 # App version
-VERSION="1.3.0"
+VERSION="1.3.1"
 
 # Remove existing bundle if it exists
 rm -rf "$APP_BUNDLE"

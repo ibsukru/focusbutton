@@ -82,7 +82,7 @@ export default function About({ className }: { className?: string }) {
                 bar integration and seamless desktop experience. Perfect for
                 users who want quick access to focus tools right from their
                 desktop.{" "}
-                <a href="/FocusButton-1.3.0.dmg" className={styles.donate}>
+                <a href="/FocusButton-1.3.1.dmg" className={styles.donate}>
                   Download for macOS
                 </a>
               </p>
