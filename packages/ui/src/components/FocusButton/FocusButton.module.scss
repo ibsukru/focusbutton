@@ -102,8 +102,15 @@
   input[type="number"] {
     border-radius: 10px;
     border: 1px solid var(--shade-2);
-    padding: 10px 5px;
+    padding: 5px 7px;
     font-size: 1rem;
+    background: var(--background);
+    color: var(--foreground);
+
+    &::-webkit-inner-spin-button,
+    &::-webkit-outer-spin-button {
+      opacity: 1;
+    }
   }
 
   > span {
