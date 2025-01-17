@@ -3,7 +3,7 @@ import ServiceWorkerRegistration from "./ServiceWorkerRegistration";
 
 import type { Metadata } from "next";
 import { ThemeProvider } from "next-themes";
-import { GoogleAnalytics } from "@next/third-parties/google";
+// import { GoogleAnalytics } from "@next/third-parties/google";
 
 import "normalize.css";
 import "./globals.scss";
@@ -40,7 +40,7 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const isDev = process.env.NODE_ENV === "development";
+  // const isDev = process.env.NODE_ENV === "development";
 
   return (
     <html lang="en" suppressHydrationWarning>
@@ -63,7 +63,7 @@ export default function RootLayout({
           <ServiceWorkerRegistration />
           {children}
         </ThemeProvider>
-        {!isDev && <GoogleAnalytics gaId="G-JWGLMW333E" />}
+        {/* {!isDev && <GoogleAnalytics gaId="G-JWGLMW333E" />} */}
       </body>
     </html>
   );
