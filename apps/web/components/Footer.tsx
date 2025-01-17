@@ -59,14 +59,14 @@ export default function Footer({
               Firefox |{" "}
             </>
           ) : null)}
-        {isDesktop && isMacOs ? (
+        {/* {isDesktop && isMacOs ? (
           <>
             <a href="/FocusButton-1.3.1.dmg" className={styles.donate}>
               🖥 macOS
             </a>{" "}
             |{" "}
           </>
-        ) : null}
+        ) : null} */}
         <a
           target="_blank"
           rel="noreferrer"
