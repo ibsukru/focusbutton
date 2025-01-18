@@ -75,7 +75,7 @@ export default function About({ className }: { className?: string }) {
                 </a>
               </p>
             </div>
-            <div className={styles.version}>
+            {/* <div className={styles.version}>
               <h4>🖥 macOS App</h4>
               <p>
                 Experience FocusButton as a native macOS application with menu
@@ -86,7 +86,7 @@ export default function About({ className }: { className?: string }) {
                   Download for macOS
                 </a>
               </p>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>
