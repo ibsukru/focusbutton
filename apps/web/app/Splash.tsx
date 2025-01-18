@@ -1,4 +1,4 @@
-import React from "react";
+import React from "react"
 
 export default function Splash() {
   return (
@@ -214,5 +214,5 @@ export default function Splash() {
         href="/splash_screens/8.3__iPad_Mini_portrait.png"
       />
     </>
-  );
+  )
 }

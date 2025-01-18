@@ -1,3 +1,3 @@
-import DraggableItem from "./DraggableItem";
+import DraggableItem from "./DraggableItem"
 
-export default DraggableItem;
+export default DraggableItem

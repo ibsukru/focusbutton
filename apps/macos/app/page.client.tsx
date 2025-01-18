@@ -1,10 +1,10 @@
-"use client";
+"use client"
 
-import { FocusButton } from "@focusbutton/ui";
-import { XCircle } from "lucide-react";
+import { FocusButton } from "@focusbutton/ui"
+import { XCircle } from "lucide-react"
 
-import styles from "./page.module.css";
-import { useEffect, useState } from "react";
+import styles from "./page.module.css"
+import { useEffect, useState } from "react"
 
 // Declare the webkit type for the window object
 declare global {
@@ -12,10 +12,10 @@ declare global {
     webkit?: {
       messageHandlers?: {
         focusApp?: {
-          postMessage: (message: any) => void;
-        };
-      };
-    };
+          postMessage: (message: any) => void
+        }
+      }
+    }
   }
 }
 
@@ -25,28 +25,28 @@ const updateMenuBarTimer = (time: number) => {
     window.webkit.messageHandlers.focusApp.postMessage({
       type: "updateTimer",
       time,
-    });
+    })
   }
-};
+}
 
 // Function to clear timer in menu bar
 const clearMenuBarTimer = () => {
   if (window.webkit?.messageHandlers?.focusApp) {
     window.webkit.messageHandlers.focusApp.postMessage({
       type: "clearTimer",
-    });
+    })
   }
-};
+}
 
 export default function HomeClient() {
-  const [mounted, setMounted] = useState(false);
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
-    setMounted(true);
-  }, []);
+    setMounted(true)
+  }, [])
 
   if (!mounted) {
-    return null;
+    return null
   }
 
   const handleExit = () => {
@@ -54,9 +54,9 @@ export default function HomeClient() {
     if (window.webkit?.messageHandlers?.focusApp) {
       window.webkit.messageHandlers.focusApp.postMessage({
         type: "quit",
-      });
+      })
     }
-  };
+  }
 
   return (
     <div className={styles.page}>
@@ -72,5 +72,5 @@ export default function HomeClient() {
         </button>
       </main>
     </div>
-  );
+  )
 }

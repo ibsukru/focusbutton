@@ -1,6 +1,6 @@
-import Link from "next/link";
-import styles from "./page.module.scss";
-import { ArrowLeft } from "lucide-react";
+import Link from "next/link"
+import styles from "./page.module.scss"
+import { ArrowLeft } from "lucide-react"
 
 export default function PrivacyPolicy() {
   return (
@@ -83,5 +83,5 @@ export default function PrivacyPolicy() {
         may have about your privacy and our data practices.
       </p>
     </div>
-  );
+  )
 }

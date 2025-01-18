@@ -1,16 +1,14 @@
-import React from "react";
-import { ThemeContext } from "../theme"; // Assuming you have a theme context
+import React from "react"
+import { ThemeContext } from "../theme" // Assuming you have a theme context
 
 interface ThemeProviderProps {
-  children: React.ReactNode;
-  value?: "light" | "dark";
+  children: React.ReactNode
+  value?: "light" | "dark"
 }
 
 export function ThemeProvider({
   children,
   value = "light",
 }: ThemeProviderProps) {
-  return (
-    <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
-  );
+  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
 }

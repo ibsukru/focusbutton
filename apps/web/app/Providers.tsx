@@ -1,16 +1,16 @@
-"use client";
+"use client"
 
-import { ThemeProvider as NextThemesProvider } from "next-themes";
-import { useEffect } from "react";
+import { ThemeProvider as NextThemesProvider } from "next-themes"
+import { useEffect } from "react"
 
-type ThemeProviderProps = Parameters<typeof NextThemesProvider>[0];
+type ThemeProviderProps = Parameters<typeof NextThemesProvider>[0]
 
 /**
  * Your app's theme provider component.
  * 'use client' is essential for next-themes to work with app-dir.
  */
 export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
-  return <NextThemesProvider {...props}>{children}</NextThemesProvider>;
+  return <NextThemesProvider {...props}>{children}</NextThemesProvider>
 }
 
 export function Providers({ children }: { children: React.ReactNode }) {
@@ -22,13 +22,13 @@ export function Providers({ children }: { children: React.ReactNode }) {
           console.log(
             "Service Worker registered with scope:",
             registration.scope,
-          );
+          )
         })
         .catch((error) => {
-          console.error("Service Worker registration failed:", error);
-        });
+          console.error("Service Worker registration failed:", error)
+        })
     }
-  }, []);
+  }, [])
 
-  return <>{children}</>;
+  return <>{children}</>
 }

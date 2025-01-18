@@ -1,9 +1,9 @@
-import React from "react";
-import { createRoot } from "react-dom/client";
-import { ThemeProvider } from "next-themes";
-import { FocusButton } from "@focusbutton/ui";
-import "./globals.css";
-import styles from "./index.module.css";
+import React from "react"
+import { createRoot } from "react-dom/client"
+import { ThemeProvider } from "next-themes"
+import { FocusButton } from "@focusbutton/ui"
+import "./globals.css"
+import styles from "./index.module.css"
 
 function Popup() {
   return (
@@ -14,15 +14,15 @@ function Popup() {
         </div>
       </div>
     </ThemeProvider>
-  );
+  )
 }
 
-const container = document.getElementById("root");
+const container = document.getElementById("root")
 if (!container) {
-  throw new Error("Root element not found");
+  throw new Error("Root element not found")
 }
 
-const root = createRoot(container);
-root.render(<Popup />);
+const root = createRoot(container)
+root.render(<Popup />)
 
 // Remove service worker registration since we're using manifest v3 background service worker

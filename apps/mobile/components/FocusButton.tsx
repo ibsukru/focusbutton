@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react"
 import {
   TouchableOpacity,
   StyleSheet,
@@ -6,12 +6,12 @@ import {
   Pressable,
   Animated,
   Platform,
-} from "react-native";
-import * as Haptics from "expo-haptics";
-import * as Notifications from "expo-notifications";
-import { ThemedView } from "./ThemedView";
-import { ThemedText } from "./ThemedText";
-import { Ionicons } from "@expo/vector-icons";
+} from "react-native"
+import * as Haptics from "expo-haptics"
+import * as Notifications from "expo-notifications"
+import { ThemedView } from "./ThemedView"
+import { ThemedText } from "./ThemedText"
+import { Ionicons } from "@expo/vector-icons"
 
 // Set up notification handler
 Notifications.setNotificationHandler({
@@ -23,7 +23,7 @@ Notifications.setNotificationHandler({
     shouldPresentAlert: true,
     priority: Notifications.AndroidNotificationPriority.MAX,
   }),
-});
+})
 
 // Create notification channel for Android
 async function setupNotifications() {
@@ -36,59 +36,57 @@ async function setupNotifications() {
       sound: "timer_end.mp3",
       enableVibrate: true,
       enableLights: true,
-    });
+    })
   }
 
-  const { status: existingStatus } = await Notifications.getPermissionsAsync();
-  let finalStatus = existingStatus;
+  const { status: existingStatus } = await Notifications.getPermissionsAsync()
+  let finalStatus = existingStatus
   if (existingStatus !== "granted") {
-    const { status } = await Notifications.requestPermissionsAsync();
-    finalStatus = status;
+    const { status } = await Notifications.requestPermissionsAsync()
+    finalStatus = status
   }
-  return finalStatus === "granted";
+  return finalStatus === "granted"
 }
 
 export function FocusButton() {
-  const [isActive, setIsActive] = useState(false);
-  const [minutes, setMinutes] = useState(0);
-  const [seconds, setSeconds] = useState(0);
-  const [upPressed, setUpPressed] = useState(false);
-  const [downPressed, setDownPressed] = useState(false);
-  const [isDarkTheme, setIsDarkTheme] = useState(false);
+  const [isActive, setIsActive] = useState(false)
+  const [minutes, setMinutes] = useState(0)
+  const [seconds, setSeconds] = useState(0)
+  const [upPressed, setUpPressed] = useState(false)
+  const [downPressed, setDownPressed] = useState(false)
+  const [isDarkTheme, setIsDarkTheme] = useState(false)
   const [hasNotificationPermission, setHasNotificationPermission] =
-    useState(false);
+    useState(false)
   const [adjustInterval, setAdjustInterval] = useState<NodeJS.Timeout | null>(
     null,
-  );
-  const notificationListener = useRef<any>();
-  const responseListener = useRef<any>();
+  )
+  const notificationListener = useRef<any>()
+  const responseListener = useRef<any>()
 
   useEffect(() => {
-    setupNotifications().then(setHasNotificationPermission);
+    setupNotifications().then(setHasNotificationPermission)
 
     notificationListener.current =
       Notifications.addNotificationReceivedListener((notification) => {
-        console.log("Notification received:", notification);
-      });
+        console.log("Notification received:", notification)
+      })
 
     responseListener.current =
       Notifications.addNotificationResponseReceivedListener((response) => {
-        console.log("Notification response:", response);
-      });
+        console.log("Notification response:", response)
+      })
 
     return () => {
-      Notifications.removeNotificationSubscription(
-        notificationListener.current,
-      );
-      Notifications.removeNotificationSubscription(responseListener.current);
-    };
-  }, []);
+      Notifications.removeNotificationSubscription(notificationListener.current)
+      Notifications.removeNotificationSubscription(responseListener.current)
+    }
+  }, [])
 
   async function scheduleNotification() {
-    if (!hasNotificationPermission) return;
+    if (!hasNotificationPermission) return
 
     try {
-      const soundName = Platform.OS === "android" ? "timer_end.mp3" : true;
+      const soundName = Platform.OS === "android" ? "timer_end.mp3" : true
       const notification = {
         content: {
           title: "Time's up!",
@@ -105,19 +103,19 @@ export function FocusButton() {
           },
         },
         trigger: null, // null means show immediately
-      };
-      await Notifications.scheduleNotificationAsync(notification);
+      }
+      await Notifications.scheduleNotificationAsync(notification)
     } catch (error) {
-      console.log("Error scheduling notification:", error);
+      console.log("Error scheduling notification:", error)
     }
   }
 
-  const isPaused = (minutes > 0 || seconds > 0) && !isActive;
-  const isCountingDown = minutes > 0 || (seconds > 0 && isActive);
+  const isPaused = (minutes > 0 || seconds > 0) && !isActive
+  const isCountingDown = minutes > 0 || (seconds > 0 && isActive)
 
-  const minutesRef = useRef(minutes);
-  const secondsRef = useRef(seconds);
-  const tiltAnimation = useRef(new Animated.Value(0)).current;
+  const minutesRef = useRef(minutes)
+  const secondsRef = useRef(seconds)
+  const tiltAnimation = useRef(new Animated.Value(0)).current
 
   const Tilt = () => {
     Animated.sequence([
@@ -141,16 +139,16 @@ export function FocusButton() {
         duration: 100,
         useNativeDriver: true,
       }),
-    ]).start();
-  };
+    ]).start()
+  }
 
   useEffect(() => {
-    minutesRef.current = minutes;
-  }, [minutes]);
+    minutesRef.current = minutes
+  }, [minutes])
 
   useEffect(() => {
-    secondsRef.current = seconds;
-  }, [seconds]);
+    secondsRef.current = seconds
+  }, [seconds])
 
   useEffect(() => {
     if (
@@ -161,255 +159,252 @@ export function FocusButton() {
       !downPressed &&
       isActive
     ) {
-      Tilt();
-      scheduleNotification();
-      setIsActive(false);
+      Tilt()
+      scheduleNotification()
+      setIsActive(false)
     }
-  }, [seconds, minutes, isCountingDown, upPressed, downPressed, isActive]);
+  }, [seconds, minutes, isCountingDown, upPressed, downPressed, isActive])
 
   useEffect(() => {
     if (upPressed && Platform.OS === "android") {
       const interval = setInterval(() => {
-        setMinutes((prev) => Math.min(prev + 1, 60));
-      }, 100);
-      return () => clearInterval(interval);
+        setMinutes((prev) => Math.min(prev + 1, 60))
+      }, 100)
+      return () => clearInterval(interval)
     }
-  }, [upPressed]);
+  }, [upPressed])
 
   useEffect(() => {
     if (downPressed && Platform.OS === "android") {
       const interval = setInterval(() => {
-        setMinutes((prev) => Math.max(prev - 1, 0));
-      }, 100);
-      return () => clearInterval(interval);
+        setMinutes((prev) => Math.max(prev - 1, 0))
+      }, 100)
+      return () => clearInterval(interval)
     }
-  }, [downPressed]);
+  }, [downPressed])
 
   useEffect(() => {
     if (upPressed) {
-      clearActiveInterval();
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      clearActiveInterval()
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
       const interval = setInterval(() => {
         if (minutesRef.current >= 60) {
-          clearActiveInterval();
-          setMinutes(60);
-          setSeconds(0);
-          return;
+          clearActiveInterval()
+          setMinutes(60)
+          setSeconds(0)
+          return
         }
 
         setSeconds((prev) => {
-          const newSeconds = prev + 1;
+          const newSeconds = prev + 1
           if (newSeconds >= 20) {
-            setMinutes((m) => Math.min(m + 1, 60));
-            return 0;
+            setMinutes((m) => Math.min(m + 1, 60))
+            return 0
           }
-          return newSeconds;
-        });
-      }, 16);
-      setAdjustInterval(interval);
+          return newSeconds
+        })
+      }, 16)
+      setAdjustInterval(interval)
     } else if (downPressed) {
-      clearActiveInterval();
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      clearActiveInterval()
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
       const interval = setInterval(() => {
         console.log("Interval tick", {
           minutes: minutesRef.current,
           seconds: secondsRef.current,
-        });
+        })
 
         if (minutesRef.current === 0 && secondsRef.current === 0) {
-          console.log("Timer at zero, clearing interval");
-          clearActiveInterval();
-          return;
+          console.log("Timer at zero, clearing interval")
+          clearActiveInterval()
+          return
         }
 
         setSeconds((prev) => {
           console.log("Updating seconds", {
             prev,
             minutes: minutesRef.current,
-          });
-          const newSeconds = prev - 1;
+          })
+          const newSeconds = prev - 1
 
           if (prev === 0) {
             if (minutesRef.current > 0) {
               console.log("Decrementing minutes", {
                 minutes: minutesRef.current,
-              });
+              })
               setMinutes((m) => {
-                const newMinutes = Math.max(m - 1, 0);
-                console.log("New minutes value", { newMinutes });
+                const newMinutes = Math.max(m - 1, 0)
+                console.log("New minutes value", { newMinutes })
                 if (newMinutes === 0) {
-                  clearActiveInterval();
+                  clearActiveInterval()
                 }
-                return newMinutes;
-              });
-              return 19;
+                return newMinutes
+              })
+              return 19
             }
-            console.log("At zero, should stop");
-            clearActiveInterval();
-            return 0;
+            console.log("At zero, should stop")
+            clearActiveInterval()
+            return 0
           }
-          return newSeconds;
-        });
-      }, 16);
-      console.log("Setting new interval");
-      setAdjustInterval(interval);
+          return newSeconds
+        })
+      }, 16)
+      console.log("Setting new interval")
+      setAdjustInterval(interval)
     } else {
-      clearActiveInterval();
+      clearActiveInterval()
     }
 
-    return () => clearActiveInterval();
-  }, [upPressed, downPressed]);
+    return () => clearActiveInterval()
+  }, [upPressed, downPressed])
 
   useEffect(() => {
-    let timerInterval: NodeJS.Timeout | null = null;
-    let startTime: number | null = null;
-    const totalTimerSeconds = minutes * 60 + seconds; // Total seconds at timer start
+    let timerInterval: NodeJS.Timeout | null = null
+    let startTime: number | null = null
+    const totalTimerSeconds = minutes * 60 + seconds // Total seconds at timer start
 
     const startTimer = () => {
-      if (timerInterval) return;
+      if (timerInterval) return
 
       // Record the start time if not already set
       if (!startTime) {
-        startTime = Date.now();
+        startTime = Date.now()
       }
 
       timerInterval = setInterval(() => {
         // Calculate total seconds elapsed
-        const currentTime = Date.now();
+        const currentTime = Date.now()
         const elapsedSeconds = Math.floor(
           (currentTime - (startTime || currentTime)) / 1000,
-        );
+        )
 
         // Calculate remaining time
-        const remainingSeconds = Math.max(
-          0,
-          totalTimerSeconds - elapsedSeconds,
-        );
-        const remainingMinutes = Math.floor(remainingSeconds / 60);
-        const remainingSecondsDisplay = remainingSeconds % 60;
+        const remainingSeconds = Math.max(0, totalTimerSeconds - elapsedSeconds)
+        const remainingMinutes = Math.floor(remainingSeconds / 60)
+        const remainingSecondsDisplay = remainingSeconds % 60
 
-        const formattedCurrentTime = new Date().toLocaleTimeString();
+        const formattedCurrentTime = new Date().toLocaleTimeString()
 
         console.log(
           `Timer Tick [${formattedCurrentTime}] - Elapsed: ${elapsedSeconds}, Remaining: ${remainingMinutes}m ${remainingSecondsDisplay}s`,
-        );
+        )
 
         // Update state with remaining time
-        setMinutes(remainingMinutes);
-        setSeconds(remainingSecondsDisplay);
+        setMinutes(remainingMinutes)
+        setSeconds(remainingSecondsDisplay)
 
         // Check if timer should end
         if (remainingSeconds === 0) {
           if (timerInterval) {
-            clearInterval(timerInterval);
-            timerInterval = null;
+            clearInterval(timerInterval)
+            timerInterval = null
           }
-          console.log(`Timer Ended at ${formattedCurrentTime}`);
-          setIsActive(false);
-          scheduleNotification();
+          console.log(`Timer Ended at ${formattedCurrentTime}`)
+          setIsActive(false)
+          scheduleNotification()
         }
-      }, 1000);
-    };
+      }, 1000)
+    }
 
     if (isActive) {
-      startTimer();
+      startTimer()
     }
 
     return () => {
       if (timerInterval) {
-        clearInterval(timerInterval);
+        clearInterval(timerInterval)
         console.log(
           `Timer Interval Cleared at ${new Date().toLocaleTimeString()}`,
-        );
+        )
       }
-    };
-  }, [isActive, minutes, seconds]);
+    }
+  }, [isActive, minutes, seconds])
 
   const incrementMinutes = () => {
-    if (minutes >= 60) return;
+    if (minutes >= 60) return
 
     if (Platform.OS === "android") {
-      setMinutes((prev) => Math.min(prev + 5, 60));
-      setIsActive(true);
-      return;
+      setMinutes((prev) => Math.min(prev + 5, 60))
+      setIsActive(true)
+      return
     }
 
-    clearActiveInterval();
-    let targetMinutes = Math.min(minutes + 5, 60);
+    clearActiveInterval()
+    let targetMinutes = Math.min(minutes + 5, 60)
     const interval = setInterval(() => {
       if (minutes >= targetMinutes) {
-        clearInterval(interval);
-        setAdjustInterval(null);
-        return;
+        clearInterval(interval)
+        setAdjustInterval(null)
+        return
       }
       setSeconds((prev) => {
-        const newSeconds = prev + 1;
+        const newSeconds = prev + 1
         if (newSeconds >= 20) {
-          setMinutes((m) => Math.min(m + 1, targetMinutes));
-          return 0;
+          setMinutes((m) => Math.min(m + 1, targetMinutes))
+          return 0
         }
-        return newSeconds;
-      });
-    }, 16);
-    setAdjustInterval(interval);
+        return newSeconds
+      })
+    }, 16)
+    setAdjustInterval(interval)
 
     if (!isActive) {
-      setIsActive(true);
+      setIsActive(true)
     }
-  };
+  }
 
   const decrementMinutes = () => {
-    if (minutes === 0 && seconds === 0) return;
+    if (minutes === 0 && seconds === 0) return
 
     if (Platform.OS === "android") {
-      setMinutes((prev) => Math.max(prev - 5, 0));
-      setIsActive(true);
-      return;
+      setMinutes((prev) => Math.max(prev - 5, 0))
+      setIsActive(true)
+      return
     }
 
-    clearActiveInterval();
-    let targetMinutes = Math.max(minutes - 5, 0);
+    clearActiveInterval()
+    let targetMinutes = Math.max(minutes - 5, 0)
     const interval = setInterval(() => {
       if (minutes <= targetMinutes && seconds === 0) {
-        clearInterval(interval);
-        setAdjustInterval(null);
-        return;
+        clearInterval(interval)
+        setAdjustInterval(null)
+        return
       }
       setSeconds((prev) => {
-        const newSeconds = prev - 1;
+        const newSeconds = prev - 1
         if (prev === 0) {
           if (minutes > targetMinutes) {
-            setMinutes((m) => Math.max(m - 1, targetMinutes));
-            return 19;
+            setMinutes((m) => Math.max(m - 1, targetMinutes))
+            return 19
           }
-          return 0;
+          return 0
         }
-        return newSeconds;
-      });
-    }, 16);
-    setAdjustInterval(interval);
+        return newSeconds
+      })
+    }, 16)
+    setAdjustInterval(interval)
 
     if (!isActive) {
-      setIsActive(true);
+      setIsActive(true)
     }
-  };
+  }
 
   const clearActiveInterval = () => {
     if (adjustInterval) {
       console.log("Clearing interval", {
         minutes: minutesRef.current,
         seconds: secondsRef.current,
-      });
-      clearInterval(adjustInterval);
-      setAdjustInterval(null);
+      })
+      clearInterval(adjustInterval)
+      setAdjustInterval(null)
     }
-  };
+  }
 
   const formatTime = (mins: number, secs: number) => {
-    return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
-  };
+    return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`
+  }
 
-  const styles = getStyles(isDarkTheme);
+  const styles = getStyles(isDarkTheme)
 
   return (
     <ThemedView style={styles.container}>
@@ -516,10 +511,10 @@ export function FocusButton() {
             <TouchableOpacity
               style={[styles.controlButton]}
               onPress={() => {
-                setIsActive(false);
-                setMinutes(0);
-                setSeconds(0);
-                clearActiveInterval();
+                setIsActive(false)
+                setMinutes(0)
+                setSeconds(0)
+                clearActiveInterval()
               }}
             >
               <Ionicons style={styles.controlIcon} name="close" size={16} />
@@ -529,7 +524,7 @@ export function FocusButton() {
         </View>
       </View>
     </ThemedView>
-  );
+  )
 }
 
 const getStyles = (isDarkTheme: boolean) =>
@@ -638,4 +633,4 @@ const getStyles = (isDarkTheme: boolean) =>
     paused: {
       borderColor: "#f5a623",
     },
-  });
+  })

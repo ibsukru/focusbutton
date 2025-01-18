@@ -36,7 +36,7 @@ chrome.offscreen.createDocument({
   url: "offscreen.html",
   reasons: ["AUDIO_PLAYBACK"],
   justification: "Playing timer completion sound",
-});
+})
 ```
 
 ### 2. Storage API

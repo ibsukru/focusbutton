@@ -1,8 +1,8 @@
-import { defineConfig, loadEnv, Plugin, UserConfig, ConfigEnv } from "vite";
-import react from "@vitejs/plugin-react";
-import { resolve } from "path";
-import { copyFileSync, mkdirSync, existsSync, writeFileSync } from "fs";
-import * as esbuild from "esbuild";
+import { defineConfig, loadEnv, Plugin, UserConfig, ConfigEnv } from "vite"
+import react from "@vitejs/plugin-react"
+import { resolve } from "path"
+import { copyFileSync, mkdirSync, existsSync, writeFileSync } from "fs"
+import * as esbuild from "esbuild"
 
 function chromeExtensionPlugin(): Plugin {
   return {
@@ -20,13 +20,13 @@ function chromeExtensionPlugin(): Plugin {
         }
       }
     },
-  };
+  }
 }
 
 export default defineConfig(({ command, mode }: ConfigEnv): UserConfig => {
-  const env = loadEnv(mode, process.cwd(), "");
-  const isFirefox = env.VITE_BROWSER === "firefox";
-  const isProduction = command === "build";
+  const env = loadEnv(mode, process.cwd(), "")
+  const isFirefox = env.VITE_BROWSER === "firefox"
+  const isProduction = command === "build"
 
   const manifestBase = {
     manifest_version: 3,
@@ -86,7 +86,7 @@ export default defineConfig(({ command, mode }: ConfigEnv): UserConfig => {
             matches: ["chrome-extension://${chrome.runtime.id}/*"],
           },
         ],
-  };
+  }
 
   const manifest = isFirefox
     ? {
@@ -98,7 +98,7 @@ export default defineConfig(({ command, mode }: ConfigEnv): UserConfig => {
           },
         },
       }
-    : manifestBase;
+    : manifestBase
 
   return {
     plugins: [
@@ -127,7 +127,7 @@ export default defineConfig(({ command, mode }: ConfigEnv): UserConfig => {
               chrome: "chrome",
               browser: "browser",
             },
-          });
+          })
         },
       },
       {
@@ -138,11 +138,11 @@ export default defineConfig(({ command, mode }: ConfigEnv): UserConfig => {
           copyFileSync(
             resolve(__dirname, "src/offscreen.html"),
             resolve(__dirname, "dist/offscreen.html"),
-          );
+          )
           copyFileSync(
             resolve(__dirname, "src/offscreen.js"),
             resolve(__dirname, "dist/offscreen.js"),
-          );
+          )
         },
       },
       {
@@ -151,7 +151,7 @@ export default defineConfig(({ command, mode }: ConfigEnv): UserConfig => {
         closeBundle() {
           // Ensure dist directory exists
           if (!existsSync("dist")) {
-            mkdirSync("dist", { recursive: true });
+            mkdirSync("dist", { recursive: true })
           }
 
           // Write manifest directly to dist folder
@@ -159,7 +159,7 @@ export default defineConfig(({ command, mode }: ConfigEnv): UserConfig => {
             resolve(__dirname, "dist/manifest.json"),
             JSON.stringify(manifest, null, 2),
             "utf-8",
-          );
+          )
         },
       },
     ],
@@ -189,5 +189,5 @@ export default defineConfig(({ command, mode }: ConfigEnv): UserConfig => {
       outDir: "dist",
       emptyOutDir: true,
     },
-  };
-});
+  }
+})

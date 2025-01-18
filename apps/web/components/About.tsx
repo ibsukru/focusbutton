@@ -1,7 +1,7 @@
-import React from "react";
-import clsx from "clsx";
+import React from "react"
+import clsx from "clsx"
 
-import styles from "./About.module.scss";
+import styles from "./About.module.scss"
 
 export default function About({ className }: { className?: string }) {
   return (
@@ -91,5 +91,5 @@ export default function About({ className }: { className?: string }) {
         </div>
       </div>
     </div>
-  );
+  )
 }

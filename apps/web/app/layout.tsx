@@ -1,12 +1,12 @@
-import Splash from "./Splash";
-import ServiceWorkerRegistration from "./ServiceWorkerRegistration";
+import Splash from "./Splash"
+import ServiceWorkerRegistration from "./ServiceWorkerRegistration"
 
-import type { Metadata } from "next";
-import { ThemeProvider } from "next-themes";
+import type { Metadata } from "next"
+import { ThemeProvider } from "next-themes"
 // import { GoogleAnalytics } from "@next/third-parties/google";
 
-import "normalize.css";
-import "./globals.scss";
+import "normalize.css"
+import "./globals.scss"
 
 export const metadata: Metadata = {
   title: "FocusButton",
@@ -33,12 +33,12 @@ export const metadata: Metadata = {
     "apple-mobile-web-app-status-bar-style": "black-translucent",
     "msapplication-starturl": "/",
   },
-};
+}
 
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: React.ReactNode
 }) {
   // const isDev = process.env.NODE_ENV === "development";
 
@@ -66,5 +66,5 @@ export default function RootLayout({
         {/* {!isDev && <GoogleAnalytics gaId="G-JWGLMW333E" />} */}
       </body>
     </html>
-  );
+  )
 }

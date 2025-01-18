@@ -1,3 +1,3 @@
-import FocusButton from "./components/FocusButton";
+import FocusButton from "./components/FocusButton"
 
-export { FocusButton };
+export { FocusButton }

@@ -1,10 +1,10 @@
-"use client";
+"use client"
 
-import React from "react";
+import React from "react"
 
-import { FaChrome, FaFirefoxBrowser } from "react-icons/fa";
-import clsx from "clsx";
-import styles from "./Footer.module.scss";
+import { FaChrome, FaFirefoxBrowser } from "react-icons/fa"
+import clsx from "clsx"
+import styles from "./Footer.module.scss"
 
 export default function Footer({
   isDesktop,
@@ -13,13 +13,13 @@ export default function Footer({
   className,
   isMacOs,
 }: {
-  isDesktop: boolean;
-  isChrome: boolean;
-  isFirefox: boolean;
-  className?: string;
-  isMacOs?: boolean;
+  isDesktop: boolean
+  isChrome: boolean
+  isFirefox: boolean
+  className?: string
+  isMacOs?: boolean
 }) {
-  const isExtensionEnabled = true;
+  const isExtensionEnabled = true
 
   return (
     <div className={clsx(styles.footer, className)}>
@@ -77,5 +77,5 @@ export default function Footer({
         </a>
       </div>
     </div>
-  );
+  )
 }

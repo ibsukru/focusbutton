@@ -1,46 +1,46 @@
-import React from "react";
-import { useDrag, useDrop } from "react-dnd";
+import React from "react"
+import { useDrag, useDrop } from "react-dnd"
 
 interface DraggableItemProps {
-  children: React.ReactNode;
-  index: number;
-  moveItem: (dragIndex: number, hoverIndex: number) => void;
+  children: React.ReactNode
+  index: number
+  moveItem: (dragIndex: number, hoverIndex: number) => void
 }
 
 const ItemTypes = {
   CARD: "card",
-};
+}
 const DraggableItem: React.FC<DraggableItemProps> = ({
   children,
   index,
   moveItem,
 }) => {
-  const ref = React.useRef<HTMLDivElement>(null);
+  const ref = React.useRef<HTMLDivElement>(null)
 
   const [, drop] = useDrop({
     accept: ItemTypes.CARD,
     hover(item: any) {
       if (!ref.current) {
-        return;
+        return
       }
-      const dragIndex = item.index;
-      const hoverIndex = index;
+      const dragIndex = item.index
+      const hoverIndex = index
 
       // Don't replace items with themselves
       if (dragIndex === hoverIndex) {
-        return;
+        return
       }
 
       // Move the item
-      moveItem(dragIndex, hoverIndex);
+      moveItem(dragIndex, hoverIndex)
 
       // Note: we're mutating the monitor item here!
       // Generally it's better to avoid mutations,
       // but it's good here for the sake of performance
       // to avoid expensive index searches.
-      item.index = hoverIndex;
+      item.index = hoverIndex
     },
-  });
+  })
 
   const [{ isDragging }, drag] = useDrag({
     type: ItemTypes.CARD,
@@ -48,10 +48,10 @@ const DraggableItem: React.FC<DraggableItemProps> = ({
     collect: (monitor) => ({
       isDragging: monitor.isDragging(),
     }),
-  });
+  })
 
-  const opacity = isDragging ? 0 : 1;
-  drag(drop(ref));
+  const opacity = isDragging ? 0 : 1
+  drag(drop(ref))
 
   return (
     <div
@@ -63,7 +63,7 @@ const DraggableItem: React.FC<DraggableItemProps> = ({
     >
       {children}
     </div>
-  );
-};
+  )
+}
 
-export default DraggableItem;
+export default DraggableItem
