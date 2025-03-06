@@ -3,6 +3,8 @@ import ServiceWorkerRegistration from "./ServiceWorkerRegistration"
 
 import type { Metadata } from "next"
 import { ThemeProvider } from "next-themes"
+import { Analytics } from "@vercel/analytics/react"
+
 // import { GoogleAnalytics } from "@next/third-parties/google";
 
 import "normalize.css"
@@ -62,6 +64,7 @@ export default function RootLayout({
         >
           <ServiceWorkerRegistration />
           {children}
+          <Analytics />
         </ThemeProvider>
         {/* {!isDev && <GoogleAnalytics gaId="G-JWGLMW333E" />} */}
       </body>

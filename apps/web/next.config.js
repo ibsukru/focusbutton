@@ -1,5 +1,5 @@
-// next.config.mjs
-import withPWA from "next-pwa";
+// next.config.js
+const withPWA = require("next-pwa")
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -12,12 +12,13 @@ const nextConfig = {
     config.resolve.fallback = {
       ...config.resolve.fallback,
       fs: false,
-    };
-    return config;
+    }
+    return config
   },
-};
+}
 
-export default withPWA({
+module.exports = withPWA({
+  ...nextConfig,
   dest: "public",
   // disable: process.env.NODE_ENV === "development",
   register: true,
@@ -46,4 +47,4 @@ export default withPWA({
       },
     },
   ],
-})(nextConfig);
+})(nextConfig)

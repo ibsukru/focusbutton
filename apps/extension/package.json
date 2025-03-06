@@ -28,7 +28,7 @@
     "@types/react-dom": "^18.2.0",
     "@types/webextension-polyfill": "^0.10.0",
     "@vitejs/plugin-react": "^4.2.1",
-    "esbuild": "^0.24.0",
+    "esbuild": "^0.25.0",
     "sass": "^1.69.0",
     "typescript": "^5.0.2",
     "vite": "^5.0.0"

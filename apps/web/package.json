@@ -12,6 +12,8 @@
     "@focusbutton/ui": "*",
     "@next/third-parties": "^15.1.4",
     "@number-flow/react": "^0.4.2",
+    "esbuild": "0.25.0",
+    "expo-router": "3.1.0",
     "lucide-react": "^0.462.0",
     "motion-number": "^0.1.7",
     "next": "^15.0.3",
