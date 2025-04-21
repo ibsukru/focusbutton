@@ -23,15 +23,6 @@ export default function Footer({
 
   return (
     <div className={clsx(styles.footer, className)}>
-      <a
-        className={clsx("button", styles.feedbackWallet)}
-        target="_blank"
-        rel="noreferrer"
-        href="https://feedbackwallet.com/teams/99ddcab9-99d6-41bd-8547-e3e08d0fb761"
-      >
-        <img width={20} height={20} src="/frog-128.webp" alt="FeedbackWallet" />{" "}
-        FeedbackWallet
-      </a>
       <div className={styles.webStoreLinks}>
         {isDesktop &&
           isExtensionEnabled &&
